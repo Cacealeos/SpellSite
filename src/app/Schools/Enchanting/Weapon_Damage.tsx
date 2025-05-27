@@ -17,6 +17,8 @@ const Weapon_Damage = ({
   else if (Mastery.type == "INTERMEDIATE") rate = 2;
   else if (Mastery.type == "MASTERED") rate = 1;
 
+  //test push
+
   return (
     <>
       <div>

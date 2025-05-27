@@ -1,5 +1,7 @@
 export class Mastery {
-  constructor(private type: string = "NOVICE") {}
+  public type: string = "NOVICE";
+
+  constructor(type: string) {}
 
   public novice() {
     this.type = "NOVICE";

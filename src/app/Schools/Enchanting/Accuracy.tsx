@@ -24,14 +24,13 @@ const Accuracy = ({
         <br />
         <input
           type="number"
-          max="255"
+          max="200"
           min="0"
           step="1"
           value="0"
           onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
         />
         <br />
-        <h4>Maximum damage cannot go no higher than BASE x2 of melee weapon</h4>
       </div>
     </>
   );

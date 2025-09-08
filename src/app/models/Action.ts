@@ -1,7 +1,7 @@
 export class Action {
   private type: string = "MAIN";
 
-  constructor(type: string) {}
+  constructor(type: void) {}
 
   public main() {
     this.type = "MAIN";

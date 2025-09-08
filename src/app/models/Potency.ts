@@ -1,7 +1,7 @@
 export class Potency {
   private type: string = "MINOR";
 
-  constructor(type: string) {}
+  constructor(type: void) {}
 
   public minor() {
     this.type = "MINOR";

@@ -10,9 +10,9 @@ export class Spell {
     public school: string = "none",
     public branch: string = "none",
     public root: string = "none",
-    public action: Action = new Action("MAIN"),
-    public potency: Potency = new Potency("MINOR"),
-    public mastery: Mastery = new Mastery("NOVICE"),
+    public action: Action = new Action(action.main()),
+    public potency: Potency = new Potency(potency.minor()),
+    public mastery: Mastery = new Mastery(mastery.novice()),
     public demon: boolean = false,
     public compound: boolean = false
   ) {}

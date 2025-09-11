@@ -1,8 +1,11 @@
 export class Mastery {
-  public type: string = "NOVICE";
+  private type: string = "NOVICE";
 
   constructor(type: void) {}
 
+  public getType() {
+    return this.type;
+  }
   public novice() {
     this.type = "NOVICE";
   }

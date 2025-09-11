@@ -3,6 +3,9 @@ export class Potency {
 
   constructor(type: void) {}
 
+  public getType() {
+    return this.type;
+  }
   public minor() {
     this.type = "MINOR";
   }

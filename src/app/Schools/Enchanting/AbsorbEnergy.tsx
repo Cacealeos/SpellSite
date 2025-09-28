@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Mastery } from "../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const Adherence = ({
+const AbsorbEnergy = ({
   ParentMastery,
   active,
 }: {
@@ -68,16 +68,15 @@ const Adherence = ({
         </div>
         <br />
         <p>
-          Info: Allows caster to place manna-channeled objects to armor so that
-          they may be carried without using up an orifice.
-        </p>
-        <p>
-          The number of targets that can be attached on the same piece of armor
-          scales with potency and environment. |GMD|
+          Info: Target recovers portion of manna used in attack against target.
         </p>
       </div>
     </>
   );
 };
 
-export default Adherence;
+export default AbsorbEnergy;
+
+// •	Absorb Energy
+// o
+// o	Minor (10%) – 9 / 6 / 3 	Major (20%) – 15 / 12 / 9 	Extreme (30%) – 21 / 18 / 15

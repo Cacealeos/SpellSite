@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Mastery } from "../../models/Mastery";
 
-const Accuracy = ({
+const Disruption = ({
   ParentMastery,
   active,
 }: {
@@ -14,15 +14,15 @@ const Accuracy = ({
 
   if (!active) setCost(0);
 
-  if (ParentMastery.getType() === testMastery.novice(true)) rate = 0.2;
+  if (ParentMastery.getType() === testMastery.novice(true)) rate = 0.5;
   else if (ParentMastery.getType() === testMastery.intermediate(true))
-    rate = 0.1;
-  else if (ParentMastery.getType() === testMastery.mastered(true)) rate = 0.05;
+    rate = 0.7;
+  else if (ParentMastery.getType() === testMastery.mastered(true)) rate = 0.15;
 
   return (
     <>
       <div>
-        <h1>Manna to Accuracy</h1>
+        <h1>Manna to Disruption Solvent</h1>
         <br />
         <input
           type="number"
@@ -38,4 +38,4 @@ const Accuracy = ({
   );
 };
 
-export default Accuracy;
+export default Disruption;

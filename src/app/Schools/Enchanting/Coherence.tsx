@@ -3,36 +3,38 @@ import { Mastery } from "../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
 const Coherence = ({
-  Mastery,
+  ParentMastery,
   active,
 }: {
-  Mastery: Mastery;
+  ParentMastery: Mastery;
   active: boolean;
 }) => {
   const [cost, setCost] = useState(0);
   const [pot, setPot] = useState(new Potency());
 
   let CoherencePotency: Potency = new Potency();
+  let testPotency: Potency = new Potency();
+  let testMastery: Mastery = new Mastery();
 
   if (!active) setCost(0);
 
-  const changeChoice = (potency: void) => {
-    if (Mastery.getType() == "NOVICE") {
-      if (CoherencePotency.getType() == "MINOR") setCost(30);
-      if (CoherencePotency.getType() == "MAJOR") setCost(45);
-      if (CoherencePotency.getType() == "EXTREME") setCost(60);
+  const changeChoice = (potency: string | void) => {
+    if (ParentMastery.getType() === testMastery.novice(true)) {
+      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(30);
+      if (CoherencePotency.getType() === testPotency.major(true)) setCost(45);
+      if (CoherencePotency.getType() === testPotency.extreme(true)) setCost(60);
       setPot(CoherencePotency);
     }
-    if (Mastery.getType() == "INTERMEDIATE") {
-      if (CoherencePotency.getType() == "MINOR") setCost(25);
-      if (CoherencePotency.getType() == "MAJOR") setCost(40);
-      if (CoherencePotency.getType() == "EXTREME") setCost(55);
+    if (ParentMastery.getType() === testMastery.intermediate(true)) {
+      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(25);
+      if (CoherencePotency.getType() === testPotency.major(true)) setCost(40);
+      if (CoherencePotency.getType() === testPotency.extreme(true)) setCost(55);
       setPot(CoherencePotency);
     }
-    if (Mastery.getType() == "MASTERED") {
-      if (CoherencePotency.getType() == "MINOR") setCost(20);
-      if (CoherencePotency.getType() == "MAJOR") setCost(35);
-      if (CoherencePotency.getType() == "EXTREME") setCost(50);
+    if (ParentMastery.getType() === testMastery.mastered(true)) {
+      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(20);
+      if (CoherencePotency.getType() === testPotency.major(true)) setCost(35);
+      if (CoherencePotency.getType() === testPotency.extreme(true)) setCost(50);
       setPot(CoherencePotency);
     }
   };

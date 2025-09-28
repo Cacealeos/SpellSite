@@ -6,13 +6,16 @@ export class Mastery {
   public getType() {
     return this.type;
   }
-  public novice() {
+  public novice(returnType: boolean = false): string | void {
     this.type = "NOVICE";
+    if (returnType) return this.type;
   }
-  public intermediate() {
+  public intermediate(returnType: boolean = false): string | void {
     this.type = "INTERMEDIATE";
+    if (returnType) return this.type;
   }
-  public mastered() {
+  public mastered(returnType: boolean = false): string | void {
     this.type = "MASTERED";
+    if (returnType) return this.type;
   }
 }

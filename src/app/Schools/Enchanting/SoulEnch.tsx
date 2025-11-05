@@ -2,15 +2,16 @@ import React, { useState, ChangeEvent } from "react";
 import { Mastery } from "../../models/Mastery";
 
 const SoulEnch = ({
-  Mastery,
+  ParentMastery,
   active,
 }: {
-  Mastery: Mastery;
+  ParentMastery: Mastery;
   active: boolean;
 }) => {
   const [cost, setCost] = useState(0);
   const [checked, check] = useState<boolean>();
   let rate: number = 0;
+  let testMastery: Mastery = new Mastery();
 
   if (!active) setCost(0);
 
@@ -18,9 +19,9 @@ const SoulEnch = ({
     const checkedState = event.target.checked;
     check(checkedState);
     if (checkedState) {
-      if (Mastery.type == "NOVICE") rate = 20;
-      else if (Mastery.type == "INTERMEDIATE") rate = 15;
-      else if (Mastery.type == "MASTERED") rate = 10;
+      if (ParentMastery.getType() == testMastery.novice()) rate = 20;
+      else if (ParentMastery.getType() == testMastery.intermediate()) rate = 15;
+      else if (ParentMastery.getType() == testMastery.mastered()) rate = 10;
 
       setCost(rate || 0);
     }

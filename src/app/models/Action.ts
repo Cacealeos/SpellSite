@@ -3,6 +3,10 @@ export class Action {
 
   constructor(type: void) {}
 
+  public getType() {
+    return this.type;
+  }
+
   public main() {
     this.type = "MAIN";
   }

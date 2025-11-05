@@ -16,7 +16,7 @@ const Select = ({
       <MenuItems>
         {choices.map((element) => {
           return (
-            <MenuItem>
+            <MenuItem key={choices.indexOf(element)}>
               <button onClick={() => changeChoice(element)}>{element}</button>
             </MenuItem>
           );

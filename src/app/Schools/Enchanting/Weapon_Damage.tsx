@@ -2,20 +2,21 @@ import React, { useState } from "react";
 import { Mastery } from "../../models/Mastery";
 
 const Weapon_Damage = ({
-  Mastery,
+  ParentMastery,
   active,
 }: {
-  Mastery: Mastery;
+  ParentMastery: Mastery;
   active: boolean;
 }) => {
   const [cost, setCost] = useState(0);
   let rate: number = 0;
+  let testMastery: Mastery = new Mastery();
 
   if (!active) setCost(0);
 
-  if (Mastery.type == "NOVICE") rate = 3;
-  else if (Mastery.type == "INTERMEDIATE") rate = 2;
-  else if (Mastery.type == "MASTERED") rate = 1;
+  if (ParentMastery.getType() == testMastery.novice()) rate = 3;
+  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 2;
+  else if (ParentMastery.getType() == testMastery.mastered()) rate = 1;
 
   //test push
 

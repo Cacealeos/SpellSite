@@ -3,16 +3,17 @@ import { Mastery } from "../../models/Mastery";
 import Select from "@/app/Select";
 
 const ApplyEffect = ({
-  Mastery,
+  ParentMastery,
   active,
 }: {
-  Mastery: Mastery;
+  ParentMastery: Mastery;
   active: boolean;
 }) => {
   const [cost, setCost] = useState(0);
   const [checked, check] = useState<boolean>();
   const [choice, setChoice] = useState<number>(-1);
   let rate: number = 0;
+  let testMastery: Mastery = new Mastery();
 
   const AppliedEffects = {
     0: "Plying Rod",
@@ -105,9 +106,9 @@ const ApplyEffect = ({
     for (const [key, val] of Object.entries(AppliedEffects)) {
       if (val === choice) setChoice(parseInt(key));
     }
-    if (Mastery.type == "NOVICE") rate = 20;
-    else if (Mastery.type == "INTERMEDIATE") rate = 15;
-    else if (Mastery.type == "MASTERED") rate = 10;
+    if (ParentMastery.getType() == testMastery.novice()) rate = 20;
+    else if (ParentMastery.getType() == testMastery.intermediate()) rate = 15;
+    else if (ParentMastery.getType() == testMastery.mastered()) rate = 10;
 
     setCost(rate || 0);
   };

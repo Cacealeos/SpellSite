@@ -1,16 +1,22 @@
 import React, { useState } from "react";
 import { Mastery } from "../../models/Mastery";
 
-const Pain = ({ Mastery, active }: { Mastery: Mastery; active: boolean }) => {
+const Pain = ({
+  ParentMastery,
+  active,
+}: {
+  ParentMastery: Mastery;
+  active: boolean;
+}) => {
   const [cost, setCost] = useState(0);
   let rate: number = 0;
+  let testMastery: Mastery = new Mastery();
 
   if (!active) setCost(0);
 
-  if (Mastery.type == "NOVICE") rate = 2;
-  else if (Mastery.type == "INTERMEDIATE") rate = 1;
-  else if (Mastery.type == "MASTERED") rate = 0.5;
-
+  if (ParentMastery.getType() == testMastery.novice()) rate = 2;
+  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 1;
+  else if (ParentMastery.getType() == testMastery.mastered()) rate = 0.5;
   return (
     <>
       <div>

@@ -24,6 +24,8 @@ export default function Enchanting() {
   const mastery = ["NOVICE", "INTERMEDIATE", "MASTERED"];
 
   const spellType = [""];
+  let testMastery: Mastery = new Mastery();
+  let testPotency: Potency = new Potency();
 
   function changeBranch(change: string) {
     let spellAlt = spell;
@@ -33,13 +35,24 @@ export default function Enchanting() {
 
   function changePotency(change: string) {
     let spellAlt = spell;
-    spellAlt.potency = new Potency(change);
+    spellAlt.potency = new Potency();
+    if (change == testPotency.minor()) spellAlt.potency.minor();
+    else if (change == testPotency.major()) spellAlt.potency.major();
+    else if (change == testPotency.extreme()) spellAlt.potency.extreme();
+    else if (change == testPotency.cataclysmic())
+      spellAlt.potency.cataclysmic();
+
     setSpell(spellAlt);
   }
 
   function changeMastery(change: string) {
     let spellAlt = spell;
-    spellAlt.mastery = new Mastery(change);
+    spellAlt.potency = new Potency();
+    if (change == testMastery.novice()) spellAlt.mastery.novice();
+    else if (change == testMastery.intermediate())
+      spellAlt.mastery.intermediate();
+    else if (change == testMastery.mastered()) spellAlt.mastery.mastered();
+
     setSpell(spellAlt);
   }
 

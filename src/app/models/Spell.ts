@@ -11,8 +11,8 @@ export class Spell {
     public branch: string = "none",
     public root: string = "none",
     public action: Action = new Action(action.main()),
-    public potency: Potency = new Potency(potency.minor()),
-    public mastery: Mastery = new Mastery(mastery.novice()),
+    public potency: Potency = new Potency(),
+    public mastery: Mastery = new Mastery(),
     public demon: boolean = false,
     public compound: boolean = false
   ) {}

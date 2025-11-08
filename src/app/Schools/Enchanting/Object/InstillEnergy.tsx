@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
+import { Potency } from "@/app/models/Potency";
 
-const Disruption = ({
+const InstillEnergy = ({
   ParentMastery,
   active,
 }: {
@@ -9,8 +10,10 @@ const Disruption = ({
   active: boolean;
 }) => {
   const [cost, setCost] = useState(0);
-  let rate: number = 0;
+  const [pot, setPot] = useState(new Potency());
+
   let testMastery: Mastery = new Mastery();
+  let rate: number = 0;
 
   if (!active) setCost(0);
 
@@ -21,7 +24,7 @@ const Disruption = ({
   return (
     <>
       <div>
-        <h1>Manna to Disruption</h1>
+        <h1>Instill Energy</h1>
         <br />
         <input
           type="number"
@@ -32,9 +35,13 @@ const Disruption = ({
           onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
         />
         <br />
+        <p>
+          Info: Transfer or extract manna from object. The transfer rate is
+          energy to turn ratio and scales with Mastery
+        </p>
       </div>
     </>
   );
 };
 
-export default Disruption;
+export default InstillEnergy;

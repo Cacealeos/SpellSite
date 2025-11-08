@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
 
-const PainThresh = ({
+const Weapon_Damage = ({
   ParentMastery,
   active,
 }: {
@@ -14,30 +14,30 @@ const PainThresh = ({
 
   if (!active) setCost(0);
 
-  if (ParentMastery.getType() === testMastery.novice(true)) rate = 0.5;
-  else if (ParentMastery.getType() === testMastery.intermediate(true))
-    rate = 0.7;
-  else if (ParentMastery.getType() === testMastery.mastered(true)) rate = 0.15;
+  if (ParentMastery.getType() == testMastery.novice()) rate = 3;
+  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 2;
+  else if (ParentMastery.getType() == testMastery.mastered()) rate = 1;
+
+  //test push
 
   return (
     <>
       <div>
-        <h1>Manna to Pain Threshold</h1>
+        <h1>Manna to Damage</h1>
         <br />
         <input
           type="number"
-          max="200"
+          max="255"
           min="0"
           step="1"
           value="0"
           onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
         />
         <br />
+        <h4>Maximum damage cannot go no higher than BASE x2 of melee weapon</h4>
       </div>
-      <br />
-      <p>Info: Max temporary threshold equal to 50% of base threshold</p>
     </>
   );
 };
 
-export default PainThresh;
+export default Weapon_Damage;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
 
-const Weapon_Damage = ({
+const Disruption = ({
   ParentMastery,
   active,
 }: {
@@ -14,30 +14,27 @@ const Weapon_Damage = ({
 
   if (!active) setCost(0);
 
-  if (ParentMastery.getType() == testMastery.novice()) rate = 3;
-  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 2;
-  else if (ParentMastery.getType() == testMastery.mastered()) rate = 1;
-
-  //test push
+  if (ParentMastery.getType() == testMastery.novice()) rate = 4;
+  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 3;
+  else if (ParentMastery.getType() == testMastery.mastered()) rate = 2;
 
   return (
     <>
       <div>
-        <h1>Manna to Damage</h1>
+        <h1>Manna to Disruption</h1>
         <br />
         <input
           type="number"
-          max="255"
+          max="50"
           min="0"
           step="1"
           value="0"
           onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
         />
         <br />
-        <h4>Maximum damage cannot go no higher than BASE x2 of melee weapon</h4>
       </div>
     </>
   );
 };
 
-export default Weapon_Damage;
+export default Disruption;

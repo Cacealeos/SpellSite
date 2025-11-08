@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
 import Select from "@/app/Select";
 
 const ApplyEffect = ({

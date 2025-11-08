@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
 
-const Evasion = ({
+const Accuracy = ({
   ParentMastery,
   active,
 }: {
@@ -14,15 +14,15 @@ const Evasion = ({
 
   if (!active) setCost(0);
 
-  if (ParentMastery.getType() === testMastery.novice(true)) rate = 0.1;
+  if (ParentMastery.getType() === testMastery.novice(true)) rate = 0.2;
   else if (ParentMastery.getType() === testMastery.intermediate(true))
-    rate = 0.15;
-  else if (ParentMastery.getType() === testMastery.mastered(true)) rate = 0.2;
+    rate = 0.1;
+  else if (ParentMastery.getType() === testMastery.mastered(true)) rate = 0.05;
 
   return (
     <>
       <div>
-        <h1>Manna to Evasion</h1>
+        <h1>Manna to Accuracy</h1>
         <br />
         <input
           type="number"
@@ -38,4 +38,4 @@ const Evasion = ({
   );
 };
 
-export default Evasion;
+export default Accuracy;

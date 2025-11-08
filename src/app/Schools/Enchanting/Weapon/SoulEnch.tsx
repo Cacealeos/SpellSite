@@ -1,7 +1,7 @@
 import React, { useState, ChangeEvent } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
 
-const SpiritEnch = ({
+const SoulEnch = ({
   ParentMastery,
   active,
 }: {
@@ -19,9 +19,9 @@ const SpiritEnch = ({
     const checkedState = event.target.checked;
     check(checkedState);
     if (checkedState) {
-      if (ParentMastery.getType() == testMastery.novice()) rate = 10;
-      else if (ParentMastery.getType() == testMastery.intermediate()) rate = 5;
-      else if (ParentMastery.getType() == testMastery.mastered()) rate = 1;
+      if (ParentMastery.getType() == testMastery.novice()) rate = 20;
+      else if (ParentMastery.getType() == testMastery.intermediate()) rate = 15;
+      else if (ParentMastery.getType() == testMastery.mastered()) rate = 10;
 
       setCost(rate || 0);
     }
@@ -30,18 +30,19 @@ const SpiritEnch = ({
   return (
     <>
       <div>
-        <h1>Spirit Enchant</h1>
+        <h1>Soul Enchant</h1>
         <br />
         <input type="checkbox" checked={checked} onChange={handleCheckBox} />
         <br />
         <h4>
-          Enable Spirit damage equal to damage be dealt to target immune to
-          physical
+          Enable Soul and Spirit damage equal to damage be dealt to target
+          immune to physical
         </h4>
+        <h4> Only viable with soul-bound weapons</h4>
         <h4> Spell Charge disabled </h4>
       </div>
     </>
   );
 };
 
-export default SpiritEnch;
+export default SoulEnch;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
 const Coherence = ({

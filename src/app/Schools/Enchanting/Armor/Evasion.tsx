@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Mastery } from "../../models/Mastery";
+import { Mastery } from "../../../models/Mastery";
 
-const Pain = ({
+const Evasion = ({
   ParentMastery,
   active,
 }: {
@@ -14,27 +14,28 @@ const Pain = ({
 
   if (!active) setCost(0);
 
-  if (ParentMastery.getType() == testMastery.novice()) rate = 2;
-  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 1;
-  else if (ParentMastery.getType() == testMastery.mastered()) rate = 0.5;
+  if (ParentMastery.getType() === testMastery.novice(true)) rate = 0.1;
+  else if (ParentMastery.getType() === testMastery.intermediate(true))
+    rate = 0.15;
+  else if (ParentMastery.getType() === testMastery.mastered(true)) rate = 0.2;
+
   return (
     <>
       <div>
-        <h1>Manna to Pain</h1>
+        <h1>Manna to Evasion</h1>
         <br />
         <input
           type="number"
-          max="50"
+          max="200"
           min="0"
           step="1"
           value="0"
           onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
         />
         <br />
-        <h4>Deal Pain with every hit of weapon to a maximum of 50</h4>
       </div>
     </>
   );
 };
 
-export default Pain;
+export default Evasion;

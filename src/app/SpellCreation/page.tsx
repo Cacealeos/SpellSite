@@ -1,3 +1,4 @@
+"use client"
 import { useState } from "react";
 import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools

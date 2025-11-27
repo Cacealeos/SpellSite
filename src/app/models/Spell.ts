@@ -10,7 +10,7 @@ export class Spell {
     public school: string = "none",
     public branch: string = "none",
     public root: string = "none",
-    public action: Action = new Action(action.main()),
+    public action: Action = new Action(),
     public potency: Potency = new Potency(),
     public mastery: Mastery = new Mastery(),
     public demon: boolean = false,

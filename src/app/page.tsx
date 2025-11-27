@@ -11,7 +11,7 @@ export default function Home(): JSX.Element {
       spell: "true",
     });
 
-    router.push(`/Spells?${params.toString()}`);
+    router.push(`/SpellCreation?${params.toString()}`);
   };
 
   return (

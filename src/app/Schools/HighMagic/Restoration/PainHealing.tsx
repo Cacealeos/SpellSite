@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const MannaHealing = ({
+const PainHealing = ({
   ParentMastery,
   active,
 }: {
@@ -17,14 +17,14 @@ const MannaHealing = ({
 
   if (!active) setCost(0);
 
-  if (ParentMastery.getType() == testMastery.novice()) rate = 5;
-  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 3;
-  else if (ParentMastery.getType() == testMastery.mastered()) rate = 1;
+  if (ParentMastery.getType() == testMastery.novice()) rate = 0.3;
+  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 0.2;
+  else if (ParentMastery.getType() == testMastery.mastered()) rate = 0.1;
 
   return (
     <>
       <div>
-        <h1>Manna to Healing</h1>
+        <h1>Manna to Pain Recovery</h1>
         <br />
         <input
           type="number"
@@ -34,10 +34,11 @@ const MannaHealing = ({
           onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
         />
         <br />
-        <p>Info: Restore Life-Force at the cost of manna</p>
+        <p>Alleviates building pain</p>
+        <p>Pain tolerance = </p>
       </div>
     </>
   );
 };
 
-export default MannaHealing;
+export default PainHealing;

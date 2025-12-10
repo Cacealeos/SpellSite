@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const MannaHealing = ({
+const RegenLF = ({
   ParentMastery,
   active,
 }: {
@@ -24,7 +24,7 @@ const MannaHealing = ({
   return (
     <>
       <div>
-        <h1>Manna to Healing</h1>
+        <h1>Manna to Regeneration</h1>
         <br />
         <input
           type="number"
@@ -34,10 +34,16 @@ const MannaHealing = ({
           onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
         />
         <br />
-        <p>Info: Restore Life-Force at the cost of manna</p>
+        <p>Regain LF or temporary LF</p>
+        <p>Last a set number of turns dependent on Difficulty of Campaign</p>
+        <ul>
+          <li>Normal: 4</li>
+          <li>Hard: 3</li>
+          <li>Game Master: 2</li>
+        </ul>
       </div>
     </>
   );
 };
 
-export default MannaHealing;
+export default RegenLF;

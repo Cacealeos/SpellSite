@@ -31,28 +31,24 @@ const GatherResonance = ({
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(200);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(20);
+      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(50);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(300);
+        calculateCost(100);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(75);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(150);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(10);
+      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(40);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(225);
+        calculateCost(80);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(50);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(100);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(0);
+      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(30);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(150);
+        calculateCost(60);
       setPot(SpellPotency);
     }
   };

@@ -20,24 +20,24 @@ const ResonateSpell = ({
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(100);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(200);
+      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(35);
+      if (CoherencePotency.getType() === testPotency.major(true)) setCost(100);
       if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(300);
+        setCost(200);
       setPot(CoherencePotency);
     }
     if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(75);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(150);
+      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(20);
+      if (CoherencePotency.getType() === testPotency.major(true)) setCost(75);
       if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(225);
+        setCost(160);
       setPot(CoherencePotency);
     }
     if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(50);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(100);
+      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(5);
+      if (CoherencePotency.getType() === testPotency.major(true)) setCost(50);
       if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(150);
+        setCost(120);
       setPot(CoherencePotency);
     }
   };

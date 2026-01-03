@@ -21,19 +21,19 @@ const InterpolateWave = ({
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
       if (SpellPotency.getType() === testPotency.minor(true)) setCost(30);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(20);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(10);
+      if (SpellPotency.getType() === testPotency.major(true)) setCost(75);
+      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(150);
       setRate(3);
     }
     if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(75);
+      if (SpellPotency.getType() === testPotency.minor(true)) setCost(20);
       if (SpellPotency.getType() === testPotency.major(true)) setCost(60);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(45);
+      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(120);
       setRate(5);
     }
     if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(150);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(120);
+      if (SpellPotency.getType() === testPotency.minor(true)) setCost(10);
+      if (SpellPotency.getType() === testPotency.major(true)) setCost(45);
       if (SpellPotency.getType() === testPotency.extreme(true)) setCost(90);
       setRate(8);
     }

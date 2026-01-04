@@ -34,13 +34,8 @@ const DisruptTarget = ({
       <div>
         <h1>Disrupt Target</h1>
         <br />
-        <p>Potency</p>
+        <p>Area of Effect</p>
         <div>
-          <span>Moderate AOE: Cost - 50%</span>
-          <input
-            type="checkbox"
-            onChange={() => setModerateAOE(!ModerateAOE)}
-          />
           <span>Small AOE: Cost + 0%</span>
           <input type="checkbox" onChange={() => setSmallAOE(!SmallAOE)} />
           <span>Moderate AOE: Cost + 200%</span>
@@ -61,6 +56,9 @@ const DisruptTarget = ({
         <br />
       </div>
       <br />
+      <p>KINETIC</p>
+      <br />
+      <p>RANGE - CLOUD</p>
       <p>
         Info: Use a manna to disruption ratio to determine disruption strength.
         Disruption affects Saturation at a of 4 to 1

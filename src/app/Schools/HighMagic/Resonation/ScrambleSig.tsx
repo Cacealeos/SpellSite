@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
@@ -19,7 +19,9 @@ const ScrambleSig = ({
   let testPotency: Potency = new Potency();
   let testMastery: Mastery = new Mastery();
 
-  if (!active) setCost(0);
+  useEffect(() => {
+    if (!active) setCost(0);
+  }, [active]);
 
   function calculateCost(cost: number) {
     if (ModerateAOE) cost *= 0.5;

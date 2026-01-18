@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
+import { elements } from "./ConjurationData";
 
 const ConjureElement = ({
   ParentMastery,
@@ -11,50 +12,43 @@ const ConjureElement = ({
 }) => {
   const [cost, setCost] = useState(0);
   const [pot, setPot] = useState(new Potency());
-  const [ModerateAOE, setModerateAOE] = useState(false);
-  const [LargeAOE, setLargeAOE] = useState(false);
-  const [MassiveAOE, setMassiveAOE] = useState(false);
+  const [Element, setElement] = useState<Record<string, {}>>(
+    elements["Heat & Cold"]
+  );
 
   let SpellPotency: Potency = new Potency();
   let testPotency: Potency = new Potency();
   let testMastery: Mastery = new Mastery();
 
-  if (!active) setCost(0);
+  useEffect(() => {
+    if (!active) setCost(0);
+  }, [active]);
 
   function calculateCost(cost: number) {
-    if (ModerateAOE) cost *= 0.5;
-    if (LargeAOE) cost *= 1;
-    if (MassiveAOE) cost *= 3;
-
     setCost(cost);
   }
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(150);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(75);
       if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(300);
+        calculateCost(105);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(600);
+        calculateCost(135);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(120);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(240);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(50);
+      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(70);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(480);
+        calculateCost(90);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(180);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(25);
+      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(35);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(360);
+        calculateCost(45);
       setPot(SpellPotency);
     }
   };
@@ -62,47 +56,82 @@ const ConjureElement = ({
   return (
     <>
       <div>
-        <h1>Scramble Signature</h1>
+        <h1>Conjure Element</h1>
+        <br />
+        <p>Elements</p>
+        <div>
+          <button
+            onClick={(e) =>
+              setElement({ "Heat & Cold": elements["Heat & Cold"] })
+            }
+          >
+            Heat & Cold
+          </button>
+          <button
+            onClick={(e) =>
+              setElement({ "Earth & Water": elements["Earth & Water"] })
+            }
+          >
+            Earth & Water
+          </button>
+          <button
+            onClick={(e) => setElement({ Lightning: elements.Lightning })}
+          >
+            Lightning
+          </button>
+          <button onClick={(e) => setElement({ Wind: elements.Wind })}>
+            {" "}
+            Wind
+          </button>
+        </div>
         <br />
         <p>Potency</p>
         <div>
-          <span>Moderate AOE: Cost - 50%</span>
-          <input
-            type="checkbox"
-            onChange={() => setModerateAOE(!ModerateAOE)}
-          />
-          <span>Large AOE: Cost + 0%</span>
-          <input type="checkbox" onChange={() => setLargeAOE(!LargeAOE)} />
-          <span>Massive AOE: Cost + 200%</span>
-          <input type="checkbox" onChange={() => setMassiveAOE(!MassiveAOE)} />
-        </div>
-        <div>
-          <p>Minor – 150 / 120 / 100</p>
+          <p>Minor – 75 / 50 / 25</p>
+          <br />
+          <span>Base: 12</span>
+          <br />
+          <span>Power: 0</span>
+          <br />
+          <span>Roll: 6</span>
+          <br />
           <input
             type="checkbox"
             onChange={(e) => changeChoice(SpellPotency.minor())}
           />
         </div>
         <div>
-          <p>Major – 300 / 240 / 180</p>
+          <p>Major – 105 / 70 / 35</p>
+          <br />
+          <span>Base: 20</span>
+          <br />
+          <span>Power: 1</span>
+          <br />
+          <span>Roll: 10</span>
+          <br />
           <input
             type="checkbox"
             onChange={(e) => changeChoice(SpellPotency.major())}
           />
         </div>
         <div>
-          <p>Extreme – 600 / 480 / 360</p>
+          <p>Extreme – 135 / 90 / 45</p>
+          <br />
+          <span>Base: 28</span>
+          <br />
+          <span>Power: 2</span>
+          <br />
+          <span>Roll: 14</span>
+          <br />
           <input
             type="checkbox"
             onChange={(e) => changeChoice(SpellPotency.extreme())}
           />
         </div>
         <br />
-        <p>
-          Info: Damages and terminates all transmissions of via Resonance and
-          manna-based mental communications within large AOE until rectified.
-        </p>
-        <p>Potency scales with extent of damage.</p>
+        <div>
+          <p>{Object.keys(Element)[0]}</p>
+        </div>
       </div>
     </>
   );

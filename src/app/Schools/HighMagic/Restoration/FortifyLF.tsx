@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
@@ -15,7 +15,9 @@ const FortifyLF = ({
   let testMastery: Mastery = new Mastery();
   let rate: number = 0;
 
-  if (!active) setCost(0);
+  useEffect(() => {
+    if (!active) setCost(0);
+  }, [active]);
 
   if (ParentMastery.getType() == testMastery.novice()) rate = 2;
   else if (ParentMastery.getType() == testMastery.intermediate()) rate = 1.5;

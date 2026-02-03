@@ -9,69 +9,49 @@ const Fields = ({
   ParentMastery: Mastery;
   active: boolean;
 }) => {
-  const [TTT, setTTT] = useState(0);
-  const [sizeTTT, setSizeTTT] = useState(2);
-  const [vitality, setVitality] = useState(0);
+  const [cost, setCost] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [damage, setDamage] = useState(0);
   const [power, setPower] = useState(0);
   const [pot, setPot] = useState(new Potency());
 
   let testMastery: Mastery = new Mastery();
 
   let PowerRate: number = 0;
-  let VitalityRate: number = 0;
+  let damageRate: number = 0;
 
   useEffect(() => {
-    if (!active) setTTT(0);
+    if (!active) setCost(0);
   }, [active]);
 
   if (ParentMastery.getType() == testMastery.novice()) {
-    PowerRate = 5;
-    VitalityRate = 1;
+    PowerRate = 15;
+    damageRate = 4;
   } else if (ParentMastery.getType() == testMastery.intermediate()) {
-    PowerRate = 4;
-    VitalityRate = 0.5;
+    PowerRate = 12;
+    damageRate = 3;
   } else if (ParentMastery.getType() == testMastery.mastered()) {
-    PowerRate = 3;
-    VitalityRate = 0.25;
-  }
-
-  function calcuateVitality(value: number) {
-    setVitality(value);
-    calcuateTTT();
-  }
-  function calcuatePower(value: number) {
-    setPower(value);
-    calcuateTTT();
-  }
-
-  function calcuateTTT() {
-    setTTT(power * PowerRate + vitality * VitalityRate);
+    PowerRate = 10;
+    damageRate = 2;
   }
 
   const changeChoice = (size: number) => {
-    if (size === 1) {
+    if (size === 1) setCost(0);
+    else if (size === 2) {
       if (ParentMastery.getType() === testMastery.novice(true)) {
-        setSizeTTT(6);
+        setCost(45);
       } else if (ParentMastery.getType() === testMastery.intermediate(true)) {
-        setSizeTTT(4);
+        setCost(35);
       } else if (ParentMastery.getType() === testMastery.mastered(true)) {
-        setSizeTTT(2);
-      }
-    } else if (size === 2) {
-      if (ParentMastery.getType() === testMastery.novice(true)) {
-        setSizeTTT(12);
-      } else if (ParentMastery.getType() === testMastery.intermediate(true)) {
-        setSizeTTT(10);
-      } else if (ParentMastery.getType() === testMastery.mastered(true)) {
-        setSizeTTT(8);
+        setCost(25);
       }
     } else if (size === 3) {
       if (ParentMastery.getType() === testMastery.novice(true)) {
-        setSizeTTT(18);
+        setCost(180);
       } else if (ParentMastery.getType() === testMastery.intermediate(true)) {
-        setSizeTTT(16);
+        setCost(140);
       } else if (ParentMastery.getType() === testMastery.mastered(true)) {
-        setSizeTTT(14);
+        setCost(100);
       }
     }
   };
@@ -82,7 +62,7 @@ const Fields = ({
         <h1>Fields</h1>
         <br />
         <div>
-          <span>Manna to Endurance</span>
+          <span>Manna to Power</span>
           <br />
           <input
             type="number"
@@ -90,17 +70,17 @@ const Fields = ({
             max="3"
             step="1"
             value={power}
-            onChange={(e) => calcuatePower(Number(e.target.value))}
+            onChange={(e) => setPower(Number(e.target.value))}
           />
 
-          <span>Manna to Vitality</span>
+          <span>Manna to Damage</span>
           <br />
           <input
             type="number"
-            min={power * 75}
+            min={power * 25 + 5}
             step="1"
-            value={vitality + power * 10}
-            onChange={(e) => calcuateVitality(Number(e.target.value))}
+            value={damage}
+            onChange={(e) => setDamage(Number(e.target.value))}
           />
         </div>
         <span>Range</span>
@@ -117,6 +97,7 @@ const Fields = ({
           <input type="checkbox" onChange={(e) => changeChoice(3)} />
         </div>
         <br />
+        <span>Total: {cost + damage * damageRate + power * PowerRate}</span>
       </div>
     </>
   );

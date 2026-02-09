@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "@/app/models";
 import { Potency } from "@/app/models/Potency";
 
-const MannaLimiter = ({
+const SpiritSoulLimiter = ({
   ParentMastery,
   active,
 }: {
@@ -22,21 +22,21 @@ const MannaLimiter = ({
 
   const changeChoice = (potency: string | void) => {
     if (SpellPotency.getType() === testPotency.minor()) {
-      setMaxIncrement(15);
-      setThreshold(90);
+      setMaxIncrement(8);
+      setThreshold(40);
     } else if (SpellPotency.getType() === testPotency.major()) {
-      setMaxIncrement(30);
-      setThreshold(180);
+      setMaxIncrement(16);
+      setThreshold(80);
     } else if (SpellPotency.getType() === testPotency.extreme()) {
-      setMaxIncrement(45);
-      setThreshold(270);
+      setMaxIncrement(24);
+      setThreshold(120);
     }
   };
 
   return (
     <>
       <div>
-        <h1>Manna Limiter</h1>
+        <h1>Disruption Delimiter</h1>
         <br />
         <p>DIRECT DAMAGE</p>
         <br />
@@ -68,7 +68,7 @@ const MannaLimiter = ({
         <h1>Set Seal Values</h1>
         <br />
         <div>
-          <span>Manna Drain Increment</span>
+          <span>Disruption Increment</span>
           <br />
           <input
             type="number"
@@ -79,10 +79,12 @@ const MannaLimiter = ({
             onChange={(e) => setCurrentIncrement(Number(e.target.value))}
           />
         </div>
-        <p>Manna will drain until Maximum of {threshold} is depleted</p>
+        <p>
+          Disruption will be inflicted until Maximum of {threshold} is depleted
+        </p>
       </div>
     </>
   );
 };
 
-export default MannaLimiter;
+export default SpiritSoulLimiter;

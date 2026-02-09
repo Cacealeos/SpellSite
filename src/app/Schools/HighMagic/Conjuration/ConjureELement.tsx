@@ -12,8 +12,9 @@ const ConjureElement = ({
 }) => {
   const [cost, setCost] = useState(0);
   const [pot, setPot] = useState(new Potency());
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   const [Element, setElement] = useState<Record<string, {}>>(
-    elements["Heat & Cold"]
+    elements["Heat & Cold"],
   );
 
   let SpellPotency: Potency = new Potency();

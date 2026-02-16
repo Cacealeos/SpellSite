@@ -15,8 +15,6 @@ const InscribeSpellSeal = ({
   const [totalRedCost, setTotalRedCost] = useState(0);
   const [totalChargeCost, settotalChargeCost] = useState(0);
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
   let testMastery: Mastery = new Mastery();
   let CostStipulationRate = 0;
   let ChargeStipulationRate = 0;

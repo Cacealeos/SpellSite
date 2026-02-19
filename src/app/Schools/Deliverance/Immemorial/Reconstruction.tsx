@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const Realignment = ({
+const Reconstruction = ({
   ParentMastery,
   active,
 }: {
@@ -52,10 +52,10 @@ const Realignment = ({
   return (
     <>
       <div>
-        <h1>Realignment</h1>
+        <h1>Reconstruction</h1>
         <br />
         <p>Potency</p>
-        <h1>RANGE - RADIAL</h1>
+        <h3>RANGE - RADIAL</h3>
         <div>
           <p>Minor 45 / 35 / 25</p>
 
@@ -88,4 +88,4 @@ const Realignment = ({
   );
 };
 
-export default Realignment;
+export default Reconstruction;

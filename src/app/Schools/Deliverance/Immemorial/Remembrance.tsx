@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const Realignment = ({
+const Remembrance = ({
   ParentMastery,
   active,
 }: {
@@ -11,7 +11,6 @@ const Realignment = ({
 }) => {
   const [cost, setCost] = useState(0);
   const [pot, setPot] = useState(new Potency());
-  const [range, setRange] = useState(0);
 
   let SpellPotency: Potency = new Potency();
   let testPotency: Potency = new Potency();
@@ -27,24 +26,28 @@ const Realignment = ({
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(45);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(95);
+      if (SpellPotency.getType() === testPotency.minor(true))
+        calculateCost(100);
+      if (SpellPotency.getType() === testPotency.major(true))
+        calculateCost(250);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(165);
+        calculateCost(500);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(35);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(75);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(75);
+      if (SpellPotency.getType() === testPotency.major(true))
+        calculateCost(150);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(135);
+        calculateCost(350);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(25);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(55);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(40);
+      if (SpellPotency.getType() === testPotency.major(true))
+        calculateCost(100);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(105);
+        calculateCost(200);
       setPot(SpellPotency);
     }
   };
@@ -52,12 +55,12 @@ const Realignment = ({
   return (
     <>
       <div>
-        <h1>Realignment</h1>
+        <h1>ReAwaken</h1>
         <br />
         <p>Potency</p>
-        <h1>RANGE - RADIAL</h1>
+        <h3>RANGE - RADIAL</h3>
         <div>
-          <p>Minor 45 / 35 / 25</p>
+          <p>Minor |1 turn| 100 / 75 / 40</p>
 
           <input
             type="checkbox"
@@ -65,7 +68,7 @@ const Realignment = ({
           />
         </div>
         <div>
-          <p>Major 95 / 75 / 55</p>
+          <p>Major |2 turn| 250 / 150 / 100</p>
           <br />
 
           <input
@@ -74,7 +77,7 @@ const Realignment = ({
           />
         </div>
         <div>
-          <p>Extreme 165 / 135 / 105</p>
+          <p>Extreme |3 turn| 500 / 350 / 200</p>
           <br />
 
           <input
@@ -88,4 +91,4 @@ const Realignment = ({
   );
 };
 
-export default Realignment;
+export default Remembrance;

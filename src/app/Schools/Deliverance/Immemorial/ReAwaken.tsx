@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const Realignment = ({
+const ReAwaken = ({
   ParentMastery,
   active,
 }: {
@@ -27,24 +27,27 @@ const Realignment = ({
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(45);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(95);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(90);
+      if (SpellPotency.getType() === testPotency.major(true))
+        calculateCost(190);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(165);
+        calculateCost(330);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(35);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(75);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(70);
+      if (SpellPotency.getType() === testPotency.major(true))
+        calculateCost(150);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(135);
+        calculateCost(270);
       setPot(SpellPotency);
     }
     if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(25);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(55);
+      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(50);
+      if (SpellPotency.getType() === testPotency.major(true))
+        calculateCost(110);
       if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(105);
+        calculateCost(210);
       setPot(SpellPotency);
     }
   };
@@ -52,12 +55,12 @@ const Realignment = ({
   return (
     <>
       <div>
-        <h1>Realignment</h1>
+        <h1>ReAwaken</h1>
         <br />
         <p>Potency</p>
-        <h1>RANGE - RADIAL</h1>
+        <h3>RANGE - RADIAL</h3>
         <div>
-          <p>Minor 45 / 35 / 25</p>
+          <p>Minor |33%, 1 turn| 90 / 70 / 50</p>
 
           <input
             type="checkbox"
@@ -65,7 +68,7 @@ const Realignment = ({
           />
         </div>
         <div>
-          <p>Major 95 / 75 / 55</p>
+          <p>Major |67%, 2 turn| 190 / 150 / 110</p>
           <br />
 
           <input
@@ -74,7 +77,7 @@ const Realignment = ({
           />
         </div>
         <div>
-          <p>Extreme 165 / 135 / 105</p>
+          <p>Extreme |100%, 3 turn| 330 / 270 / 210</p>
           <br />
 
           <input
@@ -88,4 +91,4 @@ const Realignment = ({
   );
 };
 
-export default Realignment;
+export default ReAwaken;

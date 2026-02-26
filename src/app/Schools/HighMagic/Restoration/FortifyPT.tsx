@@ -30,14 +30,14 @@ const FortifyPT = ({
           type="number"
           min="0"
           step="1"
-          value="0"
-          onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
+          value={cost}
+          onChange={(e) => setCost(Number(e.target.value))}
         />
         <br />
         <p>
           Info: Give bonus temporary tolerance. Up to 100% extra of current max
         </p>
-        <p>Pain tolerance = </p>
+        <p>Pain tolerance = {cost * rate}</p>
       </div>
     </>
   );

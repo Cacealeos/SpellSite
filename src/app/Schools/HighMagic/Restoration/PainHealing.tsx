@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
 
 const PainHealing = ({
   ParentMastery,
@@ -10,7 +9,6 @@ const PainHealing = ({
   active: boolean;
 }) => {
   const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
 
   let testMastery: Mastery = new Mastery();
   let rate: number = 0;

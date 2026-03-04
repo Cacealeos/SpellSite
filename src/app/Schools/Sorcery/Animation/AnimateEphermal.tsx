@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "@/app/models";
 import { Potency } from "@/app/models/Potency";
 
-const AnimateMaterial = ({
+const AnimateEphemeral = ({
   ParentMastery,
   active,
 }: {
@@ -16,6 +16,10 @@ const AnimateMaterial = ({
   let SpellPotency: Potency = new Potency();
   let testPotency: Potency = new Potency();
   let testMastery: Mastery = new Mastery();
+
+  useEffect(() => {
+    if (!active) setPot(SpellPotency);
+  }, [active]);
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
@@ -41,7 +45,7 @@ const AnimateMaterial = ({
   return (
     <>
       <div>
-        <h1>Animate Material</h1>
+        <h1>Animate Ephemeral</h1>
 
         <br />
         <span>Potency</span>
@@ -87,4 +91,4 @@ const AnimateMaterial = ({
   );
 };
 
-export default AnimateMaterial;
+export default AnimateEphemeral;

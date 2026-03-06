@@ -17,10 +17,6 @@ const AnimateEphemeral = ({
   let testPotency: Potency = new Potency();
   let testMastery: Mastery = new Mastery();
 
-  useEffect(() => {
-    if (!active) setPot(SpellPotency);
-  }, [active]);
-
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
       if (SpellPotency.getType() === testPotency.minor(true)) setTTT(12);

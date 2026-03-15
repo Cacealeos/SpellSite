@@ -61,7 +61,7 @@ const RefuteDispel = ({
           <p>Minor 35 / 25 / 15</p>
 
           <input
-            type="checkbox"
+            type="radio"
             onChange={(e) => changeChoice(SpellPotency.minor(), 5)}
           />
         </div>
@@ -70,7 +70,7 @@ const RefuteDispel = ({
           <br />
 
           <input
-            type="checkbox"
+            type="radio"
             onChange={(e) => changeChoice(SpellPotency.major(), 6)}
           />
         </div>
@@ -79,7 +79,7 @@ const RefuteDispel = ({
           <br />
 
           <input
-            type="checkbox"
+            type="radio"
             onChange={(e) => changeChoice(SpellPotency.extreme(), 7)}
           />
         </div>

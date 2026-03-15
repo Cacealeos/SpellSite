@@ -98,7 +98,6 @@ const TransmuteMass = ({
           onChange={(e) => setTTT(Number(e.target.value))}
         />
         <br />
-        <p>Info: Give bonus temporary health. Up to 30% extra of current max</p>
       </div>
     </>
   );

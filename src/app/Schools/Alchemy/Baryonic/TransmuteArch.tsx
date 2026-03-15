@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const TransmuteMass = ({
+const TransmuteArch = ({
   ParentMastery,
   active,
 }: {
@@ -28,24 +28,24 @@ const TransmuteMass = ({
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
+      if (SpellPotency.getType() === testPotency.minor(true)) setCost(150);
+      if (SpellPotency.getType() === testPotency.major(true)) setCost(450);
+      if (SpellPotency.getType() === testPotency.extreme(true))
+        setCost(1350);
+      setPot(SpellPotency);
+    }
+    if (ParentMastery.getType() === testMastery.intermediate(true)) {
       if (SpellPotency.getType() === testPotency.minor(true)) setCost(100);
       if (SpellPotency.getType() === testPotency.major(true)) setCost(300);
       if (SpellPotency.getType() === testPotency.extreme(true))
         setCost(900);
       setPot(SpellPotency);
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
+    if (ParentMastery.getType() === testMastery.mastered(true)) {
       if (SpellPotency.getType() === testPotency.minor(true)) setCost(75);
       if (SpellPotency.getType() === testPotency.major(true)) setCost(225);
       if (SpellPotency.getType() === testPotency.extreme(true))
         setCost(675);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(50);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(150);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        setCost(450);
       setPot(SpellPotency);
     }
     
@@ -60,28 +60,28 @@ const TransmuteMass = ({
 
         <h2>Potency</h2>
         <div>
-          <p>Minor 100 / 75 / 50</p>
+          <p>Minor 150 / 100 / 75</p>
 
           <input
-            type="checkbox"
+            type="radio"
             onChange={(e) => changeChoice(SpellPotency.minor())}
           />
         </div>
         <div>
-          <p>Major 300 / 225 / 150</p>
+          <p>Major 450 / 300 / 225</p>
           <br />
 
           <input
-            type="checkbox"
+            type="radio"
             onChange={(e) => changeChoice(SpellPotency.major())}
           />
         </div>
         <div>
-          <p>Extreme 900 / 675 / 450</p>
+          <p>Extreme 1350 / 900 / 675</p>
           <br />
 
           <input
-            type="checkbox"
+            type="radio"
             onChange={(e) => changeChoice(SpellPotency.extreme())}
           />
         </div>
@@ -98,10 +98,9 @@ const TransmuteMass = ({
           onChange={(e) => setTTT(Number(e.target.value))}
         />
         <br />
-        <p>Info: Give bonus temporary health. Up to 30% extra of current max</p>
       </div>
     </>
   );
 };
 
-export default TransmuteMass;
+export default TransmuteArch;

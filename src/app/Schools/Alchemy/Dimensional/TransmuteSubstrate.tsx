@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
+import Select from "@/app/Select";
 
 const TransmuteSubstrate = ({
   ParentMastery,
@@ -9,10 +10,11 @@ const TransmuteSubstrate = ({
   ParentMastery: Mastery;
   active: boolean;
 }) => {
-  const [ttt, setTTT] = useState(0);
   const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  const [type, setType] = useState("Displacement");
 
+  let types: string[] = ["Displacement", "Warp", "Obfuscation"];
+  let Obfuscation: boolean = types.indexOf(type) > 1;
   let SpellPotency: Potency = new Potency();
   let testPotency: Potency = new Potency();
   let testMastery: Mastery = new Mastery();
@@ -22,28 +24,27 @@ const TransmuteSubstrate = ({
     if (!active) setCost(0);
   }, [active]);
 
-  if (ParentMastery.getType() == testMastery.novice()) rate = 15;
-  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 13;
-  else if (ParentMastery.getType() == testMastery.mastered()) rate = 11;
-
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(100);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(300);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(900);
-      setPot(SpellPotency);
+      if (SpellPotency.getType() === testPotency.minor(true)) setCost(75);
+      if (SpellPotency.getType() === testPotency.major(true))
+        setCost(150 * (Obfuscation ? 2 : 1));
+      if (SpellPotency.getType() === testPotency.extreme(true))
+        setCost(300 * (Obfuscation ? 4 : 1));
     }
     if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(75);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(225);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(675);
-      setPot(SpellPotency);
+      if (SpellPotency.getType() === testPotency.minor(true)) setCost(50);
+      if (SpellPotency.getType() === testPotency.major(true))
+        setCost(100 * (Obfuscation ? 2 : 1));
+      if (SpellPotency.getType() === testPotency.extreme(true))
+        setCost(200 * (Obfuscation ? 4 : 1));
     }
     if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(50);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(150);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(450);
-      setPot(SpellPotency);
+      if (SpellPotency.getType() === testPotency.minor(true)) setCost(25);
+      if (SpellPotency.getType() === testPotency.major(true))
+        setCost(50 * (Obfuscation ? 2 : 1));
+      if (SpellPotency.getType() === testPotency.extreme(true))
+        setCost(100 * (Obfuscation ? 4 : 1));
     }
   };
 
@@ -51,9 +52,14 @@ const TransmuteSubstrate = ({
     <>
       <div>
         <div>
+          <Select
+            title="Type"
+            choices={types}
+            changeChoice={() => setType}
+          ></Select>
           <h2>Potency</h2>
           <div>
-            <p>Minor 100 / 75 / 50</p>
+            <p>Minor 75 / 50 / 25</p>
 
             <input
               type="checkbox"
@@ -61,7 +67,10 @@ const TransmuteSubstrate = ({
             />
           </div>
           <div>
-            <p>Major 300 / 225 / 150</p>
+            <p>
+              Major {150 * (Obfuscation ? 2 : 1)} /{100 * (Obfuscation ? 2 : 1)}{" "}
+              / {50 * (Obfuscation ? 2 : 1)}
+            </p>
             <br />
 
             <input
@@ -70,7 +79,10 @@ const TransmuteSubstrate = ({
             />
           </div>
           <div>
-            <p>Extreme 900 / 675 / 450</p>
+            <p>
+              Extreme {300 * (Obfuscation ? 4 : 1)} /
+              {200 * (Obfuscation ? 4 : 1)} / {100 * (Obfuscation ? 4 : 1)}
+            </p>
             <br />
 
             <input
@@ -80,16 +92,7 @@ const TransmuteSubstrate = ({
           </div>
           <br />
         </div>
-        <h1>Manna to Endurance</h1>
-        <br />
-        <input
-          type="number"
-          min="0"
-          max="4"
-          step="1"
-          value={ttt}
-          onChange={(e) => setTTT(Number(e.target.value))}
-        />
+
         <br />
       </div>
     </>

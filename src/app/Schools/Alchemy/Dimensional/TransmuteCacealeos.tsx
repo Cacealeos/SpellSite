@@ -47,13 +47,13 @@ const TransmuteCacealeos = ({
   return (
     <>
       <div>
-        <div>
-          <Select
-            title="Types"
-            choices={Types}
-            changeChoice={() => setType}
-          ></Select>
-          <div style={display}>
+        <Select
+          title="Types"
+          choices={Types}
+          changeChoice={() => setType}
+        ></Select>
+        <div style={display}>
+          <div>
             <h2>Potency</h2>
             <p>Minor 75 / 50 / 25</p>
 

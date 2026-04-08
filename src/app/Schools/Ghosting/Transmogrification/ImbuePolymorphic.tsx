@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 
-const ProjectedIllusion = ({
+const ImbuePolyMorphic = ({
   ParentMastery,
   active,
 }: {
@@ -67,4 +67,4 @@ const ProjectedIllusion = ({
   );
 };
 
-export default ProjectedIllusion;
+export default ImbuePolyMorphic;

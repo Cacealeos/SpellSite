@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "../../../models/Mastery";
 import { Potency } from "@/app/models/Potency";
 
-const DrawLifeDeath = ({
+const DrawMind = ({
   ParentMastery,
   active,
 }: {
@@ -90,4 +90,4 @@ const DrawLifeDeath = ({
   );
 };
 
-export default DrawLifeDeath;
+export default DrawMind;

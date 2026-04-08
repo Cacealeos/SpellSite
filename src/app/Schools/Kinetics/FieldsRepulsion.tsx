@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "@/app/models";
 import { Potency } from "@/app/models/Potency";
 
-const Fields = ({
+const FieldsRepulse = ({
   ParentMastery,
   active,
 }: {
@@ -103,4 +103,4 @@ const Fields = ({
   );
 };
 
-export default Fields;
+export default FieldsRepulse;

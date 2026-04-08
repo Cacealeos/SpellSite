@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState } from "react";
 import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools
@@ -21,7 +21,7 @@ export default function SpellCreatorPage() {
 
   // Parent spell state
   const [spell, setSpell] = useState<SpellsClass.Spell>(
-    new SpellsClass.Spell()
+    new SpellsClass.Spell(),
   );
 
   // Global config
@@ -44,7 +44,8 @@ export default function SpellCreatorPage() {
 
   // Spells in selected branch
   const spellsInBranch = branch
-    ? Object.keys((selectedSchool as any)[branch])
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Object.keys((selectedSchool as any)[branch])
     : [];
 
   // Ensure spellName is set
@@ -53,10 +54,12 @@ export default function SpellCreatorPage() {
   // Selected spell component
   const SpellComponent =
     branch && spellName && selectedSchool
-      ? (selectedSchool as any)[branch][spellName]
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (selectedSchool as any)[branch][spellName]
       : null;
 
   // Update spell state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateSpell = (field: string, value: any) => {
     setSpell((prev) => ({ ...prev, [field]: value }));
   };

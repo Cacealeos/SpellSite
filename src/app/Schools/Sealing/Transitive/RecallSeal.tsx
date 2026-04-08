@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "@/app/models";
 import { Potency } from "@/app/models/Potency";
 
-const SealMetaphysical = ({
+const RecallSeal = ({
   ParentMastery,
   active,
 }: {
@@ -103,4 +103,4 @@ const SealMetaphysical = ({
   );
 };
 
-export default SealMetaphysical;
+export default RecallSeal;

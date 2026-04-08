@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mastery } from "@/app/models";
 import { Potency } from "@/app/models/Potency";
 
-const SpiritSoulLimiter = ({
+const CatalystLimiter = ({
   ParentMastery,
   active,
 }: {
@@ -62,4 +62,4 @@ const SpiritSoulLimiter = ({
   );
 };
 
-export default SpiritSoulLimiter;
+export default CatalystLimiter;

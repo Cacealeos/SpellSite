@@ -4,6 +4,7 @@
 import AbsorbEnergy from "./Armor/AbsorbEnergy";
 import Adherence from "./Armor/Adherence";
 import Coherence from "./Armor/Coherence";
+import Apply from "./Armor/ApplyEffectARM";
 import DisruptionThresh from "./Armor/DisruptionThresh";
 import Evasion from "./Armor/Evasion";
 import PainThresh from "./Armor/PainThresh";
@@ -32,6 +33,7 @@ export const Enchanting = {
     Evasion,
     PainThresh,
     TempDur,
+    Apply,
   },
   Weapon: {
     Accuracy,

@@ -14,6 +14,6 @@ export class Spell {
     public potency: Potency = new Potency(),
     public mastery: Mastery = new Mastery(),
     public demon: boolean = false,
-    public compound: boolean = false
+    public compound: boolean = false,
   ) {}
 }

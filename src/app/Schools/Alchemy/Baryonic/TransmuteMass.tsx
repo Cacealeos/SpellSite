@@ -22,9 +22,9 @@ const TransmuteMass = ({
     if (!active) setCost(0);
   }, [active]);
 
-  if (ParentMastery.getType() == testMastery.novice()) rate = 15;
-  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 13;
-  else if (ParentMastery.getType() == testMastery.mastered()) rate = 11;
+  if (ParentMastery.getType() === testMastery.novice()) rate = 15;
+  else if (ParentMastery.getType() === testMastery.intermediate()) rate = 13;
+  else if (ParentMastery.getType() === testMastery.mastered()) rate = 11;
 
   const changeChoice = (potency: string | void) => {
     if (ParentMastery.getType() === testMastery.novice(true)) {

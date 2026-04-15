@@ -1,6 +1,6 @@
 //Baryonic
 import TransmuteMass from "./Baryonic/TransmuteMass";
-import TransmuteArch from "./Baryonic/TransmuteObject";
+import TransmuteArch from "./Baryonic/TransmuteArch";
 import TransmuteObject from "./Baryonic/TransmuteObject";
 import TransmutePart from "./Baryonic/TransmuteParticle";
 

@@ -1,14 +1,9 @@
 "use client";
-import { useState } from "react";
+import React from "react";
+import { useState, useEffect } from "react";
 import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools
 import Select from "../Select";
-
-type GlobalConfig = {
-  mastery: typeof SpellsClass.Mastery;
-  potency: typeof SpellsClass.Potency;
-  action: typeof SpellsClass.Action;
-};
 
 export default function SpellCreatorPage() {
   // Available schools (keys of Schools object)
@@ -24,12 +19,27 @@ export default function SpellCreatorPage() {
     new SpellsClass.Spell(),
   );
 
-  // Global config
-  const globalConfig: GlobalConfig = {
-    mastery: SpellsClass.Mastery,
-    potency: SpellsClass.Potency,
-    action: SpellsClass.Action,
+  type ActiveSpellProps = {
+    ParentMastery: SpellsClass.Mastery;
+    active: boolean;
   };
+
+  function renderSpell(args: {
+    item: React.ComponentType<ActiveSpellProps>;
+    props: ActiveSpellProps;
+  }) {
+    const Component = args.item;
+    return <Component {...args.props} />;
+  }
+
+  useEffect(() => {
+    if (!spell.mastery) {
+      let basicSpell: SpellsClass.Spell = spell;
+      basicSpell.mastery.novice();
+      basicSpell.potency.minor();
+      setSpell(basicSpell);
+    }
+  }, []);
 
   // Get selected school object
   const selectedSchool = school
@@ -44,20 +54,29 @@ export default function SpellCreatorPage() {
 
   // Spells in selected branch
   const spellsInBranch = branch
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.keys((selectedSchool as any)[branch])
+    ? Object.keys((selectedSchool as any)[branch])
     : [];
 
   // Ensure spellName is set
   if (!spellName && spellsInBranch.length > 0) setSpellName(spellsInBranch[0]);
 
   // Selected spell component
+  const activeSpell: ActiveSpellProps = {
+    ParentMastery: spell.mastery,
+    active: true,
+  };
+
   const SpellComponent =
     branch && spellName && selectedSchool
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (selectedSchool as any)[branch][spellName]
+      ? (selectedSchool as any)[branch][spellName]
       : null;
 
+  // console.log({
+  //   1: SpellComponent,
+  //   2: branch,
+  //   3: spellName,
+  //   4: selectedSchool,
+  // });
   // Update spell state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateSpell = (field: string, value: any) => {
@@ -99,11 +118,7 @@ export default function SpellCreatorPage() {
       {/* Render spell component */}
       <div className="mt-4">
         {SpellComponent ? (
-          <SpellComponent
-            spell={spell}
-            config={globalConfig}
-            onChange={updateSpell}
-          />
+          renderSpell({ item: SpellComponent, props: activeSpell })
         ) : (
           <div>No spell selected</div>
         )}
@@ -113,6 +128,7 @@ export default function SpellCreatorPage() {
       <div className="p-4 rounded bg-gray-100 shadow mt-6">
         <pre>
           {JSON.stringify({ ...spell, school, branch, spellName }, null, 2)}
+          {spell.mastery.getType()}
         </pre>
       </div>
     </div>

@@ -20,7 +20,7 @@ import RejuvenateSoul from "./Rejuventation/RejuvenateSoul";
 import RepairSeal from "./Rejuventation/RepairSeal";
 import Revival from "./Rejuventation/Revival";
 
-export const Trascendentalism = {
+export const Transcendentalism = {
   Draw: { DrawCatalyst, DrawLifeDeath, DrawSoul, DrawMemory, DrawMind },
   Extract: { AwakenNature, DirectNature, SummonNature, UnleashPotential },
   Rejuvenation: {

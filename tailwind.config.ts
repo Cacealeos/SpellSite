@@ -12,6 +12,23 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+
+      // 👇 ADD THIS SECTION
+      keyframes: {
+        gradientShift: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+      },
+
+      animation: {
+        gradient: "gradientShift 6s ease infinite",
+      },
+
+      backgroundSize: {
+        "200%": "200% 200%",
+      },
     },
   },
   plugins: [],

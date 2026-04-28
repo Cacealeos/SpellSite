@@ -84,52 +84,86 @@ export default function SpellCreatorPage() {
   };
 
   return (
-    <div className="p-6 grid gap-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold">Spell Creator</h1>
-
-      {/* School Selector */}
-      <Select
-        title={school}
-        choices={schoolNames}
-        changeChoice={(s) => {
-          setSchool(s);
-          setBranch(""); // reset branch
-          setSpellName(""); // reset spell
-        }}
-      />
-
-      {/* Branch Selector */}
-      <Select
-        title={branch}
-        choices={branches}
-        changeChoice={(b) => {
-          setBranch(b);
-          setSpellName(""); // reset spell when branch changes
-        }}
-      />
-
-      {/* Spell Selector */}
-      <Select
-        title={spellName}
-        choices={spellsInBranch}
-        changeChoice={(s) => setSpellName(s)}
-      />
-
-      {/* Render spell component */}
-      <div className="mt-4">
-        {SpellComponent ? (
-          renderSpell({ item: SpellComponent, props: activeSpell })
-        ) : (
-          <div>No spell selected</div>
-        )}
+    <div className="min-h-screen bg-gray-900 text-gray-100">
+      {/* Fixed Blank Banner */}
+      <div className="fixed top-0 left-0 w-full h-20 bg-gray-800 shadow-md z-50 border-b border-gray-700">
+        {/* Reserved for future banner content */}
       </div>
 
-      {/* Output */}
-      <div className="p-4 rounded bg-gray-100 shadow mt-6">
-        <pre>
-          {JSON.stringify({ ...spell, school, branch, spellName }, null, 2)}
-          {spell.mastery.getType()}
-        </pre>
+      {/* Main Content */}
+      <div className="pt-24 max-w-4xl mx-auto p-6 grid gap-6">
+        <h1
+          className="
+    text-4xl font-extrabold text-center cursor-help
+    bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500
+    bg-[length:200%_200%]
+    bg-clip-text text-transparent
+    animate-gradient
+  "
+          title="Select a School first, then choose a Branch, and finally select a Spell."
+        >
+          Spell Creator
+        </h1>
+
+        {/* School Selector */}
+        <div className="grid gap-2">
+          <label className="text-sm font-semibold uppercase tracking-wide text-cyan-400">
+            School
+          </label>
+          <Select
+            title={school}
+            choices={schoolNames}
+            changeChoice={(s) => {
+              setSchool(s);
+              setBranch("");
+              setSpellName("");
+            }}
+          />
+        </div>
+
+        {/* Branch Selector */}
+        <div className="grid gap-2">
+          <label className="text-sm font-semibold uppercase tracking-wide text-cyan-400">
+            Branch
+          </label>
+          <Select
+            title={branch}
+            choices={branches}
+            changeChoice={(b) => {
+              setBranch(b);
+              setSpellName("");
+            }}
+          />
+        </div>
+
+        {/* Spell Selector */}
+        <div className="grid gap-2">
+          <label className="text-sm font-semibold uppercase tracking-wide text-cyan-400">
+            Spell
+          </label>
+          <Select
+            title={spellName}
+            choices={spellsInBranch}
+            changeChoice={(s) => setSpellName(s)}
+          />
+        </div>
+
+        {/* Render spell component */}
+        <div className="mt-4">
+          {SpellComponent ? (
+            renderSpell({ item: SpellComponent, props: activeSpell })
+          ) : (
+            <div className="text-gray-400">No spell selected</div>
+          )}
+        </div>
+
+        {/* Output */}
+        <div className="p-4 rounded bg-gray-800 border border-gray-700 shadow mt-6">
+          <pre className="text-sm text-green-400">
+            {JSON.stringify({ ...spell, school, branch, spellName }, null, 2)}
+            {spell.mastery.getType()}
+          </pre>
+        </div>
       </div>
     </div>
   );

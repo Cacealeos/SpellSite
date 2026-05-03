@@ -13,6 +13,7 @@ export default function SpellCreatorPage() {
   const [school, setSchool] = useState<string>(schoolNames[0] || "");
   const [branch, setBranch] = useState<string>("");
   const [spellName, setSpellName] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"fields" | "json">("fields");
 
   // Parent spell state
   const [spell, setSpell] = useState<SpellsClass.Spell>(
@@ -71,12 +72,6 @@ export default function SpellCreatorPage() {
       ? (selectedSchool as any)[branch][spellName]
       : null;
 
-  // console.log({
-  //   1: SpellComponent,
-  //   2: branch,
-  //   3: spellName,
-  //   4: selectedSchool,
-  // });
   // Update spell state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateSpell = (field: string, value: any) => {
@@ -157,12 +152,81 @@ export default function SpellCreatorPage() {
           )}
         </div>
 
-        {/* Output */}
-        <div className="p-4 rounded bg-gray-800 border border-gray-700 shadow mt-6">
-          <pre className="text-sm text-green-400">
-            {JSON.stringify({ ...spell, school, branch, spellName }, null, 2)}
-            {spell.mastery.getType()}
-          </pre>
+        <div className="mt-6 rounded bg-gray-800 border border-gray-700 shadow">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-700">
+            <button
+              onClick={() => setActiveTab("fields")}
+              className={`px-4 py-2 text-sm font-medium transition ${
+                activeTab === "fields"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              Spell Fields
+            </button>
+
+            <button
+              onClick={() => setActiveTab("json")}
+              className={`px-4 py-2 text-sm font-medium transition ${
+                activeTab === "json"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              JSON Output
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-4">
+            {activeTab === "fields" ? (
+              <div className="space-y-2 text-sm text-green-400">
+                <div>
+                  <span className="text-gray-300">Name:</span> {spellName}
+                </div>
+                <div>
+                  <span className="text-gray-300">School:</span> {school}
+                </div>
+                <div>
+                  <span className="text-gray-300">Branch:</span> {branch}
+                </div>
+                <div>
+                  <span className="text-gray-300">Base:</span> {spell.base}
+                </div>
+                <div>
+                  <span className="text-gray-300">Cost:</span> {spell.cost}
+                </div>
+                <div>
+                  <span className="text-gray-300">Requirement:</span>{" "}
+                  {spell.requirement}
+                </div>
+                <div>
+                  <span className="text-gray-300">Root:</span> {spell.root}
+                </div>
+                <div>
+                  <span className="text-gray-300">Demon:</span>{" "}
+                  {spell.demon ? "Yes" : "No"}
+                </div>
+                <div>
+                  <span className="text-gray-300">Compound:</span>{" "}
+                  {spell.compound ? "Yes" : "No"}
+                </div>
+                <div>
+                  <span className="text-gray-300">Mastery Type:</span>{" "}
+                  {spell.mastery.getType()}
+                </div>
+              </div>
+            ) : (
+              <pre className="text-sm text-green-400 overflow-auto whitespace-pre-wrap">
+                {JSON.stringify(
+                  { ...spell, school, branch, spellName },
+                  null,
+                  2,
+                )}
+              </pre>
+            )}
+          </div>
         </div>
       </div>
     </div>

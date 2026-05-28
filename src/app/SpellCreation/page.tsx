@@ -15,6 +15,10 @@ export default function SpellCreatorPage() {
   const [spellName, setSpellName] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"fields" | "json">("fields");
 
+  const [manna, setManna] = useState<number>(0);
+  const [ttt, setTtt] = useState<number>(0);
+  const [intelligence, setIntelligence] = useState<number>(0);
+
   // Parent spell state
   const [spell, setSpell] = useState<SpellsClass.Spell>(
     new SpellsClass.Spell(),
@@ -23,6 +27,7 @@ export default function SpellCreatorPage() {
   type ActiveSpellProps = {
     ParentMastery: SpellsClass.Mastery;
     active: boolean;
+    updateSpell: (field: string, value: any) => void;
   };
 
   function renderSpell(args: {
@@ -42,6 +47,74 @@ export default function SpellCreatorPage() {
     }
   }, []);
 
+  // Set default branch when school changes
+  useEffect(() => {
+    if (branches.length > 0) {
+      setBranch(branches[0]);
+    } else {
+      setBranch("");
+    }
+  }, [school]);
+
+  // Set default spell when branch changes
+  useEffect(() => {
+    if (spellsInBranch.length > 0) {
+      setSpellName(spellsInBranch[0]);
+    } else {
+      setSpellName("");
+    }
+  }, [branch, school]);
+
+  // DEBUGGING *************************************************************************************************************
+
+  const [debugTick, setDebugTick] = useState(0);
+
+  useEffect(() => {
+    const debugSpell = new SpellsClass.Spell();
+
+    debugSpell.cost = Math.floor(Math.random() * 300);
+    debugSpell.ttt = Math.floor(Math.random() * 120);
+    debugSpell.requirement = Math.floor(Math.random() * 10) + 1;
+    debugSpell.demon = Math.random() > 0.5;
+
+    const roll = Math.floor(Math.random() * 4);
+
+    if (roll === 0) debugSpell.potency.minor();
+    else if (roll === 1) debugSpell.potency.major();
+    else if (roll === 2) debugSpell.potency.extreme();
+    else debugSpell.potency.cataclysmic();
+
+    setSpell(debugSpell);
+  }, [school, branch, spellName, debugTick]);
+
+  useEffect(() => {
+    // Temporary debug values
+    setSpell((prev) => {
+      const debugSpell = {
+        ...prev,
+        cost: 15,
+        ttt: 75,
+        requirement: 8,
+        demon: Math.random() > 0.5,
+      };
+
+      // Random potency for UI testing
+      const roll = Math.floor(Math.random() * 4);
+
+      if (roll === 0) {
+        debugSpell.potency.minor();
+      } else if (roll === 1) {
+        debugSpell.potency.major();
+      } else if (roll === 2) {
+        debugSpell.potency.extreme();
+      } else {
+        debugSpell.potency.cataclysmic();
+      }
+
+      return debugSpell;
+    });
+  }, [school, branch, spellName]);
+
   // Get selected school object
   const selectedSchool = school
     ? Schools[school as keyof typeof Schools]
@@ -51,7 +124,7 @@ export default function SpellCreatorPage() {
   const branches = selectedSchool ? Object.keys(selectedSchool) : [];
 
   // Ensure branch is set
-  if (!branch && branches.length > 0) setBranch(branches[0]);
+  // if (!branch && branches.length > 0) setBranch(branches[0]);
 
   // Spells in selected branch
   const spellsInBranch = branch
@@ -59,13 +132,7 @@ export default function SpellCreatorPage() {
     : [];
 
   // Ensure spellName is set
-  if (!spellName && spellsInBranch.length > 0) setSpellName(spellsInBranch[0]);
-
-  // Selected spell component
-  const activeSpell: ActiveSpellProps = {
-    ParentMastery: spell.mastery,
-    active: true,
-  };
+  // if (!spellName && spellsInBranch.length > 0) setSpellName(spellsInBranch[0]);
 
   const SpellComponent =
     branch && spellName && selectedSchool
@@ -77,6 +144,149 @@ export default function SpellCreatorPage() {
   const updateSpell = (field: string, value: any) => {
     setSpell((prev) => ({ ...prev, [field]: value }));
   };
+
+  // Selected spell component
+  const activeSpell: ActiveSpellProps = {
+    ParentMastery: spell.mastery,
+    active: true,
+    updateSpell,
+  };
+
+  const potencyColorMap = {
+    Minor: {
+      border: "border-green-400/60",
+      glow: "shadow-green-500/20",
+      bg: "bg-gradient-to-br from-green-500/10 via-gray-900 to-gray-950",
+    },
+    Major: {
+      border: "border-cyan-400/60",
+      glow: "shadow-cyan-500/25",
+      bg: "bg-gradient-to-br from-cyan-500/10 via-gray-900 to-gray-950",
+    },
+    Extreme: {
+      border: "border-purple-400/60",
+      glow: "shadow-purple-500/30",
+      bg: "bg-gradient-to-br from-purple-500/15 via-gray-900 to-gray-950",
+    },
+    Cataclysmic: {
+      border: "border-orange-400/70",
+      glow: "shadow-orange-500/35",
+      bg: "bg-gradient-to-br from-orange-500/15 via-gray-900 to-gray-950",
+    },
+    default: {
+      border: "border-gray-700",
+      glow: "shadow-black/20",
+      bg: "bg-gray-900",
+    },
+  };
+
+  const potencyType = spell.potency?.getType?.();
+  const potencyColor =
+    potencyColorMap[potencyType as keyof typeof potencyColorMap] ??
+    potencyColorMap.default;
+
+  const getStatColor = (
+    value: number,
+    type: "cost" | "ttt" | "requirement",
+  ) => {
+    let low = 0;
+    let medium = 0;
+    let high = 0;
+    let red = 0;
+
+    switch (type) {
+      case "cost":
+        low = 25;
+        medium = 49;
+        high = 99;
+        red = 299;
+        break;
+
+      case "ttt":
+        low = 5;
+        medium = 10;
+        high = 20;
+        red = 40;
+        break;
+
+      case "requirement":
+        low = 3;
+        medium = 5;
+        high = 7;
+        red = 9;
+        break;
+    }
+
+    // 🔴 RED (hard threshold)
+    if (value >= red) {
+      return {
+        border: "border-red-500/80",
+        glow: "shadow-red-500/40",
+        bg: "from-red-500/25 to-red-900/10",
+        text: "text-red-300",
+      };
+    }
+
+    // 🟠 ORANGE (between high and red)
+    if (value >= high) {
+      return {
+        border: "border-orange-400/80",
+        glow: "shadow-orange-500/40",
+        bg: "from-orange-500/25 to-amber-500/10",
+        text: "text-orange-300",
+      };
+    }
+
+    // 🟣 PURPLE
+    if (value >= medium) {
+      return {
+        border: "border-purple-400/70",
+        glow: "shadow-purple-500/30",
+        bg: "from-purple-500/20 to-fuchsia-500/10",
+        text: "text-purple-300",
+      };
+    }
+
+    // 🔵 BLUE
+    if (value >= low) {
+      return {
+        border: "border-cyan-400/70",
+        glow: "shadow-cyan-500/30",
+        bg: "from-cyan-500/20 to-blue-500/10",
+        text: "text-cyan-300",
+      };
+    }
+
+    // 🟢 GREEN fallback
+    return {
+      border: "border-green-400/70",
+      glow: "shadow-green-500/30",
+      bg: "from-green-500/20 to-emerald-500/10",
+      text: "text-green-300",
+    };
+  };
+
+  const stats: {
+    label: string;
+    value: number;
+    type: "cost" | "ttt" | "requirement";
+  }[] = [
+    {
+      label: spell.demon ? "Demon" : "Manna",
+      value: spell.cost ?? 0,
+      type: "cost",
+    },
+    {
+      label: "TTT",
+      value: spell.ttt ?? 0,
+      type: "ttt",
+    },
+    {
+      label: "Intelligence",
+      value: spell.requirement ?? 0,
+      type: "requirement",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
@@ -142,6 +352,58 @@ export default function SpellCreatorPage() {
             changeChoice={(s) => setSpellName(s)}
           />
         </div>
+        {/* Spell Statistics */}
+
+        <div
+          className={`
+    rounded-xl border shadow-xl p-6
+    transition-all duration-500
+    ${potencyColor.border}
+    ${potencyColor.glow}
+    ${potencyColor.bg}
+  `}
+        >
+          <div className="flex flex-wrap justify-center gap-8">
+            {stats.map((stat) => {
+              const colors = getStatColor(stat.value, stat.type);
+
+              return (
+                <div
+                  key={stat.label}
+                  className="flex flex-col items-center gap-3"
+                >
+                  <div
+                    className={`
+            w-28 h-28 rounded-full
+            border-2 shadow-lg
+            bg-gradient-to-br
+            flex flex-col items-center justify-center
+            transition-all duration-500
+            ${colors.border}
+            ${colors.glow}
+            ${colors.bg}
+          `}
+                  >
+                    <div className="text-xs uppercase tracking-widest text-gray-400">
+                      {stat.label}
+                    </div>
+
+                    <div className={`text-3xl font-extrabold ${colors.text}`}>
+                      {stat.value}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <button
+          onClick={() => setDebugTick((t) => t + 1)}
+          className="px-3 py-1 text-sm bg-gray-700 rounded"
+        >
+          Reroll Debug Spell
+        </button>
 
         {/* Render spell component */}
         <div className="mt-4">

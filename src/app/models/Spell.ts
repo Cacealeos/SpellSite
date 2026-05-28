@@ -6,6 +6,7 @@ export class Spell {
   constructor(
     public base: number = 0,
     public cost: number = 0,
+    public ttt: number = 0,
     public requirement: number = 0,
     public school: string = "none",
     public branch: string = "none",

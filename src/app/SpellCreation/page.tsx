@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { useState, useEffect } from "react";
+import { Spell } from "../models";
 import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools
 import Select from "../Select";
@@ -15,14 +16,8 @@ export default function SpellCreatorPage() {
   const [spellName, setSpellName] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"fields" | "json">("fields");
 
-  const [manna, setManna] = useState<number>(0);
-  const [ttt, setTtt] = useState<number>(0);
-  const [intelligence, setIntelligence] = useState<number>(0);
-
   // Parent spell state
-  const [spell, setSpell] = useState<SpellsClass.Spell>(
-    new SpellsClass.Spell(),
-  );
+  const [spell, setSpell] = useState(() => new SpellsClass.Spell());
 
   type ActiveSpellProps = {
     ParentMastery: SpellsClass.Mastery;
@@ -85,35 +80,9 @@ export default function SpellCreatorPage() {
     else debugSpell.potency.cataclysmic();
 
     setSpell(debugSpell);
-  }, [school, branch, spellName, debugTick]);
+  }, [debugTick]);
 
-  useEffect(() => {
-    // Temporary debug values
-    setSpell((prev) => {
-      const debugSpell = {
-        ...prev,
-        cost: 15,
-        ttt: 75,
-        requirement: 8,
-        demon: Math.random() > 0.5,
-      };
-
-      // Random potency for UI testing
-      const roll = Math.floor(Math.random() * 4);
-
-      if (roll === 0) {
-        debugSpell.potency.minor();
-      } else if (roll === 1) {
-        debugSpell.potency.major();
-      } else if (roll === 2) {
-        debugSpell.potency.extreme();
-      } else {
-        debugSpell.potency.cataclysmic();
-      }
-
-      return debugSpell;
-    });
-  }, [school, branch, spellName]);
+  // DEBUGGING *************************************************************************************************************
 
   // Get selected school object
   const selectedSchool = school
@@ -141,8 +110,11 @@ export default function SpellCreatorPage() {
 
   // Update spell state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateSpell = (field: string, value: any) => {
-    setSpell((prev) => ({ ...prev, [field]: value }));
+  const updateSpell = <K extends keyof Spell>(field: K, value: Spell[K]) => {
+    setSpell((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   // Selected spell component
@@ -151,6 +123,16 @@ export default function SpellCreatorPage() {
     active: true,
     updateSpell,
   };
+
+  useEffect(() => {
+    const newSpell = new SpellsClass.Spell();
+
+    newSpell.school = school;
+    newSpell.branch = branch;
+    newSpell.root = spellName;
+
+    setSpell(newSpell);
+  }, [school, branch, spellName]);
 
   const potencyColorMap = {
     Minor: {

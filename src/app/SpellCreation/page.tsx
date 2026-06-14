@@ -22,7 +22,7 @@ export default function SpellCreatorPage() {
   type ActiveSpellProps = {
     ParentMastery: SpellsClass.Mastery;
     active: boolean;
-    updateSpell: (field: string, value: any) => void;
+    updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
   };
 
   function renderSpell(args: {

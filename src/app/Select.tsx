@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useRef, useEffect } from "react";
 
 const Select = ({
@@ -11,7 +12,7 @@ const Select = ({
   title: string;
 }) => {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
+
   const selectRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +47,8 @@ const Select = ({
           active:scale-[0.99]
         "
       >
-        <span>{selected || title}</span>
+        <span>{title}</span>
+
         <span className={`transition-transform ${open ? "rotate-180" : ""}`}>
           ▼
         </span>
@@ -55,13 +57,12 @@ const Select = ({
       {open && (
         <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-700 bg-gray-800 shadow-2xl max-h-64 overflow-y-auto">
           {choices
-            .filter((choice) => choice !== selected)
+            .filter((choice) => choice !== title)
             .map((choice) => (
               <button
                 key={choice}
                 type="button"
                 onClick={() => {
-                  setSelected(choice);
                   changeChoice(choice);
                   setOpen(false);
                 }}

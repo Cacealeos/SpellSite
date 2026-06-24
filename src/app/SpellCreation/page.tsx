@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Spell } from "../models";
 import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools
@@ -32,15 +32,6 @@ export default function SpellCreatorPage() {
     const Component = args.item;
     return <Component {...args.props} />;
   }
-
-  useEffect(() => {
-    if (!spell.mastery) {
-      let basicSpell: SpellsClass.Spell = spell;
-      basicSpell.mastery.novice();
-      basicSpell.potency.minor();
-      setSpell(basicSpell);
-    }
-  }, []);
 
   // Set default branch when school changes
   useEffect(() => {
@@ -110,11 +101,39 @@ export default function SpellCreatorPage() {
 
   // Update spell state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateSpell = <K extends keyof Spell>(field: K, value: Spell[K]) => {
-    setSpell((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const updateSpell = useCallback(
+    <K extends keyof Spell>(field: K, value: Spell[K]) => {
+      setSpell((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    },
+    [],
+  );
+
+  const cycleMastery = () => {
+    setSpell((prev) => {
+      const mastery = new SpellsClass.Mastery();
+
+      switch (prev.mastery.getType()) {
+        case "NOVICE":
+          mastery.intermediate();
+          break;
+
+        case "INTERMEDIATE":
+          mastery.mastered();
+          break;
+
+        case "MASTERED":
+          mastery.novice();
+          break;
+      }
+
+      return {
+        ...prev,
+        mastery,
+      };
+    });
   };
 
   // Selected spell component
@@ -125,13 +144,18 @@ export default function SpellCreatorPage() {
   };
 
   useEffect(() => {
-    const newSpell = new SpellsClass.Spell();
+    setSpell((prev) => {
+      const newSpell = new SpellsClass.Spell();
 
-    newSpell.school = school;
-    newSpell.branch = branch;
-    newSpell.root = spellName;
+      newSpell.school = school;
+      newSpell.branch = branch;
+      newSpell.root = spellName;
 
-    setSpell(newSpell);
+      // Preserve mastery
+      newSpell.mastery = prev.mastery;
+
+      return newSpell;
+    });
   }, [school, branch, spellName]);
 
   const potencyColorMap = {
@@ -335,6 +359,27 @@ export default function SpellCreatorPage() {
           />
         </div>
         {/* Spell Statistics */}
+
+        {/* Mastery Controls */}
+
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={cycleMastery}
+            className="
+      px-6 py-3 rounded-lg
+      border border-purple-500/50
+      bg-gray-800
+      text-purple-300
+      font-semibold
+      shadow-lg shadow-purple-500/20
+      hover:bg-purple-900/30
+      hover:border-purple-400
+      transition-all duration-300
+    "
+          >
+            Mastery: {spell.mastery.getType()}
+          </button>
+        </div>
 
         <div
           className={`

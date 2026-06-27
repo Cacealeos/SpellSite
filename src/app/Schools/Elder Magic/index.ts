@@ -8,7 +8,7 @@ import AugmentDimensional from "./Augementation/AugementDimensional";
 import ManifestPortal from "./Manifestation/ManifestPortal";
 
 export const ElderMagic = {
-  Augementation: {
+  Augmentation: {
     AugmentGravity,
     AugmentMagnetism,
     AugmentParticle,

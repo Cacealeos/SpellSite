@@ -21,7 +21,7 @@ import TransmuteSubstrate from "./Dimensional/TransmuteSubstrate";
 
 export const Alchemy = {
   Baryonic: { TransmuteMass, TransmuteArch, TransmutePart, TransmuteObject },
-  Metaphyscial: { TransmuteGravity, TransmuteLightHeat, TransmuteAvatar },
+  Metaphysical: { TransmuteGravity, TransmuteLightHeat, TransmuteAvatar },
   Structured: { Conjoin, Manifest, Transform },
   Dimensional: { TransmuteCacealeos, TransmuteDimensional, TransmuteSubstrate },
 };

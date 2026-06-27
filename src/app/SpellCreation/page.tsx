@@ -2,9 +2,11 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { Spell } from "../models";
+
 import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools
 import Select from "../Select";
+import { SchoolInfo } from "../Schools/SchoolInfo";
 
 export default function SpellCreatorPage() {
   // Available schools (keys of Schools object)
@@ -15,6 +17,15 @@ export default function SpellCreatorPage() {
   const [branch, setBranch] = useState<string>("");
   const [spellName, setSpellName] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"fields" | "json">("fields");
+
+  // Descriptions for the currently selected school and branch
+  const schoolDescription =
+    SchoolInfo[school as keyof typeof SchoolInfo]?.description ?? "";
+
+  const branchDescription =
+    SchoolInfo[school as keyof typeof SchoolInfo]?.branches[
+      branch as keyof (typeof SchoolInfo)[keyof typeof SchoolInfo]["branches"]
+    ] ?? "";
 
   // Parent spell state
   const [spell, setSpell] = useState(() => new SpellsClass.Spell());
@@ -357,6 +368,29 @@ export default function SpellCreatorPage() {
             choices={spellsInBranch}
             changeChoice={(s) => setSpellName(s)}
           />
+        </div>
+
+        {/* Context Description Panel */}
+        <div className="grid gap-6 p-4 rounded-xl bg-gray-800 border border-gray-700 shadow text-center">
+          {/* School */}
+          <div>
+            <h2 className="text-lg font-bold text-cyan-400 underline underline-offset-4">
+              {school || "No School Selected"}
+            </h2>
+            <p className="text-sm text-gray-300 mt-2">
+              {schoolDescription || "Select a school to view its description."}
+            </p>
+          </div>
+
+          {/* Branch */}
+          <div className="border-t border-gray-700 pt-4">
+            <h3 className="text-md font-semibold text-purple-400 underline underline-offset-4">
+              {branch || "No Branch Selected"}
+            </h3>
+            <p className="text-sm text-gray-400 mt-2">
+              {branchDescription || "Select a branch to view its description."}
+            </p>
+          </div>
         </div>
         {/* Spell Statistics */}
 

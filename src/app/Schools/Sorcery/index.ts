@@ -20,7 +20,7 @@ import AuthorConsciousness from "./Animation/AuthorConsciousness";
 import MergeAsymmertical from "./Animation/MergeAsymmetrical";
 import MergeSymmetrical from "./Animation/MergeSymmetrical";
 
-export const Sorecery = {
+export const Sorcery = {
   Possession: { PossessDash, PossessMount, PossessSprint, PossessSustain },
   Dominate: { DominateDash, DominateMount, DominateSprint, DominateSustain },
   Assimilation: { Assimilate },

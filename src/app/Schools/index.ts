@@ -5,7 +5,7 @@ import { Ghosting } from "./Ghosting";
 import { HighMagic } from "./HighMagic";
 import { Kinetics } from "./Kinetics";
 import { Sealing } from "./Sealing";
-import { Sorecery } from "./Sorcery";
+import { Sorcery } from "./Sorcery";
 import { Transcendentalism } from "./Transcendentalism";
 import { Alchemy } from "./Alchemy";
 
@@ -17,7 +17,7 @@ export {
   HighMagic,
   Kinetics,
   Sealing,
-  Sorecery,
+  Sorcery,
   Transcendentalism,
   Alchemy,
 };

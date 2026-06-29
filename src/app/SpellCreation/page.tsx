@@ -5,10 +5,10 @@ import { Spell } from "../models";
 
 import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools
-import Select from "../Select";
 import { SchoolInfo } from "../Schools/SchoolInfo";
 import SpellExportPanel from "./SpellExportPanel";
 import SpellSelectionPanel from "./SpellSelectionPanel";
+import SpellStatisticsPanel from "./SpellStatisticsPanel";
 
 export default function SpellCreatorPage() {
   // Available schools (keys of Schools object)
@@ -328,6 +328,8 @@ export default function SpellCreatorPage() {
           Spell Creator
         </h1>
 
+        {/* Spell selection */}
+
         <SpellSelectionPanel
           school={school}
           branch={branch}
@@ -343,77 +345,14 @@ export default function SpellCreatorPage() {
         />
         {/* Spell Statistics */}
 
-        {/* Mastery Controls */}
-
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={cycleMastery}
-            className="
-      px-6 py-3 rounded-lg
-      border border-purple-500/50
-      bg-gray-800
-      text-purple-300
-      font-semibold
-      shadow-lg shadow-purple-500/20
-      hover:bg-purple-900/30
-      hover:border-purple-400
-      transition-all duration-300
-    "
-          >
-            Mastery: {spell.mastery.getType()}
-          </button>
-        </div>
-
-        <div
-          className={`
-    rounded-xl border shadow-xl p-6
-    transition-all duration-500
-    ${potencyColor.border}
-    ${potencyColor.glow}
-    ${potencyColor.bg}
-  `}
-        >
-          <div className="flex flex-wrap justify-center gap-8">
-            {stats.map((stat) => {
-              const colors = getStatColor(stat.value, stat.type);
-
-              return (
-                <div
-                  key={stat.label}
-                  className="flex flex-col items-center gap-3"
-                >
-                  <div
-                    className={`
-            w-28 h-28 rounded-full
-            border-2 shadow-lg
-            bg-gradient-to-br
-            flex flex-col items-center justify-center
-            transition-all duration-500
-            ${colors.border}
-            ${colors.glow}
-            ${colors.bg}
-          `}
-                  >
-                    <div className="text-xs uppercase tracking-widest text-gray-400">
-                      {stat.label}
-                    </div>
-
-                    <div className={`text-3xl font-extrabold ${colors.text}`}>
-                      {stat.value}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <button
-          onClick={() => setDebugTick((t) => t + 1)}
-          className="px-3 py-1 text-sm bg-gray-700 rounded"
-        >
-          Reroll Debug Spell
-        </button>
+        <SpellStatisticsPanel
+          spell={spell}
+          stats={stats}
+          potencyColor={potencyColor}
+          getStatColor={getStatColor}
+          cycleMastery={cycleMastery}
+          rerollDebug={() => setDebugTick((t) => t + 1)}
+        />
 
         {/* Render spell component */}
         <div className="mt-4">
@@ -423,6 +362,8 @@ export default function SpellCreatorPage() {
             <div className="text-gray-400">No spell selected</div>
           )}
         </div>
+
+        {/* export spell */}
 
         <SpellExportPanel
           spell={spell}

@@ -7,6 +7,7 @@ import * as SpellsClass from "../models"; // Spell, Action, Potency, Mastery
 import * as Schools from "../Schools"; // single import for all schools
 import Select from "../Select";
 import { SchoolInfo } from "../Schools/SchoolInfo";
+import SpellExportPanel from "./SpellExportPanel";
 
 export default function SpellCreatorPage() {
   // Available schools (keys of Schools object)
@@ -16,7 +17,6 @@ export default function SpellCreatorPage() {
   const [school, setSchool] = useState<string>(schoolNames[0] || "");
   const [branch, setBranch] = useState<string>("");
   const [spellName, setSpellName] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"fields" | "json">("fields");
 
   // Descriptions for the currently selected school and branch
   const schoolDescription =
@@ -475,82 +475,12 @@ export default function SpellCreatorPage() {
           )}
         </div>
 
-        <div className="mt-6 rounded bg-gray-800 border border-gray-700 shadow">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-700">
-            <button
-              onClick={() => setActiveTab("fields")}
-              className={`px-4 py-2 text-sm font-medium transition ${
-                activeTab === "fields"
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
-              }`}
-            >
-              Spell Fields
-            </button>
-
-            <button
-              onClick={() => setActiveTab("json")}
-              className={`px-4 py-2 text-sm font-medium transition ${
-                activeTab === "json"
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
-              }`}
-            >
-              JSON Output
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-4">
-            {activeTab === "fields" ? (
-              <div className="space-y-2 text-sm text-green-400">
-                <div>
-                  <span className="text-gray-300">Name:</span> {spellName}
-                </div>
-                <div>
-                  <span className="text-gray-300">School:</span> {school}
-                </div>
-                <div>
-                  <span className="text-gray-300">Branch:</span> {branch}
-                </div>
-                <div>
-                  <span className="text-gray-300">Base:</span> {spell.base}
-                </div>
-                <div>
-                  <span className="text-gray-300">Cost:</span> {spell.cost}
-                </div>
-                <div>
-                  <span className="text-gray-300">Requirement:</span>{" "}
-                  {spell.requirement}
-                </div>
-                <div>
-                  <span className="text-gray-300">Root:</span> {spell.root}
-                </div>
-                <div>
-                  <span className="text-gray-300">Demon:</span>{" "}
-                  {spell.demon ? "Yes" : "No"}
-                </div>
-                <div>
-                  <span className="text-gray-300">Compound:</span>{" "}
-                  {spell.compound ? "Yes" : "No"}
-                </div>
-                <div>
-                  <span className="text-gray-300">Mastery Type:</span>{" "}
-                  {spell.mastery.getType()}
-                </div>
-              </div>
-            ) : (
-              <pre className="text-sm text-green-400 overflow-auto whitespace-pre-wrap">
-                {JSON.stringify(
-                  { ...spell, school, branch, spellName },
-                  null,
-                  2,
-                )}
-              </pre>
-            )}
-          </div>
-        </div>
+        <SpellExportPanel
+          spell={spell}
+          spellName={spellName}
+          school={school}
+          branch={branch}
+        />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Mastery, Potency } from "@/app/models";
 import { Spell } from "@/app/models";
 import CustomRadio from "@/app/Radio";
+import PotencySelector from "@/app/PotencyDisplay";
 
 type TransmuteArchProps = {
   ParentMastery: Mastery;
@@ -19,6 +20,24 @@ const TransmuteArch = ({
   const [selectedPotency, setSelectedPotency] = useState<
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "150 / 100 / 75",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "450 / 300 / 225",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "1350 / 900 / 675",
+    },
+  ];
 
   const getCost = (masteryType: string, potencyType: string): number => {
     switch (masteryType) {
@@ -128,35 +147,11 @@ const TransmuteArch = ({
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
-      <div className="mb-6">
-        <h2 className="mb-4 text-xl font-bold text-cyan-400">Potency</h2>
-
-        <div className="space-y-3">
-          <CustomRadio
-            selected={selectedPotency === "MINOR"}
-            value="MINOR"
-            label="Minor"
-            description="150 / 100 / 75"
-            onClick={() => setSelectedPotency("MINOR")}
-          />
-
-          <CustomRadio
-            selected={selectedPotency === "MAJOR"}
-            value="MAJOR"
-            label="Major"
-            description="450 / 300 / 225"
-            onClick={() => setSelectedPotency("MAJOR")}
-          />
-
-          <CustomRadio
-            selected={selectedPotency === "EXTREME"}
-            value="EXTREME"
-            label="Extreme"
-            description="1350 / 900 / 675"
-            onClick={() => setSelectedPotency("EXTREME")}
-          />
-        </div>
-      </div>
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
       <div className="border-t border-gray-700 pt-6">
         <h2 className="mb-3 text-xl font-bold text-orange-400">

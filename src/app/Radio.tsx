@@ -74,38 +74,19 @@ export default function CustomRadio({
     >
       {/* ICON WRAPPER */}
       <div className="relative flex h-12 w-12 items-center justify-center">
-        {/* OUTER GLOW RING */}
+        {/* OUTER GLOW */}
         <div
           className={`
-      absolute h-10 w-10 rounded-full
-      transition-all duration-300
+      absolute h-10 w-10 rounded-full transition-all duration-300
 
       ${
         selected
           ? value === "MINOR"
-            ? "bg-green-500/30 ring-2 ring-green-400"
+            ? "bg-green-500/25 ring-1 ring-green-400 shadow-[0_0_24px_10px_rgba(34,197,94,0.55)]"
             : value === "MAJOR"
-              ? "bg-orange-500/30 ring-2 ring-orange-400"
-              : "bg-purple-500/30 ring-2 ring-purple-400"
-          : "bg-transparent ring-0"
-      }
-    `}
-        />
-
-        {/* INNER BORDER RING (gives depth) */}
-        <div
-          className={`
-      absolute h-9 w-9 rounded-full border
-      transition-all duration-300
-
-      ${
-        selected
-          ? value === "MINOR"
-            ? "border-green-400/70"
-            : value === "MAJOR"
-              ? "border-orange-400/70"
-              : "border-purple-400/70"
-          : "border-gray-600"
+              ? "bg-orange-500/25 ring-1 ring-orange-400 shadow-[0_0_24px_10px_rgba(249,115,22,0.55)]"
+              : "bg-purple-500/25 ring-1 ring-purple-400 shadow-[0_0_24px_10px_rgba(168,85,247,0.55)]"
+          : "bg-transparent ring-0 shadow-none"
       }
     `}
         />
@@ -114,7 +95,8 @@ export default function CustomRadio({
         <div
           className={`
       relative z-10 flex h-8 w-8 items-center justify-center
-      overflow-hidden rounded-full border-2 bg-gray-900
+      overflow-hidden rounded-full
+      border bg-gray-900
       transition-all duration-200
 
       ${selected ? getBorder() : "border-gray-600"}
@@ -134,7 +116,22 @@ export default function CustomRadio({
 
       {/* TEXT BLOCK */}
       <div>
-        <div className="font-semibold">{label}</div>
+        <div
+          className={`
+    font-semibold transition-all duration-300
+    ${
+      selected
+        ? value === "MINOR"
+          ? "text-green-300 drop-shadow-[0_0_6px_rgba(34,197,94,0.7)]"
+          : value === "MAJOR"
+            ? "text-orange-300 drop-shadow-[0_0_6px_rgba(249,115,22,0.7)]"
+            : "text-purple-300 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]"
+        : "text-gray-100"
+    }
+  `}
+        >
+          {label}
+        </div>
 
         {description && (
           <div className="text-sm text-gray-400">{description}</div>

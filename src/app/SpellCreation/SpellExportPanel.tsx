@@ -116,27 +116,24 @@ export default function SpellExportPanel({
             </div>
           </div>
         ) : (
-          <>
-            <div className="mb-3 flex justify-end">
-              <button
-                onClick={copyJson}
-                title="Copy JSON"
-                className="rounded p-2 text-cyan-400 transition hover:bg-gray-700 hover:text-cyan-300"
-              >
-                <ClipboardDocumentIcon className="h-5 w-5" />
-              </button>
-            </div>
+          <div className="relative">
+            <button
+              onClick={copyJson}
+              title="Copy JSON"
+              className="absolute top-2 right-8 z-10 rounded-md bg-gray-800 border border-gray-700 p-2 text-cyan-400 shadow-lg transition hover:bg-gray-700 hover:text-cyan-300"
+            >
+              <ClipboardDocumentIcon className="h-5 w-5" />
+            </button>
 
             {copied && (
-              <div className="mb-2 text-right text-xs text-green-400">
-                Copied to clipboard!
+              <div className="absolute top-3 right-16 z-10 text-xs font-medium text-green-400">
+                Copied!
               </div>
             )}
-
-            <pre className="overflow-auto whitespace-pre-wrap text-sm text-green-400">
+            <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded text-sm text-green-400 pr-12">
               {JSON.stringify(exportData, null, 2)}
             </pre>
-          </>
+          </div>
         )}
       </div>
     </div>

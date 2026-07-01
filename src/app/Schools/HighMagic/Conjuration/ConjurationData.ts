@@ -1,31 +1,42 @@
 export const elements = {
   "Heat & Cold": {
-    Damage: "THERMAL DAMAGE",
-    Range: "RANGE - MISSILE",
-    Effect:
-      "Impairs (Blinds, Ignites, Melts, Disable, Immobilize, etc.) Possible Power vs Dis Check against susceptible target(s) Failures deals pain of 100 x power",
-    Emanates: "User",
+    damage: "THERMAL",
+    range: "RANGE - MISSILE",
+    emanates: "USER",
+    effect: [
+      "Impairs (Blinds, Ignites, Melts, Disables, Immobilizes, etc.).",
+      "Possible POWER vs DIS check against susceptible target(s).",
+      "Failures deal pain equal to 100 × POWER.",
+    ],
   },
+
   "Earth & Water": {
-    Damage: "PRESSURE DAMAGE",
-    Range: "RANGE - RADIAL",
-    Effect: "Targets lose defensive actions with a Power-to-Power check",
-    Emanates: "ENVIRONMENT",
+    damage: "PRESSURE",
+    range: "RANGE - RADIAL",
+    emanates: "ENVIRONMENT",
+    effect: ["Targets lose defensive actions with a POWER vs POWER check."],
   },
+
   Wind: {
-    Damage: "ELECTRIC DAMAGE",
-    Range: "RANGE - CLOUD",
-    Effect: "Targets become dismembered after failing a Power x 3 Vs End save",
-    Emanates: "ENVIRONMENT",
+    damage: "ELECTRIC",
+    range: "RANGE - CLOUD",
+    emanates: "ENVIRONMENT",
+    effect: [
+      "Targets become dismembered after failing a POWER × 3 vs END save.",
+    ],
   },
+
   Lightning: {
-    Damage: "ELECTRIC DAMAGE",
-    Range: "RANGE - MISSILE",
-    Effect:
-      "Target armor and weapons are damaged if susceptible. Durability damage equal to 100 x Power. (x2 if power exceeds target stress tolerance",
-    Emanates: "USER",
+    damage: "ELECTRIC",
+    range: "RANGE - MISSILE",
+    emanates: "USER",
+    effect: [
+      "Target armor and weapons are damaged if susceptible.",
+      "Durability damage equals 100 × POWER.",
+      "Damage is doubled if POWER exceeds the target's END Stress Threshold.",
+    ],
   },
-};
+} as const;
 
 export const force = {
   Gas: {

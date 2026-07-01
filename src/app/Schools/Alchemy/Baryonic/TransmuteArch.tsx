@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Mastery, Potency } from "@/app/models";
 import { Spell } from "@/app/models";
-import CustomRadio from "@/app/Radio";
 import PotencySelector from "@/app/PotencyDisplay";
 
 type TransmuteArchProps = {

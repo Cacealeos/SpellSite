@@ -23,6 +23,42 @@ export const elementOptions = [
  */
 export type ElementType = (typeof elementOptions)[number];
 
+const POTENCY_STATS = {
+  MINOR: {
+    label: "Minor",
+    base: 12,
+    power: 0,
+    roll: 6,
+    costs: {
+      NOVICE: 75,
+      INTERMEDIATE: 50,
+      MASTERED: 25,
+    },
+  },
+  MAJOR: {
+    label: "Major",
+    base: 20,
+    power: 1,
+    roll: 10,
+    costs: {
+      NOVICE: 105,
+      INTERMEDIATE: 70,
+      MASTERED: 35,
+    },
+  },
+  EXTREME: {
+    label: "Extreme",
+    base: 28,
+    power: 2,
+    roll: 14,
+    costs: {
+      NOVICE: 135,
+      INTERMEDIATE: 90,
+      MASTERED: 45,
+    },
+  },
+} as const;
+
 type ConjureElementProps = {
   ParentMastery: Mastery;
   active: boolean;
@@ -38,14 +74,13 @@ const ConjureElement = ({
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
 
-  /* =========================================================
-   1. STATIC CONFIGURATION (UI + DATA MAPS)
-   ========================================================= */
+  const [intensity, setIntensity] = useState<number>(0);
+  const [selectedElement, setSelectedElement] =
+    useState<ElementType>("Heat & Cold");
 
-  /**
-   * Available element choices for this spell.
-   * Kept as a const tuple so TypeScript can infer strict union types.
-   */
+  /* =========================
+     ELEMENT DATA
+  ========================= */
 
   const elementIcons: Record<ElementType, React.ElementType> = {
     "Heat & Cold": FireIcon,
@@ -71,7 +106,6 @@ const ConjureElement = ({
       bg: "bg-orange-500/10",
       hover: "hover:border-orange-300",
     },
-
     "Earth & Water": {
       base: "text-blue-400",
       border: "border-blue-400",
@@ -79,15 +113,13 @@ const ConjureElement = ({
       bg: "bg-blue-500/10",
       hover: "hover:border-blue-300",
     },
-
     Wind: {
-      base: "text-green-400", // changed from cyan → green
+      base: "text-green-400",
       border: "border-green-400",
       glow: "shadow-green-500/30",
       bg: "bg-green-500/10",
       hover: "hover:border-green-300",
     },
-
     Lightning: {
       base: "text-yellow-300",
       border: "border-yellow-300",
@@ -97,245 +129,232 @@ const ConjureElement = ({
     },
   };
 
-  /**
-   * Cost table:
-   * Maps Mastery tier + Potency tier → base cost.
-   */
-  const COSTS = {
-    NOVICE: {
-      MINOR: 75,
-      MAJOR: 105,
-      EXTREME: 135,
-    },
-    INTERMEDIATE: {
-      MINOR: 50,
-      MAJOR: 70,
-      EXTREME: 90,
-    },
-    MASTERED: {
-      MINOR: 25,
-      MAJOR: 35,
-      EXTREME: 45,
-    },
-  } as const;
-
-  /**
-   * Helper for safe cost lookup.
-   * Centralizes indexing logic so component stays readable.
-   */
-  const getCost = (
-    mastery: keyof typeof COSTS,
-    potency: keyof (typeof COSTS)["NOVICE"],
-  ) => COSTS[mastery][potency];
-
-  /**
-   * Potency selector configuration for UI rendering.
-   */
-  const potencyOptions = [
-    {
-      value: "MINOR" as const,
-      label: "Minor",
-      description: "75 / 50 / 25",
-    },
-    {
-      value: "MAJOR" as const,
-      label: "Major",
-      description: "105 / 70 / 35",
-    },
-    {
-      value: "EXTREME" as const,
-      label: "Extreme",
-      description: "135 / 90 / 45",
-    },
-  ];
-
-  /* =========================================================
-   2. COMPONENT STATE (USER SELECTIONS)
-   ========================================================= */
-
-  /**
-   * Currently selected element (drives UI + spell output).
-   */
-  const [selectedElement, setSelectedElement] =
-    useState<ElementType>("Heat & Cold");
-
-  /**
-   * Currently selected potency tier.
-   */
-
-  /**
-   * Derived element data used for rendering stats panel.
-   */
   const selectedData = elements[selectedElement];
 
-  /* =========================================================
-   3. RESET EFFECT (WHEN SPELL DEACTIVATES)
-   ========================================================= */
+  /* =========================
+     RESET ON DEACTIVATE
+  ========================= */
 
-  /**
-   * When the spell becomes inactive:
-   * reset UI state back to defaults.
-   */
   useEffect(() => {
     if (active) return;
 
     setSelectedPotency("MINOR");
     setSelectedElement("Heat & Cold");
+    setIntensity(0);
   }, [active]);
 
-  /* =========================================================
-   4. SPELL SYNCHRONIZATION EFFECT
-   (SYNC LOCAL UI → GLOBAL SPELL STATE)
-   ========================================================= */
+  /* =========================
+     POTENCY SYNC EFFECT
+  ========================= */
 
   useEffect(() => {
     if (!active) return;
 
-    /* ---------------------------------------------
-     4.1 Build Potency instance from selection
-     --------------------------------------------- */
     const pot = new Potency();
 
-    switch (selectedPotency) {
-      case "MINOR":
-        pot.minor();
-        break;
+    const potencyMethod = {
+      MINOR: () => pot.minor(),
+      MAJOR: () => pot.major(),
+      EXTREME: () => pot.extreme(),
+    } as const;
 
-      case "MAJOR":
-        pot.major();
-        break;
+    potencyMethod[selectedPotency]();
 
-      case "EXTREME":
-        pot.extreme();
-        break;
-    }
+    const stats = POTENCY_STATS[selectedPotency];
+    const mastery =
+      ParentMastery.getType() as keyof POTENCY_STATS["MINOR"]["costs"];
+    const base = stats.base * (1 + intensity);
+    const cost = stats.costs[mastery] * 2 ** intensity;
 
-    /* ---------------------------------------------
-     4.2 Resolve mastery + cost calculation
-     --------------------------------------------- */
-    const mastery = ParentMastery.getType() as keyof typeof COSTS;
-
-    const cost = getCost(mastery, selectedPotency);
-
-    /* ---------------------------------------------
-     4.3 Push updates to parent Spell model
-     --------------------------------------------- */
     updateSpell("potency", pot);
+    updateSpell("base", base);
     updateSpell("cost", cost);
-
-    /**
-     * This spell does not generate TTT.
-     * Always explicitly reset to avoid stale state.
-     */
     updateSpell("ttt", 0);
-  }, [active, selectedPotency, ParentMastery, updateSpell]);
+  }, [active, selectedPotency, intensity, ParentMastery, updateSpell]);
 
-  /* =========================================================
-   5. RUNTIME DERIVED DATA
-   ========================================================= */
+  /* =========================
+     DERIVED UI VALUES
+  ========================= */
+
+  /**
+   * Builds the UI options for the potency selector dynamically from POTENCY_STATS.
+   *
+   * We derive this instead of hardcoding values so that:
+   * - Labels stay consistent with the central potency definition
+   * - Cost descriptions always reflect actual mastery scaling
+   * - Adding/removing potency tiers only requires updating POTENCY_STATS
+   *
+   * Object.keys is typed via keyof to preserve TypeScript safety.
+   */
+
+  const potencyOptions = (
+    Object.keys(POTENCY_STATS) as Array<keyof typeof POTENCY_STATS>
+  ).map((key) => {
+    const stats = POTENCY_STATS[key];
+
+    return {
+      value: key,
+      label: stats.label,
+      description: `${stats.costs.NOVICE} / ${stats.costs.INTERMEDIATE} / ${stats.costs.MASTERED}`,
+    };
+  });
+
+  const AOES = ["None", "Small", "Moderate"] as const;
+
+  const aoeLevel = AOES[intensity];
 
   return (
-    <>
-      <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
-        <PotencySelector
-          options={potencyOptions}
-          selectedPotency={selectedPotency}
-          setSelectedPotency={setSelectedPotency}
-        />
-        {/*
-Element Selector UI
-*/}
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* =========================
+        POTENCY
+    ========================= */}
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
-        <div className="mt-6 border-t border-gray-700 pt-6">
-          <h2 className="mb-4 text-xl font-bold text-orange-400">Element</h2>
+      {/* =========================
+        ELEMENT SELECTOR
+    ========================= */}
+      <div className="mt-6 border-t border-gray-700 pt-6">
+        <h2 className="mb-4 text-xl font-bold text-orange-400">Element</h2>
 
-          <div className="grid grid-cols-2 gap-3">
-            {elementOptions.map((element) => {
-              const theme = elementTheme[element];
-              const Icon = elementIcons[element];
-              const isSelected = selectedElement === element;
+        <div className="grid grid-cols-2 gap-3">
+          {elementOptions.map((element) => {
+            const theme = elementTheme[element];
+            const Icon = elementIcons[element];
+            const isSelected = selectedElement === element;
 
-              return (
-                <label
-                  key={element}
-                  className={`
-            flex flex-col items-center justify-center gap-2
-            cursor-pointer
-            rounded-lg
-            border
-            p-4
-            transition
-            ${
-              selectedElement === element
-                ? "border-cyan-400 bg-cyan-500/20 shadow-lg shadow-cyan-500/20"
-                : "border-gray-700 bg-gray-800 hover:border-cyan-500"
-            }
-          `}
+            return (
+              <label
+                key={element}
+                className={`
+                flex flex-col items-center justify-center gap-2
+                cursor-pointer rounded-lg border p-4 transition
+                ${
+                  isSelected
+                    ? `${theme.border} ${theme.bg} ${theme.glow}`
+                    : "border-gray-700 bg-gray-800 hover:border-gray-600"
+                }
+              `}
+              >
+                <input
+                  type="radio"
+                  name="element"
+                  value={element}
+                  checked={isSelected}
+                  onChange={() => setSelectedElement(element)}
+                  className="sr-only"
+                />
+
+                <Icon
+                  className={`h-6 w-6 transition ${
+                    isSelected ? theme.base : "text-gray-500"
+                  }`}
+                />
+
+                <span
+                  className={`text-sm font-semibold transition ${
+                    isSelected ? theme.base : "text-gray-200"
+                  }`}
                 >
-                  <input
-                    type="radio"
-                    name="element"
-                    value={element}
-                    checked={selectedElement === element}
-                    onChange={() => setSelectedElement(element)}
-                    className="sr-only"
-                  />
-
-                  <Icon
-                    className={`
-    h-6 w-6 transition
-    ${isSelected ? theme.base : "text-gray-500"}
-  `}
-                  />
-                  <span
-                    className={`
-    text-sm font-semibold transition
-    ${isSelected ? theme.base : "text-gray-200"}
-  `}
-                  >
-                    {element}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+                  {element}
+                </span>
+              </label>
+            );
+          })}
         </div>
-        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5">
-          <h3 className="mb-4 text-xl font-bold text-cyan-300">
-            {selectedElement}
-          </h3>
+      </div>
 
-          <div className="space-y-3">
-            <div className="flex">
-              <span className="w-28 font-semibold text-orange-400">Damage</span>
-              <span>{selectedData.damage}</span>
-            </div>
+      {/* =========================
+        INTENSITY
+    ========================= */}
+      <div className="mt-8 space-y-4">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-200">Intensity</h3>
 
-            <div className="flex">
-              <span className="w-28 font-semibold text-orange-400">Range</span>
-              <span>{selectedData.range}</span>
-            </div>
+          <p className="mt-2 text-sm text-gray-400">
+            Each level increases base damage by 100% and doubles cost.
+          </p>
+        </div>
 
-            <div className="flex">
-              <span className="w-28 font-semibold text-orange-400">
-                Emanates
+        <div className="space-y-2">
+          <div className="flex justify-between px-1 text-xs text-gray-400">
+            <span>0</span>
+            <span>1</span>
+            <span>2</span>
+          </div>
+
+          <input
+            type="range"
+            min={0}
+            max={2}
+            step={1}
+            value={intensity}
+            onChange={(e) => setIntensity(Number(e.target.value))}
+            className="w-full cursor-pointer accent-cyan-500"
+          />
+        </div>
+      </div>
+
+      {/* =========================
+        ELEMENT STATS CARD
+    ========================= */}
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5">
+        <h3 className="mb-4 text-xl font-bold text-cyan-300">
+          {selectedElement}
+        </h3>
+
+        <div className="space-y-3">
+          <div className="flex">
+            <span className="w-28 font-semibold text-orange-400">Damage</span>
+            <span>
+              {selectedData.damage}{" "}
+              <span className="text-gray-400">
+                ({POTENCY_STATS[selectedPotency].base * (1 + intensity)})
               </span>
-              <span>{selectedData.emanates}</span>
-            </div>
+            </span>
+          </div>
+          <div className="flex">
+            <span className="w-28 font-semibold text-orange-400">Roll</span>
+            <span>{POTENCY_STATS[selectedPotency].roll}</span>
+          </div>
 
-            <div className="border-t border-gray-700 pt-3">
-              <h4 className="mb-2 font-semibold text-orange-400">Effects</h4>
+          <div className="flex">
+            <span className="w-28 font-semibold text-orange-400">Power</span>
+            <span>
+              {POTENCY_STATS[selectedPotency].power + (intensity > 0 ? 1 : 0)}
+            </span>
+          </div>
 
-              <ul className="list-disc space-y-2 pl-5 text-gray-300">
-                {selectedData.effect.map((line, idx) => (
-                  <li key={idx}>{line}</li>
-                ))}
-              </ul>
-            </div>
+          <div className="flex">
+            <span className="w-28 font-semibold text-orange-400">AoE</span>
+            <span>{aoeLevel}</span>
+          </div>
+
+          <div className="flex">
+            <span className="w-28 font-semibold text-orange-400">Range</span>
+            <span>{selectedData.range}</span>
+          </div>
+
+          <div className="flex">
+            <span className="w-28 font-semibold text-orange-400">Emanates</span>
+            <span>{selectedData.emanates}</span>
+          </div>
+
+          <div className="border-t border-gray-700 pt-3">
+            <h4 className="mb-2 font-semibold text-orange-400">Effects</h4>
+
+            <ul className="list-disc space-y-2 pl-5 text-gray-300">
+              {selectedData.effect.map((line, idx) => (
+                <li key={idx}>{line}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -18,7 +18,7 @@ export const elements = {
   },
 
   Wind: {
-    damage: "ELECTRIC",
+    damage: "VORPAL",
     range: "RANGE - CLOUD",
     emanates: "ENVIRONMENT",
     effect: [

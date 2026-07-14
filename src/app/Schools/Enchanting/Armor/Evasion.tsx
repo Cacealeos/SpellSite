@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Mastery, Spell } from "@/app/models";
 
 const Evasion = ({
@@ -15,15 +15,24 @@ const Evasion = ({
   /* =========================
      MASTERY MULTIPLIER
   ========================= */
-  const rate = useMemo(() => {
-    const type = ParentMastery.getType();
+  let rate = 0;
 
-    if (type === "NOVICE") return 0.1;
-    if (type === "INTERMEDIATE") return 0.15;
-    if (type === "MASTERED") return 0.2;
+  switch (ParentMastery.getType()) {
+    case "NOVICE":
+      rate = 10;
+      break;
+    case "INTERMEDIATE":
+      rate = 15;
+      break;
+    case "MASTERED":
+      rate = 20;
+      break;
+  }
 
-    return 0;
-  }, [ParentMastery]);
+  /* =========================
+     DERIVED VALUE
+  ========================= */
+  const evasion = Math.min(baseValue * rate, 200);
 
   /* =========================
      RESET WHEN INACTIVE
@@ -32,14 +41,19 @@ const Evasion = ({
     if (!active) {
       setBaseValue(0);
       updateSpell("ttt", 0);
-      updateSpell("cost", 0);
     }
   }, [active, updateSpell]);
 
   /* =========================
-     DERIVED VALUE
+     CLAMP WHEN MASTERY CHANGES
   ========================= */
-  const cost = baseValue * rate;
+  useEffect(() => {
+    const maxManna = Math.ceil(200 / rate);
+
+    if (baseValue > maxManna) {
+      setBaseValue(maxManna);
+    }
+  }, [rate, baseValue]);
 
   /* =========================
      SYNC TO PARENT SPELL
@@ -47,24 +61,36 @@ const Evasion = ({
   useEffect(() => {
     if (!active) return;
 
-    updateSpell("cost", cost);
     updateSpell("ttt", baseValue);
-  }, [cost, baseValue, active, updateSpell]);
+  }, [baseValue, rate, active, updateSpell]);
 
   return (
-    <div>
-      <h1>Manna to Evasion</h1>
+    <div className="space-y-4">
+      <h1 className="text-lg font-semibold text-orange-400">
+        Manna to Evasion
+      </h1>
 
       <input
+        className="w-32 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-center text-gray-100"
         type="number"
-        max={200}
         min={0}
+        max={Math.ceil(200 / rate)}
         step={1}
         value={baseValue}
         onChange={(e) => setBaseValue(Number(e.target.value))}
       />
 
-      <div>Cost: {cost.toFixed(2)}</div>
+      <p className="text-sm text-gray-400">
+        Info: Converts Manna into temporary Evasion at the current mastery rate.
+        Maximum Evasion granted is 200.
+      </p>
+
+      <p className="text-lg">
+        <span className="text-lg font-semibold text-orange-400">
+          Evasion Bonus:
+        </span>{" "}
+        <span className="font-bold text-blue-400">{evasion}</span>
+      </p>
     </div>
   );
 };

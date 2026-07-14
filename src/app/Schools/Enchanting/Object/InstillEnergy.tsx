@@ -1,46 +1,84 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
 
 const InstillEnergy = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  const [baseValue, setBaseValue] = useState(0);
 
-  let testMastery: Mastery = new Mastery();
-  let rate: number = 0;
+  /* =========================
+     MASTERY MULTIPLIER
+  ========================= */
+  let rate = 0;
 
-  if (!active) setCost(0);
+  switch (ParentMastery.getType()) {
+    case "NOVICE":
+      rate = 5;
+      break;
+    case "INTERMEDIATE":
+      rate = 3;
+      break;
+    case "MASTERED":
+      rate = 2;
+      break;
+  }
 
-  if (ParentMastery.getType() == testMastery.novice()) rate = 4;
-  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 3;
-  else if (ParentMastery.getType() == testMastery.mastered()) rate = 2;
+  /* =========================
+     DERIVED VALUE
+  ========================= */
+  const energy = baseValue * rate;
+
+  /* =========================
+     RESET WHEN INACTIVE
+  ========================= */
+  useEffect(() => {
+    if (!active) {
+      setBaseValue(0);
+      updateSpell("ttt", 0);
+    }
+  }, [active, updateSpell]);
+
+  /* =========================
+     SYNC TO PARENT SPELL
+  ========================= */
+  useEffect(() => {
+    if (!active) return;
+
+    updateSpell("ttt", baseValue);
+  }, [baseValue, rate, active, updateSpell]);
 
   return (
-    <>
-      <div>
-        <h1>Instill Energy</h1>
-        <br />
-        <input
-          type="number"
-          max="50"
-          min="0"
-          step="1"
-          value="0"
-          onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
-        />
-        <br />
-        <p>
-          Info: Transfer or extract manna from object. The transfer rate is
-          energy to turn ratio and scales with Mastery
-        </p>
-      </div>
-    </>
+    <div className="space-y-4">
+      <h1 className="text-lg font-semibold text-orange-400">
+        Instill Energy ({rate} / TTT)
+      </h1>
+
+      <input
+        className="ml-4 w-32 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-center text-gray-100"
+        type="number"
+        min={0}
+        max={50}
+        step={1}
+        value={baseValue}
+        onChange={(e) => setBaseValue(Number(e.target.value))}
+      />
+
+      <p className="text-lg">
+        <span className="font-medium text-gray-300">Energy Transferred:</span>{" "}
+        <span className="font-bold text-blue-400">{energy}</span>
+      </p>
+
+      <p className="text-sm text-gray-400">
+        Info: Transfers or extracts energy from an object. Energy transfer rate
+        scales with Mastery.
+      </p>
+    </div>
   );
 };
 

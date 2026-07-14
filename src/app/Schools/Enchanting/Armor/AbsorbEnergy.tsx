@@ -1,82 +1,90 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
+import React, { useEffect, useState } from "react";
+import { Mastery } from "@/app/models/Mastery";
 import { Potency } from "@/app/models/Potency";
+import { Spell } from "@/app/models/Spell";
+import PotencySelector from "@/app/PotencyDisplay";
+type PotencyType = "MINOR" | "MAJOR" | "EXTREME" | "CATACLYSMIC";
 
-const AbsorbEnergy = ({
-  ParentMastery,
-  active,
-}: {
+type AbsorbEnergyProps = {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
-
-  let AdherencePotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
-
-  //if (!active) setCost(0);
-
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (AdherencePotency.getType() === testPotency.minor(true)) setCost(30);
-      if (AdherencePotency.getType() === testPotency.major(true)) setCost(45);
-      if (AdherencePotency.getType() === testPotency.extreme(true)) setCost(60);
-      setPot(AdherencePotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (AdherencePotency.getType() === testPotency.minor(true)) setCost(25);
-      if (AdherencePotency.getType() === testPotency.major(true)) setCost(40);
-      if (AdherencePotency.getType() === testPotency.extreme(true)) setCost(55);
-      setPot(AdherencePotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (AdherencePotency.getType() === testPotency.minor(true)) setCost(20);
-      if (AdherencePotency.getType() === testPotency.major(true)) setCost(35);
-      if (AdherencePotency.getType() === testPotency.extreme(true)) setCost(50);
-      setPot(AdherencePotency);
-    }
-  };
-
-  return (
-    <>
-      <div>
-        <h1>Coherence</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor – 30 / 25 / 20</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(AdherencePotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 45 / 40 / 35</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(AdherencePotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 60 / 55 / 50</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(AdherencePotency.extreme())}
-          />
-        </div>
-        <br />
-        <p>
-          Info: Target recovers portion of manna used in attack against target.
-        </p>
-      </div>
-    </>
-  );
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 };
 
-export default AbsorbEnergy;
+const potencyOptions = [
+  {
+    value: "MINOR" as const,
+    label: "Minor",
+    description: "10% – 9 / 6 / 3",
+  },
+  {
+    value: "MAJOR" as const,
+    label: "Major",
+    description: "20% – 15 / 12 / 9",
+  },
+  {
+    value: "EXTREME" as const,
+    label: "Extreme",
+    description: "30% – 21 / 18 / 15",
+  },
+];
 
-// •	Absorb Energy
-// o
-// o	Minor (10%) – 9 / 6 / 3 	Major (20%) – 15 / 12 / 9 	Extreme (30%) – 21 / 18 / 15
+export default function AbsorbEnergy({
+  ParentMastery,
+  active,
+  updateSpell,
+}: AbsorbEnergyProps) {
+  const [selectedPotency, setSelectedPotency] = useState<PotencyType>("MINOR");
+
+  useEffect(() => {
+    if (!active) return;
+
+    const mastery = new Mastery();
+    const potency = new Potency();
+
+    let ttt = 0;
+
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        if (ParentMastery.getType() === mastery.novice(true)) ttt = 9;
+        if (ParentMastery.getType() === mastery.intermediate(true)) ttt = 6;
+        if (ParentMastery.getType() === mastery.mastered(true)) ttt = 3;
+        break;
+
+      case "MAJOR":
+        potency.major();
+        if (ParentMastery.getType() === mastery.novice(true)) ttt = 15;
+        if (ParentMastery.getType() === mastery.intermediate(true)) ttt = 12;
+        if (ParentMastery.getType() === mastery.mastered(true)) ttt = 9;
+        break;
+
+      case "EXTREME":
+        potency.extreme();
+        if (ParentMastery.getType() === mastery.novice(true)) ttt = 21;
+        if (ParentMastery.getType() === mastery.intermediate(true)) ttt = 18;
+        if (ParentMastery.getType() === mastery.mastered(true)) ttt = 15;
+        break;
+    }
+
+    updateSpell("potency", potency);
+    updateSpell("ttt", ttt);
+  }, [selectedPotency, ParentMastery, active, updateSpell]);
+
+  return (
+    <div>
+      <h1>Absorb Energy</h1>
+
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
+
+      <p>
+        Target recovers a portion of the manna expended in the attack against
+        them.
+      </p>
+    </div>
+  );
+}

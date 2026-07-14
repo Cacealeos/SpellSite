@@ -90,7 +90,14 @@ export default function SpellExportPanel({
             <div>
               <span className="text-gray-300">Cost:</span> {spell.cost}
             </div>
+            <div>
+              <span className="text-gray-300">TTT:</span> {spell.ttt}
+            </div>
 
+            <div>
+              <span className="text-gray-300">Potency:</span>{" "}
+              {spell.potency.getType()}
+            </div>
             <div>
               <span className="text-gray-300">Requirement:</span>{" "}
               {spell.requirement}

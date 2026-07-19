@@ -1,79 +1,119 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useState, useEffect } from "react";
+import { Mastery, Spell, Potency } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const Adherence = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let AdherencePotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "30 / 25 / 20",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "45 / 40 / 35",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "60 / 55 / 50",
+    },
+  ];
 
-  if (!active) setCost(0);
+  let cost = 0;
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (AdherencePotency.getType() === testPotency.minor(true)) setCost(30);
-      if (AdherencePotency.getType() === testPotency.major(true)) setCost(45);
-      if (AdherencePotency.getType() === testPotency.extreme(true)) setCost(60);
-      setPot(AdherencePotency);
+  switch (ParentMastery.getType()) {
+    case "NOVICE":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 30;
+          break;
+        case "MAJOR":
+          cost = 45;
+          break;
+        case "EXTREME":
+          cost = 60;
+          break;
+      }
+      break;
+
+    case "INTERMEDIATE":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 25;
+          break;
+        case "MAJOR":
+          cost = 40;
+          break;
+        case "EXTREME":
+          cost = 55;
+          break;
+      }
+      break;
+
+    case "MASTERED":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 20;
+          break;
+        case "MAJOR":
+          cost = 35;
+          break;
+        case "EXTREME":
+          cost = 50;
+          break;
+      }
+      break;
+  }
+
+  /* =========================
+     RESET WHEN INACTIVE
+  ========================= */
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (AdherencePotency.getType() === testPotency.minor(true)) setCost(25);
-      if (AdherencePotency.getType() === testPotency.major(true)) setCost(40);
-      if (AdherencePotency.getType() === testPotency.extreme(true)) setCost(55);
-      setPot(AdherencePotency);
+  }, [active, updateSpell]);
+
+  /* =========================
+     SYNC TO PARENT SPELL
+  ========================= */
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
     }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (AdherencePotency.getType() === testPotency.minor(true)) setCost(20);
-      if (AdherencePotency.getType() === testPotency.major(true)) setCost(35);
-      if (AdherencePotency.getType() === testPotency.extreme(true)) setCost(50);
-      setPot(AdherencePotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+  }, [active, cost, updateSpell]);
 
   return (
     <>
       <div>
-        <h1>Coherence</h1>
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
         <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor – 30 / 25 / 20</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(AdherencePotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 45 / 40 / 35</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(AdherencePotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 60 / 55 / 50</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(AdherencePotency.extreme())}
-          />
-        </div>
-        <br />
-        <p>
-          Info: Allows caster to place manna-channeled objects to armor so that
-          they may be carried without using up an orifice.
-        </p>
-        <p>
-          The number of targets that can be attached on the same piece of armor
-          scales with potency and environment. |GMD|
+        <p className="text-sm text-gray-400">
+          Info: Allows the caster to place manna-channeled objects on armor so
+          that they may be carried without using up an orifice. The number of
+          targets that can be attached to the same piece of armor scales with
+          potency and environment. |GMD|
         </p>
       </div>
     </>

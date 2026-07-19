@@ -1,80 +1,120 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useState, useEffect } from "react";
+import { Mastery, Spell, Potency } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const Coherence = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let CoherencePotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "30 / 25 / 20",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "45 / 40 / 35",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "60 / 55 / 50",
+    },
+  ];
 
-  if (!active) setCost(0);
+  let cost = 0;
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(30);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(45);
-      if (CoherencePotency.getType() === testPotency.extreme(true)) setCost(60);
-      setPot(CoherencePotency);
+  switch (ParentMastery.getType()) {
+    case "NOVICE":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 30;
+          break;
+        case "MAJOR":
+          cost = 45;
+          break;
+        case "EXTREME":
+          cost = 60;
+          break;
+      }
+      break;
+
+    case "INTERMEDIATE":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 25;
+          break;
+        case "MAJOR":
+          cost = 40;
+          break;
+        case "EXTREME":
+          cost = 55;
+          break;
+      }
+      break;
+
+    case "MASTERED":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 20;
+          break;
+        case "MAJOR":
+          cost = 35;
+          break;
+        case "EXTREME":
+          cost = 50;
+          break;
+      }
+      break;
+  }
+
+  /* =========================
+     RESET WHEN INACTIVE
+  ========================= */
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(25);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(40);
-      if (CoherencePotency.getType() === testPotency.extreme(true)) setCost(55);
-      setPot(CoherencePotency);
+  }, [active, updateSpell]);
+
+  /* =========================
+     SYNC TO PARENT SPELL
+  ========================= */
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
     }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(20);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(35);
-      if (CoherencePotency.getType() === testPotency.extreme(true)) setCost(50);
-      setPot(CoherencePotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+  }, [active, cost, updateSpell]);
 
   return (
     <>
       <div>
-        <h1>Coherence</h1>
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
         <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor – 30 / 25 / 20</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 45 / 40 / 35</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 60 / 55 / 50</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.extreme())}
-          />
-        </div>
-        <br />
-        <p>
+        <p className="text-sm text-gray-400">
+          {" "}
           Info: Allows the wearer of armor to audibly or mentally communicate
           with wearers of other pieces of equipment that have the same
-          enchantment.
-        </p>
-        <p>
-          The number of targets that can communicate on the same channel scales
-          with potency and environment. |GMD|
+          enchantment. The number of targets that can communicate on the same
+          channel scales with potency and environment. |GMD|
         </p>
       </div>
     </>
@@ -82,18 +122,3 @@ const Coherence = ({
 };
 
 export default Coherence;
-
-// •	Adherence
-// o	Info: Allows caster to place manna-channeled objects to armor so that they may be carried without using up an orifice. The number of targets that can be attached on the same piece of armor scales with potency and environment. (GMD)
-// o	Minor – 30 / 25 / 20	Major – 45 / 40 / 35	Extreme – 60 / 55 / 50
-// •	Manna to Evasion:	 (1/10) / (1/15) / (1/20)
-// o	Max Evade is 200
-// •	Manna to Temporary Durability: 	(1/5) / (1/10) / (1/15)
-// o	Max Durability is 200
-// •	Manna to Disruption Threshold:	(1/5) / (1/7) / (1/10)
-// o	Max temporary threshold equal to 50% of base threshold
-// •	Manna to Pain Threshold:	 (1/5) / (1/7) / (1/10)
-// o	Max temporary threshold equal to 50% of base threshold
-// •	Absorb Energy
-// o	Target recovers portion of manna used in attack against target.
-// o	Minor (10%) – 9 / 6 / 3 	Major (20%) – 15 / 12 / 9 	Extreme (30%) – 21 / 18 / 15

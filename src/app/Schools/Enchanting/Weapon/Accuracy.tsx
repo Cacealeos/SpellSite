@@ -81,7 +81,9 @@ const Accuracy = ({
       />
 
       <p className="text-lg">
-        <span className="font-medium text-gray-300">Accuracy Bonus:</span>{" "}
+        <span className="text-lg font-semibold text-orange-400">
+          Accuracy Bonus:
+        </span>{" "}
         <span className="font-bold text-blue-400">{accuracy}</span>
       </p>
 

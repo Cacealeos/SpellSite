@@ -1,3 +1,10 @@
+import {
+  CloudIcon,
+  CubeIcon,
+  BeakerIcon,
+  BoltIcon,
+} from "@heroicons/react/24/solid";
+
 export const elements = {
   "Heat & Cold": {
     damage: "THERMAL",
@@ -42,17 +49,28 @@ export const force = {
   Gas: {
     Damage: "Deals NO DAMAGE",
     Range: "RANGE - RADIAL",
+    Icon: CloudIcon,
+    color: "green",
   },
+
   Solids: {
     Damage: "Deals NO DAMAGE",
     Range: "RANGE - MISSILE",
+    Icon: CubeIcon,
+    color: "red",
   },
+
   Fluids: {
     Damage: "Deals NO DAMAGE",
     Range: "RANGE - CLOUD/RADIAL",
+    Icon: BeakerIcon,
+    color: "blue",
   },
+
   Plasma: {
     Damage: "Deals NO DAMAGE",
     Range: "RANGE - RADIAL",
+    Icon: BoltIcon,
+    color: "purple",
   },
 };

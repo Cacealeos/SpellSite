@@ -1,141 +1,224 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 import { force } from "./ConjurationData";
 
 const ConjureForce = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
-  const [Element, setElement] = useState<Record<string, {}>>(force.Gas);
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const [selectedMedium, setSelectedMedium] =
+    useState<keyof typeof force>("Gas");
 
-  useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+  const medium = force[selectedMedium];
 
-  function calculateCost(cost: number) {
-    setCost(cost);
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "20 / 10 / 1",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "30 / 20 / 10",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "40 / 30 / 20",
+    },
+  ];
+
+  let cost = 0;
+
+  switch (ParentMastery.getType()) {
+    case "NOVICE":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 20;
+          break;
+        case "MAJOR":
+          cost = 30;
+          break;
+        case "EXTREME":
+          cost = 40;
+          break;
+      }
+      break;
+
+    case "INTERMEDIATE":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 10;
+          break;
+        case "MAJOR":
+          cost = 20;
+          break;
+        case "EXTREME":
+          cost = 30;
+          break;
+      }
+      break;
+
+    case "MASTERED":
+      switch (selectedPotency) {
+        case "MINOR":
+          cost = 1;
+          break;
+        case "MAJOR":
+          cost = 10;
+          break;
+        case "EXTREME":
+          cost = 20;
+          break;
+      }
+      break;
   }
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(20);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(30);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(40);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(10);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(20);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(30);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(1);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(10);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(20);
-      setPot(SpellPotency);
-    }
+  const colorStyles = {
+    green: {
+      border: "border-green-400",
+      text: "text-green-400",
+      glow: "shadow-[0_0_12px_rgba(74,222,128,0.5)]",
+    },
+    red: {
+      border: "border-red-400",
+      text: "text-red-400",
+      glow: "shadow-[0_0_12px_rgba(248,113,113,0.5)]",
+    },
+    blue: {
+      border: "border-blue-400",
+      text: "text-blue-400",
+      glow: "shadow-[0_0_12px_rgba(96,165,250,0.5)]",
+    },
+    purple: {
+      border: "border-purple-400",
+      text: "text-purple-400",
+      glow: "shadow-[0_0_12px_rgba(192,132,252,0.5)]",
+    },
   };
 
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+    }
+  }, [active, updateSpell]);
+
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
+    }
+
+    updateSpell("cost", cost);
+  }, [active, cost, updateSpell]);
+
   return (
-    <>
+    <div>
       <div>
-        <h1>Conjure Element</h1>
+        <h2 className="text-xl font-bold text-orange-400">Conjure Force</h2>
+
+        <div className="mt-1 mb-4 h-px bg-gray-600" />
+
+        <h3 className="text-lg font-semibold text-orange-400">Medium</h3>
+
+        <div className="grid grid-cols-4 gap-3">
+          {Object.entries(force).map(([name, data]) => {
+            const Icon = data.Icon;
+            const selected = selectedMedium === name;
+
+            const styles = colorStyles[data.color];
+
+            return (
+              <button
+                key={name}
+                onClick={() => setSelectedMedium(name as keyof typeof force)}
+                className={`
+        flex flex-col items-center justify-center
+        rounded-lg border p-3
+        transition-all
+        ${selected ? `${styles.border} ${styles.glow}` : "border-gray-600"}
+      `}
+              >
+                <Icon
+                  className={`
+          h-8 w-8
+          ${selected ? styles.text : "text-gray-400"}
+        `}
+                />
+
+                <span
+                  className={`
+          mt-2 text-sm
+          ${selected ? styles.text : "text-gray-300"}
+        `}
+                >
+                  {name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <br />
-        <p>Mediums</p>
-        <div>
-          <button onClick={(e) => setElement({ Gas: force.Gas })}>Gas</button>
-          <button onClick={(e) => setElement({ Solids: force.Solids })}>
-            Solids
-          </button>
-          <button onClick={(e) => setElement({ Lightning: force.Fluids })}>
-            Fluids
-          </button>
-          <button onClick={(e) => setElement({ Wind: force.Plasma })}>
-            Plasma
-          </button>
+
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+
+        <br />
+
+        <p className="text-sm text-gray-400">
+          Potency scales with Power, Cost, and Area of Effect.
+        </p>
+
+        <div className="mt-5 rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-md">
+          <h3 className="text-lg font-semibold text-orange-400">
+            {selectedMedium}
+          </h3>
+
+          <div className="mt-2 h-px bg-gray-700" />
+
+          <div className="mt-3 space-y-2 text-sm text-gray-300">
+            <p>
+              <span className="font-semibold text-gray-400">Damage:</span>{" "}
+              {medium.Damage}
+            </p>
+
+            <p>
+              <span className="font-semibold text-gray-400">Range:</span>{" "}
+              {medium.Range}
+            </p>
+          </div>
         </div>
         <br />
-        <p>Potency</p>
-        <br />
-        <span>Potency Scales with Power, Cost, and AOE</span>
-        <div>
-          <p>Minor – 20 / 10 / 1</p>
-          <br />
-          <span>Power: 1</span>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 30 / 20 / 10</p>
-          <br />
-          <span>Power: 2</span>
-          <br />
-          <span>Small AOE</span>
-          <br />
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 40 / 30 / 20</p>
-          <br />
-          <span>Power: 3</span>
-          <br />
-          <span>Moderate AOE</span>
-          <br />
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
-        <div>
-          <p>{Object.keys(Element)[0]}</p>
-          <br />
-          <p>
-            targets the environment to either, push, pull, shape, or shake
-            matter. Environmental damage can be inflicted indirectly in this
-            way.
-          </p>
-          <br />
-          <p>
-            Potential direct targets composed of the used element make
-            Discipline check that scale with potency and receive +/- to rolls
-            equal to power disparity.
-          </p>
-          <br />
-          <ul>
-            Can result in:
-            <li>Action loss for targets. Does not stack.</li>
-            <li>Lifting, relocating, or destroying susceptible targets.</li>
-            <li>Interruption of attacks if used Defensively</li>
-            <li>Intercept objects or Projectiles if used Defensively</li>
-            <li>Reduce damage via obstruction if used Defensively</li>
-            <li>DISARM save</li>
-            <li>Intended to be played with situational awareness.</li>
-            <li></li>
-          </ul>
-        </div>
+        <p className="text-sm text-gray-400">
+          Targets the environment to either push, pull, shape, or shake matter.
+          Environmental damage can be inflicted indirectly in this way.
+        </p>
       </div>
-    </>
+    </div>
   );
 };
 
 export default ConjureForce;
+
+{
+  /* <p className="mt-2">
+            Targets the environment to either push, pull, shape, or shake
+            matter. Environmental damage can be inflicted indirectly in this
+            way.
+          </p> */
+}

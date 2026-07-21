@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 
 import { Mastery, Spell } from "@/app/models";
-import { appliedEffects } from "./ApplyEffect";
 import Select from "@/app/Select";
+import { appliedWeapons } from "./ApplyEffect";
 
 const ApplyEffect = ({
   ParentMastery,
@@ -13,7 +13,7 @@ const ApplyEffect = ({
   active: boolean;
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [selectedEffect, setSelectedEffect] = useState(0);
+  const [selectedWeapon, setSelectedWeapon] = useState(0);
   const [baseCost, setBaseCost] = useState(0);
 
   let cost = 0;
@@ -66,11 +66,11 @@ const ApplyEffect = ({
     <>
       <div>
         <Select
-          title="Applied Effects"
-          choices={appliedEffects.map((effect) => effect.label)}
+          title="Applied Weapons"
+          choices={appliedWeapons.map((weapon) => weapon.label)}
           changeChoice={(choice: string) =>
-            setSelectedEffect(
-              appliedEffects.findIndex((effect) => effect.label === choice),
+            setSelectedWeapon(
+              appliedWeapons.findIndex((weapon) => weapon.label === choice),
             )
           }
         />
@@ -78,14 +78,13 @@ const ApplyEffect = ({
         <br />
 
         <h2 className="text-xl font-bold text-orange-400">
-          {appliedEffects[selectedEffect].label}
+          {appliedWeapons[selectedWeapon].label}
         </h2>
 
-        <hr className="my-3 border-gray-600" />
-        <br />
+        <div className="mt-1 mb-4 h-px bg-gray-600" />
 
         <div className="space-y-2">
-          {appliedEffects[selectedEffect].info.map((line, index) => (
+          {appliedWeapons[selectedWeapon].info.map((line, index) => (
             <p key={index} className="text-sm text-gray-400">
               {line}
             </p>

@@ -12,7 +12,7 @@ import TempDur from "./Armor/TempDur";
 
 // Weapon branch
 import Accuracy from "./Weapon/Accuracy";
-import ApplyEffect from "./Weapon/ApplyEffect";
+import ApplyEffect from "./Weapon/ApplyEffectWEAP";
 import Disruption from "./Weapon/Disruption";
 import Pain from "./Weapon/Pain";
 import SoulEnch from "./Weapon/SoulEnch";

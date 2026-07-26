@@ -1,107 +1,181 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+
+import { Mastery, Spell, Potency } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const GatherResonance = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
-  const [DetectLF, setDetectLF] = useState(false);
-  const [DetectNF, setDetectNF] = useState(false);
-  const [DetectC, setDetectC] = useState(false);
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const [detectLifeForce, setDetectLifeForce] = useState(false);
+  const [detectNecroForce, setDetectNecroForce] = useState(false);
+  const [detectChaos, setDetectChaos] = useState(false);
 
-  if (!active) setCost(0);
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "20 / 10 / 0",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "50 / 40 / 30",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "100 / 80 / 60",
+    },
+  ];
 
-  function calculateCost(cost: number) {
-    if (DetectLF) cost *= 1.5;
-    if (DetectNF) cost *= 1.5;
-    if (DetectC) cost *= 2;
-
-    setCost(cost);
-  }
-
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(20);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(50);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(100);
-      setPot(SpellPotency);
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(10);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(40);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(80);
-      setPot(SpellPotency);
+
+    const mastery = ParentMastery.getType();
+
+    const costs = {
+      MINOR: {
+        NOVICE: 20,
+        INTERMEDIATE: 10,
+        MASTERED: 0,
+      },
+      MAJOR: {
+        NOVICE: 50,
+        INTERMEDIATE: 40,
+        MASTERED: 30,
+      },
+      EXTREME: {
+        NOVICE: 100,
+        INTERMEDIATE: 80,
+        MASTERED: 60,
+      },
+    };
+
+    let cost =
+      costs[selectedPotency][mastery as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
+
+    let multiplier = 1;
+
+    if (detectLifeForce) multiplier += 0.5;
+    if (detectNecroForce) multiplier += 0.5;
+    if (detectChaos) multiplier += 1;
+
+    cost = Math.round(cost * multiplier);
+
+    updateSpell("cost", cost);
+
+    const potency = new Potency();
+
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(0);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(30);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(60);
-      setPot(SpellPotency);
-    }
-  };
+
+    updateSpell("potency", potency);
+  }, [
+    active,
+    ParentMastery,
+    selectedPotency,
+    detectLifeForce,
+    detectNecroForce,
+    detectChaos,
+    updateSpell,
+  ]);
 
   return (
     <>
-      <div>
-        <h1>Gather Resonance</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <span>Detect Life-Force: Cost + 50%</span>
-          <input type="checkbox" onChange={() => setDetectLF(!DetectLF)} />
-          <span>Detect Necro-Force: Cost + 50%</span>
-          <input type="checkbox" onChange={() => setDetectNF(!DetectNF)} />
-          <span>Detect Chaotic Energy: Cost + 100%</span>
-          <input type="checkbox" onChange={() => setDetectC(!DetectC)} />
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Detection Options
+        </h3>
+
+        <div className="space-y-3">
+          <label className="flex cursor-pointer items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-4 py-3 transition hover:border-orange-500">
+            <div>
+              <p className="font-medium text-gray-100">Detect Life-Force</p>
+              <p className="text-sm text-gray-400">Increases Cost by 50%</p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={detectLifeForce}
+              onChange={() => setDetectLifeForce(!detectLifeForce)}
+              className="h-5 w-5 accent-orange-500"
+            />
+          </label>
+
+          <label className="flex cursor-pointer items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-4 py-3 transition hover:border-orange-500">
+            <div>
+              <p className="font-medium text-gray-100">Detect Necro-Force</p>
+              <p className="text-sm text-gray-400">Increases Cost by 50%</p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={detectNecroForce}
+              onChange={() => setDetectNecroForce(!detectNecroForce)}
+              className="h-5 w-5 accent-orange-500"
+            />
+          </label>
+
+          <label className="flex cursor-pointer items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-4 py-3 transition hover:border-orange-500">
+            <div>
+              <p className="font-medium text-gray-100">Detect Chaotic Energy</p>
+              <p className="text-sm text-gray-400">Increases Cost by 100%</p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={detectChaos}
+              onChange={() => setDetectChaos(!detectChaos)}
+              className="h-5 w-5 accent-orange-500"
+            />
+          </label>
         </div>
-        <div>
-          <p>Minor – 20 / 10 / 0</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 50 / 40 / 30</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 100 / 80 / 60</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
+      </div>
+
+      <div className="mt-8 space-y-4 text-gray-300">
         <p>
-          Info: Parse out any latent manna signature in the area being broadcast
-          as High magic or as transmissions between Magi-Tech.
+          Parse out any latent manna signature in the area being broadcast as
+          High Magic or transmitted through Magi-Tech.
         </p>
+
         <p>
-          Can be used pre-emptively or after sensing manna signature. Isolating
-          source of manna is determined by strength of signal being received,
-          integrity of the signal, and uses an Int Check
+          Can be used pre-emptively or after sensing a manna signature.
+          Isolating the source depends on signal strength, integrity, and an
+          Intelligence Check.
         </p>
+
         <p>
-          Potency scales with parsing ability, precision in locating source, and
-          detection of multiple signals through noise. Int Check is used to
-          parse scrambled signatures.
+          Higher potency improves parsing ability, precision in locating the
+          source, and distinguishing multiple signatures through interference.
+          Intelligence Checks are used to decipher scrambled signatures.
         </p>
       </div>
     </>

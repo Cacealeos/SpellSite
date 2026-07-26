@@ -1,85 +1,157 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models";
+import { useEffect, useState } from "react";
+
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const InterpolateWave = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [rate, setRate] = useState(0);
-  let testMastery: Mastery = new Mastery();
+  // ==================================================
+  // State
+  // ==================================================
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  if (!active) setCost(0);
+  // ==================================================
+  // Potency Options
+  // ==================================================
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(30);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(75);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(150);
-      setRate(3);
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "30 / 20 / 10",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "75 / 60 / 45",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "150 / 120 / 90",
+    },
+  ];
+
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      updateSpell("ttt", 0);
+      return;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(20);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(60);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(120);
-      setRate(5);
+
+    const mastery = ParentMastery.getType();
+
+    const costs = {
+      MINOR: {
+        NOVICE: 30,
+        INTERMEDIATE: 20,
+        MASTERED: 10,
+      },
+      MAJOR: {
+        NOVICE: 75,
+        INTERMEDIATE: 60,
+        MASTERED: 45,
+      },
+      EXTREME: {
+        NOVICE: 150,
+        INTERMEDIATE: 120,
+        MASTERED: 90,
+      },
+    };
+
+    const tttValues = {
+      NOVICE: 8,
+      INTERMEDIATE: 5,
+      MASTERED: 3,
+    };
+
+    const cost =
+      costs[selectedPotency][mastery as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
+
+    const ttt = tttValues[mastery as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
+
+    updateSpell("cost", cost);
+    updateSpell("ttt", ttt);
+
+    const potency = new Potency();
+
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(10);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(45);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(90);
-      setRate(8);
-    }
-  };
+
+    updateSpell("potency", potency);
+  }, [active, ParentMastery, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
+
+  const ttt = {
+    NOVICE: 3,
+    INTERMEDIATE: 5,
+    MASTERED: 8,
+  }[ParentMastery.getType() as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
 
   return (
     <>
-      <div>
-        <h1>Project Wave</h1>
-        <br />
-        <p>Potency</p>
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
-        <div>
-          <p>Minor – 30 / 20 / 10</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 75 / 60 / 45</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 150 / 120 / 90</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
-        <p>
-          Info: Detects light waves outside the visible spectrum but cannot
-          interpret them without some kind of key.
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Sustained TTT Cost
+        </h3>
+
+        <p className="text-center text-3xl font-bold text-cyan-400">
+          {ttt} TTT
         </p>
-        <p>
-          Also allows for the insertion of “noise” to such signals at the risk
-          of projecting the caster manna signature.
+
+        <p className="mt-2 text-center text-sm text-gray-400">
+          Consumed each turn while broadcasting.
         </p>
-        <p>Uses a TTT cost to sustain broadcast.</p>
+      </div>
+
+      <div className="mt-6 space-y-4 text-gray-300">
         <p>
-          Potency scales with the parsing ability, and the strength of noise and
-          signals detected.
+          Detects light waves outside the visible spectrum but cannot interpret
+          them without some form of key.
+        </p>
+
+        <p>
+          Allows the insertion of noise into detected signals at the risk of
+          projecting the caster's manna signature.
+        </p>
+
+        <p>Uses a TTT cost to sustain the broadcast.</p>
+
+        <p>
+          Potency scales with parsing ability and the strength of both detected
+          signals and injected noise.
         </p>
       </div>
     </>

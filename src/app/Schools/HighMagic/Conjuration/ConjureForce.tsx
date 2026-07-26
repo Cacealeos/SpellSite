@@ -201,6 +201,11 @@ const ConjureForce = ({
               <span className="font-semibold text-gray-400">Range:</span>{" "}
               {medium.Range}
             </p>
+            <p>
+              <span className="font-semibold text-gray-400">
+                Emanates: ENVIRONMENT
+              </span>
+            </p>
           </div>
         </div>
         <br />

@@ -1,87 +1,122 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const ResonateSpell = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  // ==================================================
+  // State
+  // ==================================================
 
-  let CoherencePotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  if (!active) setCost(0);
+  // ==================================================
+  // Potency Options
+  // ==================================================
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(35);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(100);
-      if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(200);
-      setPot(CoherencePotency);
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "35 / 20 / 5",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "100 / 75 / 50",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "200 / 160 / 120",
+    },
+  ];
+
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(20);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(75);
-      if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(160);
-      setPot(CoherencePotency);
+
+    const mastery = ParentMastery.getType();
+
+    const costs = {
+      MINOR: {
+        NOVICE: 35,
+        INTERMEDIATE: 20,
+        MASTERED: 5,
+      },
+      MAJOR: {
+        NOVICE: 100,
+        INTERMEDIATE: 75,
+        MASTERED: 50,
+      },
+      EXTREME: {
+        NOVICE: 200,
+        INTERMEDIATE: 160,
+        MASTERED: 120,
+      },
+    };
+
+    const cost =
+      costs[selectedPotency][mastery as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
+
+    updateSpell("cost", cost);
+
+    const potency = new Potency();
+
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(5);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(50);
-      if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(120);
-      setPot(CoherencePotency);
-    }
-  };
+
+    updateSpell("potency", potency);
+  }, [active, ParentMastery, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
     <>
-      <div>
-        <h1>Resonate Spell</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor – 35 / 20 / 5</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 100 / 75 / 50</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 200 / 160 / 120</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.extreme())}
-          />
-        </div>
-        <br />
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
+
+      <div className="mt-6 space-y-4 text-gray-300">
+        <p>Sends transmissions as manna fluctuations across large distances.</p>
+
         <p>
-          Info: Send transmission sent as manna fluctuations from large
-          distances.
+          Sending a signal reveals the caster's position if receivers are
+          present to intercept it.
         </p>
+
         <p>
-          Sending signal give away the position of the caster if there are
-          receivers to intercept.
-        </p>
-        <p>
-          Potency scales with strength and resilience of signal. Stronger
-          signals are easier to detect. Resilient signals are resistant to
-          scrambling.
+          Potency scales with signal strength and resilience. Stronger signals
+          are easier to detect, while resilient signals resist scrambling.
         </p>
       </div>
     </>

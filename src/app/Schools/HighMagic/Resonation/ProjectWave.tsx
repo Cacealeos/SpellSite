@@ -1,80 +1,152 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models";
+import { useEffect, useState } from "react";
+
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const ProjectWave = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [rate, setRate] = useState(0);
-  let testMastery: Mastery = new Mastery();
+  // ==================================================
+  // State
+  // ==================================================
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  if (!active) setCost(0);
+  // ==================================================
+  // Potency Options
+  // ==================================================
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(15);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(50);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(100);
-      setRate(3);
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "15 / 10 / 5",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "50 / 35 / 25",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "100 / 80 / 60",
+    },
+  ];
+
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      updateSpell("ttt", 0);
+      return;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(10);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(35);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(80);
-      setRate(5);
+
+    const mastery = ParentMastery.getType();
+
+    const costs = {
+      MINOR: {
+        NOVICE: 15,
+        INTERMEDIATE: 10,
+        MASTERED: 5,
+      },
+      MAJOR: {
+        NOVICE: 50,
+        INTERMEDIATE: 35,
+        MASTERED: 25,
+      },
+      EXTREME: {
+        NOVICE: 100,
+        INTERMEDIATE: 80,
+        MASTERED: 60,
+      },
+    };
+
+    const tttValues = {
+      NOVICE: 8,
+      INTERMEDIATE: 5,
+      MASTERED: 3,
+    };
+
+    const cost =
+      costs[selectedPotency][mastery as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
+
+    const ttt = tttValues[mastery as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
+
+    updateSpell("cost", cost);
+    updateSpell("ttt", ttt);
+
+    const potency = new Potency();
+
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(5);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(25);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(60);
-      setRate(8);
-    }
-  };
+
+    updateSpell("potency", potency);
+  }, [active, ParentMastery, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
+
+  const ttt = {
+    NOVICE: 8,
+    INTERMEDIATE: 5,
+    MASTERED: 3,
+  }[ParentMastery.getType() as "NOVICE" | "INTERMEDIATE" | "MASTERED"];
 
   return (
     <>
-      <div>
-        <h1>Project Wave</h1>
-        <br />
-        <p>Potency</p>
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
-        <div>
-          <p>Minor – 15 / 10 / 5</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 50 / 35 / 25</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 100 / 80 / 60</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
-        <p>
-          Info: Produces light waves with the user’s manna signature as a
-          message or to disrupt active channels. Uses a TTT cost to sustain
-          broadcast.
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Turn-to-Turn Cost
+        </h3>
+
+        <p className="text-center text-3xl font-bold text-cyan-400">
+          {ttt} TTT
         </p>
+
+        <p className="mt-2 text-center text-sm text-gray-400">
+          Sustain cost varies based on Mastery.
+        </p>
+      </div>
+
+      <div className="mt-6 space-y-4 text-gray-300">
         <p>
-          Potency scales with strength, complexity, and resilience of signal.
+          Produces light waves carrying the caster's manna signature as a
+          message or to disrupt active channels.
+        </p>
+
+        <p>Uses a Turn-to-Turn cost to sustain the broadcast.</p>
+
+        <p>
+          Potency scales with the strength, complexity, and resilience of the
+          transmitted signal.
         </p>
       </div>
     </>

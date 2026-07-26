@@ -132,7 +132,7 @@ const InterpolateWave = ({
         </p>
 
         <p className="mt-2 text-center text-sm text-gray-400">
-          Consumed each turn while broadcasting.
+          Sustain cost varies based on Mastery.
         </p>
       </div>
 

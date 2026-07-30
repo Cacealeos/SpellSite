@@ -1,170 +1,273 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "../../../models/Potency";
+import { useState, useEffect } from "react";
+
+import { Mastery, Spell, Potency } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const CollapseSaturation = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
+  // ==================================================
+  // State
+  // ==================================================
+
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
+
   const [damage, setDamage] = useState(0);
-  const [pot, setPot] = useState(new Potency());
-  const [TTT, setTTT] = useState(0);
+  const [vitalityInvestment, setVitalityInvestment] = useState(0);
 
-  let SpellPotency: Potency = pot;
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const spellData = {
+    MINOR: {
+      costs: {
+        NOVICE: 90,
+        INTERMEDIATE: 60,
+        MASTERED: 30,
+      },
+      vitality: {
+        NOVICE: 50,
+        INTERMEDIATE: 100,
+        MASTERED: 150,
+      },
+      ratio: 2,
+    },
 
-  useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    MAJOR: {
+      costs: {
+        NOVICE: 200,
+        INTERMEDIATE: 150,
+        MASTERED: 100,
+      },
+      vitality: {
+        NOVICE: 200,
+        INTERMEDIATE: 300,
+        MASTERED: 400,
+      },
+      ratio: 1,
+    },
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(90);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(60);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(30);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(200);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(150);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(100);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(500);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(400);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(300);
-      setPot(SpellPotency);
-    }
+    EXTREME: {
+      costs: {
+        NOVICE: 500,
+        INTERMEDIATE: 400,
+        MASTERED: 300,
+      },
+      vitality: {
+        NOVICE: 500,
+        INTERMEDIATE: 700,
+        MASTERED: 900,
+      },
+      ratio: 0.5,
+    },
   };
 
-  function caculateDamageCost(damage: number, rate: number) {
-    setDamage(rate);
-    setTTT(rate * damage);
-  }
+  const mastery = ParentMastery.getType() as
+    | "NOVICE"
+    | "INTERMEDIATE"
+    | "MASTERED";
+
+  const data = spellData[selectedPotency];
+
+  const baseCost = data.costs[mastery];
+  const baseVitality = data.vitality[mastery];
+
+  const totalCost = baseCost + vitalityInvestment;
+
+  const currentVitality = baseVitality + vitalityInvestment;
+
+  const requiredTTT =
+    selectedPotency === "MINOR"
+      ? damage * 2
+      : selectedPotency === "MAJOR"
+        ? damage
+        : Math.ceil(damage / 2);
+
+  // ==================================================
+  // Potency Options
+  // ==================================================
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "90 / 60 / 30",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "200 / 150 / 100",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "500 / 400 / 300",
+    },
+  ];
+
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      updateSpell("ttt", 0);
+      return;
+    }
+
+    updateSpell("cost", totalCost);
+    updateSpell("ttt", requiredTTT);
+
+    const potency = new Potency();
+
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
+    }
+
+    updateSpell("potency", potency);
+  }, [active, totalCost, requiredTTT, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
     <>
-      <h1>Collapse Saturation</h1>
-      <h2>Info</h2>
-      <p>
-        Collect and pool a mass of saturated manna into a construct to be
-        weaponized by collapsing the Saturation into Ether or Ethereal,
-        releasing great energy. Positioning and Orientation of the collective is
-        caster dependent and dynamic
-      </p>
-      <br />
-      <b>Large AOE.</b>
-      <br />
-      <p>
-        Power scales with the amount of Saturation. Every 10% provides 1 power.
-        |Max 6|
-      </p>
-      <br />
-      <b>Collectives Power / Endurance matches the Saturation Scaling</b>
-      <br />
-      <p>
-        Vitality of the collective prevents the interruption/premature
-        detonation of the Collapse Saturation mass
-      </p>
-      <br />
-      <p>
-        Damage starts at 0 and scales with invested TTT cost into strike.
-        Invested TTT depreciates by 10 every turn not charged. Collective cannot
-        be detonated with less than 10 invested TTT
-      </p>
-      <br />
-      <p>Potency Scales with:</p>
-      <ul>
-        <li>
-          Vitality |Base + additional manna to Vitality ratio of 1:1|
-          <li>Base cost</li>
-          <li>TTT Damage to manna ratio.</li>
-          <li>
-            <b>Mastery also improves Vitality</b>
-          </li>
-        </li>
-      </ul>
-      <br />
-      <p>KINETIC</p>
-      <br />
-      <p>RANGE - RADIAL</p>
-      <br />
-      <b>
-        Fluctuate Saturation has moderate Saturation threshold. And becomes
-        unusable at HIGH Saturation. |40%+|
-      </b>
-      <div>
-        <h1>
-          <button onClick={() => changeChoice(testPotency.minor(true))}>
-            MINOR
-          </button>
-        </h1>
+      <h2 className="mb-6 border-b border-gray-700 pb-2 text-2xl font-bold text-orange-400">
+        Collapse Saturation
+      </h2>
 
-        <ol>
-          <li>Base Cost - 90 / 60 / 30</li>
-          <li>Vitality - | 50 / 100 / 150 | + X</li>
-          <li>TTT to damage: 2 TO 1</li>
-        </ol>
-        <input
-          type="number"
-          min="0"
-          value={damage}
-          onChange={(e) => caculateDamageCost(Number(e.target.value), 2)}
-          disabled={SpellPotency.getType() === testPotency.minor(true)}
-        />
-        <br />
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
+
+      {/* Statistics */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Collapse Statistics
+        </h3>
+
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span>Base Cost</span>
+            <span>{baseCost}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Base Vitality</span>
+            <span>{baseVitality}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Current Vitality</span>
+            <span>{currentVitality}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Current Damage</span>
+            <span>{damage}</span>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <h1>
-          <button onClick={() => changeChoice(testPotency.major(true))}>
-            MAJOR
-          </button>
-        </h1>
-        <br />
-        <ol>
-          <li>Base Cost - 200 / 150 / 100</li>
-          <li>Vitality - | 200 / 300 / 400 | + X</li>
-          <li>TTT to damage: 1 TO 1</li>
-        </ol>
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Vitality Investment
+        </h3>
+
+        <label className="mb-2 block text-sm text-gray-300">
+          Additional Vitality
+        </label>
+
         <input
           type="number"
-          min="0"
-          value={damage}
-          onChange={(e) => caculateDamageCost(Number(e.target.value), 2)}
-          disabled={SpellPotency.getType() === testPotency.major(true)}
+          min={0}
+          value={vitalityInvestment}
+          onChange={(e) => setVitalityInvestment(Number(e.target.value))}
+          className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-center text-lg text-cyan-400 focus:border-orange-500 focus:outline-none"
         />
-        <br />
+
+        <p className="mt-4 text-center text-sm text-gray-400">
+          Current Vitality
+        </p>
+
+        <p className="text-center text-xl font-semibold text-cyan-400">
+          {currentVitality}
+        </p>
       </div>
-      <div>
-        <h1>
-          <button onClick={() => changeChoice(testPotency.extreme(true))}>
-            EXTREME
-          </button>
-        </h1>
-        <br />
-        <ol>
-          <li>Base Cost - 500 / 400 / 300</li>
-          <li>Vitality - | 500 / 700 / 900 | + X</li>
-          <li>TTT to damage: 1 TO 2</li>
-        </ol>
+
+      {/* Damage Investment */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Damage Investment
+        </h3>
+
+        <label className="mb-2 block text-sm text-gray-300">
+          Desired Damage
+        </label>
+
         <input
           type="number"
-          min="0"
-          step="1"
+          min={0}
           value={damage}
-          onChange={(e) => caculateDamageCost(Number(e.target.value), 0.5)}
-          disabled={SpellPotency.getType() === testPotency.extreme(true)}
+          onChange={(e) => setDamage(Number(e.target.value))}
+          className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-center text-lg text-cyan-400 focus:border-orange-500 focus:outline-none"
         />
-        <br />
+
+        <p className="mt-4 text-center text-sm text-gray-400">TTT to Damage</p>
+
+        <p className="text-center text-xl font-semibold text-cyan-400">
+          {selectedPotency === "MINOR"
+            ? "2 : 1"
+            : selectedPotency === "MAJOR"
+              ? "1 : 1"
+              : "1 : 2"}
+        </p>
+      </div>
+
+      {/* Spell Description */}
+
+      <div className="mt-6 space-y-4 text-gray-300">
+        <p>
+          Collect and pool saturated manna into a construct before collapsing it
+          into Ether or Ethereal, releasing tremendous kinetic energy.
+        </p>
+
+        <p>
+          Power scales with Saturation. Every 10% Saturation grants +1 Power, up
+          to a maximum of 6.
+        </p>
+
+        <p>
+          Collective Vitality scales with potency and may be further reinforced
+          through additional manna investment.
+        </p>
+
+        <p>
+          Damage is generated by investing Turn-to-Turn cost into the construct.
+          Stored TTT decays by 10 each turn while the construct remains
+          undetonated.
+        </p>
+
+        <p>The construct cannot be detonated with less than 10 invested TTT.</p>
       </div>
     </>
   );

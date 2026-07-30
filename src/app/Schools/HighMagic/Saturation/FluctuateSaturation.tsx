@@ -1,98 +1,171 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
+import { useEffect, useState } from "react";
 
-const FluctuateSaturation = ({
+import { Mastery, Spell } from "@/app/models";
+
+// ==================================================
+// Static Data
+// ==================================================
+
+const masteryData = {
+  NOVICE: {
+    powerRate: 12,
+    damageRate: 5,
+  },
+  INTERMEDIATE: {
+    powerRate: 10,
+    damageRate: 4,
+  },
+  MASTERED: {
+    powerRate: 8,
+    damageRate: 3,
+  },
+};
+
+export default function FluctuateSaturation({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+}) {
+  // ==================================================
+  // State
+  // ==================================================
   const [power, setPower] = useState(0);
-  const [damage, setDamage] = useState(0);
-  let powerRate: number = 0;
-  let damageRate: number = 0;
-  let testMastery: Mastery = new Mastery();
+  const [damageInvestment, setDamageInvestment] = useState(0);
+
+  // ==================================================
+  // Derived Values
+  // ==================================================
+  const mastery = ParentMastery.getType() as
+    | "NOVICE"
+    | "INTERMEDIATE"
+    | "MASTERED";
+
+  const { powerRate, damageRate } = masteryData[mastery];
+
+  const powerDamageBonus = power * 5;
+
+  const totalDamage = damageInvestment + powerDamageBonus;
+
+  const cost = power * powerRate + damageInvestment * damageRate;
+
+  const positiveScaling = 0;
+  const negativeScaling = 0.2;
+  const scalingAdjustment = Math.floor(totalDamage * negativeScaling);
+  // ==================================================
+  // Spell Updates
+  // ==================================================
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
+    }
 
-  if (ParentMastery.getType() === testMastery.novice(true)) {
-    powerRate = 12;
-    damageRate = 5;
-  } else if (ParentMastery.getType() === testMastery.intermediate(true)) {
-    powerRate = 10;
-    damageRate = 4;
-  } else if (ParentMastery.getType() === testMastery.mastered(true)) {
-    powerRate = 8;
-    damageRate = 3;
-  }
+    updateSpell("cost", cost);
+  }, [active, cost, updateSpell]);
 
-  function caculatePowerCost(pow: number) {
-    setPower(pow);
-    setDamage(damage + pow * 5); //bonus damage from power
-    pow *= powerRate || 0;
-    setCost(pow + damage * damageRate);
-  }
-
-  function caculateDamageCost(dam: number) {
-    setDamage(dam + power * 5); //bonus damage from power
-    dam *= damageRate || 0;
-    setCost(dam + power * powerRate);
-  }
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
     <>
-      <h1>Fluctuate Saturation</h1>
-      <p>
-        Info: Attack with animated Ether and Ethereal. Fluctuate Saturation
-        affects Saturation at a heavy rate
-      </p>
-      <br />
-      <p>Power of Fluctuate Saturation peaks at 5 |7 with SPELL CHARGE|</p>
-      <div>
-        <h1>Manna to Power</h1>
-        <br />
+      {/* Statistics */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Fluctuation Statistics
+        </h3>
+
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-gray-300">Damage Type</span>
+            <span className="font-semibold text-cyan-400">Kinetic</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-300">Range</span>
+            <span className="font-semibold text-cyan-400">Missile / Cloud</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-300">Scaling</span>
+
+            <span className="font-semibold text-cyan-400">
+              0 / {scalingAdjustment} ({positiveScaling * 100}% / -
+              {negativeScaling * 100}%)
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-300">Power</span>
+            <span className="font-semibold text-cyan-400">{power}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-300">Damage</span>
+            <span className="font-semibold text-cyan-400">{totalDamage}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-300">Cost</span>
+            <span className="font-semibold text-cyan-400">{cost}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Power Investment */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Power Investment
+        </h3>
+
+        <label className="mb-2 block text-sm text-gray-300">
+          Manna to Power
+          <span className="ml-2 text-xs text-gray-500">(Max of 5)</span>
+        </label>
+
         <input
           type="number"
-          max="5"
-          min="0"
-          step="1"
-          value="0"
-          onChange={(e) => caculatePowerCost(Number(e.target.value))}
+          min={0}
+          max={5}
+          value={power}
+          onChange={(e) => setPower(Number(e.target.value) || 0)}
+          className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-center text-lg text-cyan-400"
         />
-        <br />
-      </div>
-      <div>
-        <h1>Manna to Damage</h1>
-        <br />
-        <input
-          type="number"
-          max="200"
-          min="0"
-          step="1"
-          value="0"
-          onChange={(e) => caculateDamageCost(Number(e.target.value))}
-        />
-        <br />
-      </div>
-      <div>
-        <p>Kinetic</p>
-        <br />
-        <p>RANGE - MISSLE / CLOUD</p>
-        <br />
-        <p>Recieves bonus damage from power |5|</p>
-        <br />
-        <p>
-          Fluctuate Saturation has Saturation MODERATE threshold. And becomes
-          unusable at HIGH Saturation. |40%+|
+
+        <p className="mt-4 text-center text-sm text-gray-400">Bonus Damage</p>
+
+        <p className="text-center text-xl font-semibold text-cyan-400">
+          +{powerDamageBonus}
         </p>
-        <span>Damage: {damage}</span>
+      </div>
+
+      {/* Damage Investment */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Damage Investment
+        </h3>
+
+        <label className="mb-2 block text-sm text-gray-300">
+          Manna to Damage
+        </label>
+
+        <input
+          type="number"
+          min={0}
+          max={200}
+          value={damageInvestment}
+          onChange={(e) => setDamageInvestment(Number(e.target.value) || 0)}
+          className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-center text-lg text-cyan-400"
+        />
       </div>
     </>
   );
-};
-
-export default FluctuateSaturation;
+}

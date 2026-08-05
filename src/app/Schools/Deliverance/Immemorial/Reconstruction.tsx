@@ -1,88 +1,127 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+const costTable = {
+  NOVICE: {
+    MINOR: 45,
+    MAJOR: 95,
+    EXTREME: 165,
+  },
+  INTERMEDIATE: {
+    MINOR: 35,
+    MAJOR: 75,
+    EXTREME: 135,
+  },
+  MASTERED: {
+    MINOR: 25,
+    MAJOR: 55,
+    EXTREME: 105,
+  },
+};
 
 const Reconstruction = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
-  const [range, setRange] = useState(0);
+  // ==================================================
+  // State
+  // ==================================================
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
+
+  // ==================================================
+  // Potency Options
+  // ==================================================
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "45 / 35 / 25",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "95 / 75 / 55",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "165 / 135 / 105",
+    },
+  ];
+
+  const cost =
+    costTable[ParentMastery.getType() as keyof typeof costTable][
+      selectedPotency
+    ];
+
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      updateSpell("potency", new Potency());
+      return;
+    }
 
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
+    const potency = new Potency();
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(45);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(95);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(165);
-      setPot(SpellPotency);
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(35);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(75);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(135);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(25);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(55);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(105);
-      setPot(SpellPotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+    updateSpell("potency", potency);
+  }, [active, cost, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
     <>
-      <div>
-        <h1>Reconstruction</h1>
-        <br />
-        <p>Potency</p>
-        <h3>RANGE - RADIAL</h3>
-        <div>
-          <p>Minor 45 / 35 / 25</p>
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major 95 / 75 / 55</p>
-          <br />
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Reconstruction Statistics
+        </h3>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme 165 / 135 / 105</p>
-          <br />
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-gray-300">Range</span>
+            <span className="font-semibold text-cyan-400">Radial</span>
+          </div>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
+          <div className="flex justify-between">
+            <span className="text-gray-300">Cost</span>
+            <span className="font-semibold text-cyan-400">{cost}</span>
+          </div>
         </div>
-        <br />
       </div>
     </>
   );

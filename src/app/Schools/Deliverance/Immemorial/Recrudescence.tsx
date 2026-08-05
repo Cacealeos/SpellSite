@@ -1,92 +1,134 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+const spellTable = {
+  NOVICE: {
+    MINOR: { cost: 100, turns: 1 },
+    MAJOR: { cost: 250, turns: 2 },
+    EXTREME: { cost: 500, turns: 3 },
+  },
+  INTERMEDIATE: {
+    MINOR: { cost: 75, turns: 1 },
+    MAJOR: { cost: 150, turns: 2 },
+    EXTREME: { cost: 350, turns: 3 },
+  },
+  MASTERED: {
+    MINOR: { cost: 40, turns: 1 },
+    MAJOR: { cost: 100, turns: 2 },
+    EXTREME: { cost: 200, turns: 3 },
+  },
+};
 
 const Recrudescence = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
-  const [range, setRange] = useState(0);
+  // ==================================================
+  // State
+  // ==================================================
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
+
+  // ==================================================
+  // Potency Options
+  // ==================================================
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "1 Turn • 100 / 75 / 40",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "2 Turns • 250 / 150 / 100",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "3 Turns • 500 / 350 / 200",
+    },
+  ];
+
+  const { cost, turns } =
+    spellTable[ParentMastery.getType() as keyof typeof spellTable][
+      selectedPotency
+    ];
+
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      updateSpell("potency", new Potency());
+      return;
+    }
 
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
+    const potency = new Potency();
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(250);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(500);
-      setPot(SpellPotency);
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(75);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(150);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(350);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(40);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(200);
-      setPot(SpellPotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+    updateSpell("potency", potency);
+  }, [active, cost, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
     <>
-      <div>
-        <h1>Recrudescence</h1>
-        <br />
-        <p>Potency</p>
-        <h3>RANGE - RADIAL</h3>
-        <div>
-          <p>Minor |1 turn| 100 / 75 / 40</p>
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major |2 turn| 250 / 150 / 100</p>
-          <br />
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Recrudescence Statistics
+        </h3>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme |3 turn| 500 / 350 / 200</p>
-          <br />
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-gray-300">Range</span>
+            <span className="font-semibold text-cyan-400">Radial</span>
+          </div>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
+          <div className="flex justify-between">
+            <span className="text-gray-300">Duration</span>
+            <span className="font-semibold text-cyan-400">
+              {turns} {turns === 1 ? "Turn" : "Turns"}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-300">Cost</span>
+            <span className="font-semibold text-cyan-400">{cost}</span>
+          </div>
         </div>
-        <br />
       </div>
     </>
   );

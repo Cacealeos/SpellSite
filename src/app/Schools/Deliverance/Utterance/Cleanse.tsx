@@ -1,89 +1,125 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
 
-const RefuteCleanse = ({
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+const spellTable = {
+  NOVICE: {
+    MINOR: { cost: 40 },
+    MAJOR: { cost: 70 },
+    EXTREME: { cost: 100 },
+  },
+  INTERMEDIATE: {
+    MINOR: { cost: 30 },
+    MAJOR: { cost: 60 },
+    EXTREME: { cost: 90 },
+  },
+  MASTERED: {
+    MINOR: { cost: 20 },
+    MAJOR: { cost: 50 },
+    EXTREME: { cost: 80 },
+  },
+};
+
+const Cleanse = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  // ==================================================
+  // State
+  // ==================================================
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
+
+  // ==================================================
+  // Potency Options
+  // ==================================================
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "40 / 30 / 20",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "70 / 60 / 50",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "100 / 90 / 80",
+    },
+  ];
+
+  const { cost } =
+    spellTable[ParentMastery.getType() as keyof typeof spellTable][
+      selectedPotency
+    ];
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      updateSpell("potency", new Potency());
+      return;
+    }
 
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
+    const potency = new Potency();
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(40);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(70);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(100);
-      setPot(SpellPotency);
+    switch (selectedPotency) {
+      case "MINOR":
+        potency.minor();
+        break;
+      case "MAJOR":
+        potency.major();
+        break;
+      case "EXTREME":
+        potency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(30);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(60);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(90);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(20);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(50);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(80);
-      setPot(SpellPotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+    updateSpell("potency", potency);
+  }, [active, cost, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
     <>
-      <div>
-        <h1>Cleanse</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor 40 / 30 / 20</p>
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major 70 / 60 / 50</p>
-          <br />
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Cleanse Statistics
+        </h3>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme 100 / 90 / 80</p>
-          <br />
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-gray-300">Cost</span>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
+            <span className="font-semibold text-cyan-400">{cost}</span>
+          </div>
         </div>
-        <br />
       </div>
     </>
   );
 };
 
-export default RefuteCleanse;
+export default Cleanse;

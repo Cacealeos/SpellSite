@@ -1,89 +1,126 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const SageBringer = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "+1 | 90 / 60 / 30",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "+2 | 180 / 150 / 120",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "+3 | 270 / 240 / 210",
+    },
+  ];
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
+    }
 
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
+    const spellPotency = new Potency();
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(90);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(180);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(270);
-      setPot(SpellPotency);
+    let cost = 0;
+
+    switch (selectedPotency) {
+      case "MINOR":
+        spellPotency.minor();
+
+        switch (ParentMastery.getType()) {
+          case "NOVICE":
+            cost = 90;
+            break;
+          case "INTERMEDIATE":
+            cost = 60;
+            break;
+          case "MASTERED":
+            cost = 30;
+            break;
+        }
+        break;
+
+      case "MAJOR":
+        spellPotency.major();
+
+        switch (ParentMastery.getType()) {
+          case "NOVICE":
+            cost = 180;
+            break;
+          case "INTERMEDIATE":
+            cost = 150;
+            break;
+          case "MASTERED":
+            cost = 120;
+            break;
+        }
+        break;
+
+      case "EXTREME":
+        spellPotency.extreme();
+
+        switch (ParentMastery.getType()) {
+          case "NOVICE":
+            cost = 270;
+            break;
+          case "INTERMEDIATE":
+            cost = 240;
+            break;
+          case "MASTERED":
+            cost = 210;
+            break;
+        }
+        break;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(60);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(150);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(240);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(30);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(120);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(210);
-      setPot(SpellPotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+    updateSpell("potency", spellPotency);
+  }, [active, ParentMastery, selectedPotency, updateSpell]);
 
   return (
     <>
-      <div>
-        <h1>Sage Bringer</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor|+1| 90 / 60 / 30</p>
+      <h2 className="mb-2 text-center text-3xl font-bold text-cyan-400">
+        Sage Bringer
+      </h2>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major|+2| 180 / 150 / 120</p>
-          <br />
+      <p className="mb-6 text-center text-sm text-gray-400">
+        This spell lasts for three turns.
+      </p>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme|+3| 270 / 240 / 210</p>
-          <br />
+      <PotencySelector
+        options={potencyOptions}
+        selectedPotency={selectedPotency}
+        setSelectedPotency={setSelectedPotency}
+      />
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
+      <div className="mt-6 space-y-4 text-gray-300">
+        <p>
+          Sage Bringer enhances the caster's capabilities based on the selected
+          potency.
+        </p>
+
+        <p>The effect remains active for three turns after casting.</p>
       </div>
     </>
   );

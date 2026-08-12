@@ -1,91 +1,114 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import React, { useEffect, useState } from "react";
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const EnforceEthereal = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "150 / 100 / 50",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "900 / 600 / 300",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "5400 / 3600 / 1800",
+    },
+  ];
+
+  // ==================================================
+  // Spell Calculation
+  // ==================================================
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
+    }
 
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
+    const mastery = ParentMastery.getType();
+    const spellPotency = new Potency();
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(150);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(900);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(5400);
-      setPot(SpellPotency);
+    let cost = 0;
+
+    switch (selectedPotency) {
+      case "MINOR":
+        spellPotency.minor();
+
+        if (mastery === "NOVICE") cost = 150;
+        if (mastery === "INTERMEDIATE") cost = 100;
+        if (mastery === "MASTERED") cost = 50;
+        break;
+
+      case "MAJOR":
+        spellPotency.major();
+
+        if (mastery === "NOVICE") cost = 900;
+        if (mastery === "INTERMEDIATE") cost = 600;
+        if (mastery === "MASTERED") cost = 300;
+        break;
+
+      case "EXTREME":
+        spellPotency.extreme();
+
+        if (mastery === "NOVICE") cost = 5400;
+        if (mastery === "INTERMEDIATE") cost = 3600;
+        if (mastery === "MASTERED") cost = 1800;
+        break;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(600);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(3600);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(50);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(300);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(1800);
-      setPot(SpellPotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+    updateSpell("potency", spellPotency);
+  }, [active, ParentMastery, selectedPotency, updateSpell]);
+
+  // ==================================================
+  // UI
+  // ==================================================
 
   return (
     <>
-      <div>
-        <h1>Enforce Ethereal</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor 150 / 100 / 50</p>
+      <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
+        Enforce Ethereal
+      </h2>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major 900 / 600 / 300</p>
-          <br />
+      {/* ==================================================
+          Potency
+          ================================================== */}
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme 5400 / 3600 / 1800</p>
-          <br />
+      <div className="mt-6">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
+      {/* ==================================================
+          Information
+          ================================================== */}
+
+      <div className="mt-6 space-y-4 text-gray-300">
+        <p>
+          Reinforces an ethereal target, with the potency determining the
+          strength and base manna cost of the effect.
+        </p>
       </div>
     </>
   );

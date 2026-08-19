@@ -1,37 +1,97 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import React, { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
 
 const Reconstitute = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency ())
+  // ==================================================
+  // State
+  // ==================================================
+
+  const [cost, setCost] = useState(150);
+
+  // ==================================================
+  // Reset
+  // ==================================================
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      setCost(150);
+      updateSpell("cost", 0);
+    }
+  }, [active, updateSpell]);
+
+  // ==================================================
+  // Cost Change Handler
+  // ==================================================
+
+  const changeCost = (value: number) => {
+    const newCost = Math.max(150, Math.min(1000, value));
+
+    setCost(newCost);
+    updateSpell("cost", newCost);
+  };
+
+  // ==================================================
+  // UI
+  // ==================================================
 
   return (
     <>
-      <div>
-        <h1>Reconstitute</h1>
-        
-        <input
-          type="number"
-          max="1000"
-          min="150"
-          value={cost}
-            onChange={(e) => setCost(Number(e.target.value))}
-        />
-        <br />
-      </div>
-      <h2>Cost: {cost}</h2>
+      <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
+        Reconstitute
+      </h2>
 
+      {/* ==================================================
+          Spell Properties & Final Statistics
+          ================================================== */}
+
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Spell Properties
+        </h3>
+
+        <div className="space-y-3 text-gray-300">
+          <div className="flex justify-between">
+            <span>Cost</span>
+
+            <span className="font-semibold text-cyan-400">{cost}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ==================================================
+          Optional Cost
+          ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Cost Adjustment
+        </h3>
+
+        <label className="block">
+          <span className="text-gray-300">
+            Cost
+            <span className="ml-2 text-gray-500">(Optional — minimum 150)</span>
+          </span>
+
+          <input
+            type="number"
+            min={150}
+            max={1000}
+            step={1}
+            value={cost}
+            onChange={(e) => changeCost(Number(e.target.value) || 150)}
+            className="mt-1 w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+          />
+        </label>
+      </div>
     </>
   );
 };

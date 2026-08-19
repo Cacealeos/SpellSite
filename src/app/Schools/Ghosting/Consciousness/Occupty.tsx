@@ -1,75 +1,144 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import React, { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const OccupyConsciousness = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency ())
+  // ==================================================
+  // Potency Data
+  // ==================================================
 
-   let SpellPotency: Potency = new Potency();
-    let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const potencyStats = {
+    MINOR: {
+      NOVICE: { cost: 60 },
+      INTERMEDIATE: { cost: 40 },
+      MASTERED: { cost: 20 },
+    },
+    MAJOR: {
+      NOVICE: { cost: 120 },
+      INTERMEDIATE: { cost: 100 },
+      MASTERED: { cost: 80 },
+    },
+    EXTREME: {
+      NOVICE: { cost: 240 },
+      INTERMEDIATE: { cost: 200 },
+      MASTERED: { cost: 160 },
+    },
+  };
+
+  // ==================================================
+  // State
+  // ==================================================
+
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
+
+  // ==================================================
+  // Mastery
+  // ==================================================
+
+  const mastery = ParentMastery.getType() as
+    | "NOVICE"
+    | "INTERMEDIATE"
+    | "MASTERED";
+
+  const currentStats = potencyStats[selectedPotency][mastery];
+
+  // ==================================================
+  // Potency Selector Options
+  // ==================================================
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: `Cost: ${potencyStats.MINOR.NOVICE.cost} / ${potencyStats.MINOR.INTERMEDIATE.cost} / ${potencyStats.MINOR.MASTERED.cost}`,
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: `Cost: ${potencyStats.MAJOR.NOVICE.cost} / ${potencyStats.MAJOR.INTERMEDIATE.cost} / ${potencyStats.MAJOR.MASTERED.cost}`,
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: `Cost: ${potencyStats.EXTREME.NOVICE.cost} / ${potencyStats.EXTREME.INTERMEDIATE.cost} / ${potencyStats.EXTREME.MASTERED.cost}`,
+    },
+  ];
+
+  // ==================================================
+  // Spell State
+  // ==================================================
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+    }
+  }, [active, updateSpell]);
 
+  useEffect(() => {
+    if (!active) return;
 
-    const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(60);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(120);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(240);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(40);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(100);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(200);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) setCost(20);
-      if (SpellPotency.getType() === testPotency.major(true)) setCost(80);
-      if (SpellPotency.getType() === testPotency.extreme(true)) setCost(160);
-      setPot(SpellPotency);
-    }
-  };
+    updateSpell("cost", currentStats.cost);
+  }, [active, currentStats.cost, updateSpell]);
+
+  // ==================================================
+  // UI
+  // ==================================================
 
   return (
     <>
-      <div>
-        <h1>Manifest Death</h1>
-        <h3>RANGE - DIRECT</h3>
+      <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
+        Occupy Consciousness
+      </h2>
 
-        <h4>Minor: 60 / 40 / 20</h4>
-        <input
-          type="radio"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-        />
-        <br />
-        <h4>Major: 120 / 100 / 80</h4>
-        <input
-          type="radio"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-        />
-        <br />
-        <h4>Extreme: 240 / 200 / 160</h4>
-        <input
-          type="radio"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-        />
-        <br />
+      {/* ==================================================
+          Spell Properties & Final Statistics
+          ================================================== */}
+
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Spell Properties
+        </h3>
+
+        <div className="space-y-3 text-gray-300">
+          <div className="flex justify-between">
+            <span>Range</span>
+            <span className="font-semibold text-cyan-400">DIRECT</span>
+          </div>
+
+          <div className="flex justify-between border-t border-gray-700 pt-3">
+            <span>Cost</span>
+            <span className="font-semibold text-cyan-400">
+              {currentStats.cost}
+            </span>
+          </div>
+        </div>
       </div>
-      <h2>Cost: {cost}</h2>
 
-      
+      {/* ==================================================
+          Potency
+          ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Potency
+        </h3>
+
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
     </>
   );
 };

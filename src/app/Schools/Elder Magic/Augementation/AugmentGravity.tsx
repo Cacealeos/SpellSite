@@ -1,223 +1,341 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import React, { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
 const AugmentGravity = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState({
-    base: 0,
-    Power: 0,
-    AOE: 0,
-    Charge: 0,
-    Cost: 0,
-    Mod: 0,
-    Damage: 0,
-  });
-  const [pot, setPot] = useState(new Potency());
+  // ==================================================
+  // Constants
+  // ==================================================
+
+  const AOE = ["SMALL", "MODERATE", "LARGE", "MASSIVE"];
+
+  // ==================================================
+  // State
+  // ==================================================
+
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
+
   const [increments, setIncrement] = useState(0);
 
-  let AOE = ["SMALL", "MODERATE", "LARGE", "MASSIVE"];
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  // ==================================================
+  // Mastery
+  // ==================================================
+
+  const mastery = ParentMastery.getType() as
+    | "NOVICE"
+    | "INTERMEDIATE"
+    | "MASTERED";
+
+  // ==================================================
+  // Potency Base Statistics
+  // ==================================================
+
+  const potencyStats = {
+    MINOR: {
+      base: 40,
+      power: 2,
+      aoe: 0,
+      charge: 3,
+      damage: 10,
+
+      NOVICE: {
+        cost: 90,
+        costModifier: 30,
+      },
+      INTERMEDIATE: {
+        cost: 75,
+        costModifier: 25,
+      },
+      MASTERED: {
+        cost: 60,
+        costModifier: 20,
+      },
+    },
+
+    MAJOR: {
+      base: 80,
+      power: 3,
+      aoe: 1,
+      charge: 5,
+      damage: 15,
+
+      NOVICE: {
+        cost: 185,
+        costModifier: 42,
+      },
+      INTERMEDIATE: {
+        cost: 155,
+        costModifier: 35,
+      },
+      MASTERED: {
+        cost: 125,
+        costModifier: 28,
+      },
+    },
+
+    EXTREME: {
+      base: 140,
+      power: 4,
+      aoe: 2,
+      charge: 7,
+      damage: 20,
+
+      NOVICE: {
+        cost: 330,
+        costModifier: 48,
+      },
+      INTERMEDIATE: {
+        cost: 280,
+        costModifier: 40,
+      },
+      MASTERED: {
+        cost: 230,
+        costModifier: 32,
+      },
+    },
+  };
+
+  const selectedStats = potencyStats[selectedPotency];
+  const masteryStats = selectedStats[mastery];
+
+  // ==================================================
+  // Derived Increment Statistics
+  // ==================================================
+
+  const currentStats = {
+    base: selectedStats.base + selectedStats.damage * increments,
+
+    power: selectedStats.power + (increments > 0 ? 1 : 0),
+
+    aoe:
+      increments > 1
+        ? Math.min(selectedStats.aoe + 1, AOE.length - 1)
+        : selectedStats.aoe,
+
+    charge: selectedStats.charge + (increments > 1 ? 1 : 0),
+
+    damage: selectedStats.damage,
+
+    cost: masteryStats.cost + masteryStats.costModifier * increments,
+  };
+
+  // ==================================================
+  // Spell Update
+  // ==================================================
 
   useEffect(() => {
-    if (!active)
-      setCost({
-        base: 0,
-        Power: 0,
-        AOE: 0,
-        Charge: 0,
-        Cost: 0,
-        Mod: 0,
-        Damage: 0,
-      });
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
+    }
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        setCost({
-          base: 40,
-          Power: 2,
-          AOE: 0,
-          Charge: 3,
-          Cost: 90,
-          Mod: 30,
-          Damage: 10,
-        });
-      if (SpellPotency.getType() === testPotency.major(true))
-        setCost({
-          base: 80,
-          Power: 3,
-          AOE: 1,
-          Charge: 5,
-          Cost: 185,
-          Mod: 42,
-          Damage: 15,
-        });
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        setCost({
-          base: 140,
-          Power: 4,
-          AOE: 2,
-          Charge: 7,
-          Cost: 330,
-          Mod: 48,
-          Damage: 20,
-        });
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        setCost({
-          base: 40,
-          Power: 2,
-          AOE: 0,
-          Charge: 3,
-          Cost: 75,
-          Mod: 25,
-          Damage: 10,
-        });
-      if (SpellPotency.getType() === testPotency.major(true))
-        setCost({
-          base: 80,
-          Power: 3,
-          AOE: 1,
-          Charge: 5,
-          Cost: 155,
-          Mod: 35,
-          Damage: 15,
-        });
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        setCost({
-          base: 140,
-          Power: 4,
-          AOE: 2,
-          Charge: 7,
-          Cost: 280,
-          Mod: 40,
-          Damage: 20,
-        });
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        setCost({
-          base: 40,
-          Power: 2,
-          AOE: 0,
-          Charge: 3,
-          Cost: 60,
-          Mod: 20,
-          Damage: 10,
-        });
-      if (SpellPotency.getType() === testPotency.major(true))
-        setCost({
-          base: 80,
-          Power: 3,
-          AOE: 1,
-          Charge: 5,
-          Cost: 125,
-          Mod: 28,
-          Damage: 15,
-        });
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        setCost({
-          base: 140,
-          Power: 4,
-          AOE: 2,
-          Charge: 7,
-          Cost: 230,
-          Mod: 32,
-          Damage: 20,
-        });
-      setPot(SpellPotency);
-    }
-  };
+    updateSpell("cost", currentStats.cost);
+  }, [active, currentStats.cost, updateSpell]);
+
+  // ==================================================
+  // Potency Options
+  // ==================================================
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: `Cost: ${potencyStats.MINOR.NOVICE.cost} / ${potencyStats.MINOR.INTERMEDIATE.cost} / ${potencyStats.MINOR.MASTERED.cost}`,
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: `Cost: ${potencyStats.MAJOR.NOVICE.cost} / ${potencyStats.MAJOR.INTERMEDIATE.cost} / ${potencyStats.MAJOR.MASTERED.cost}`,
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: `Cost: ${potencyStats.EXTREME.NOVICE.cost} / ${potencyStats.EXTREME.INTERMEDIATE.cost} / ${potencyStats.EXTREME.MASTERED.cost}`,
+    },
+  ];
 
   return (
     <>
-      <div>
-        <h1>Augment Gravity</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <h2>Minor: 90 / 75 / 60</h2>
-          <h3>Base: 40</h3>
-          <h3>Power: 2</h3>
-          <h3>AOE: SMALL</h3>
-          <h3>Charge: 3</h3>
-          <h3>Damage: +10</h3>
-          <br />
+      {/* ==================================================
+          Potency
+          ================================================== */}
+      <div className="mt-6">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+      {/* ==================================================
+          Augmentation
+          ================================================== */}
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Augmentation
+        </h3>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <h2>Major: 185 / 155 / 125</h2>
-          <h3>Base: 80</h3>
-          <h3>Power: 3</h3>
-          <h3>AOE: MODERATE</h3>
-          <h3>Charge: 5</h3>
-          <h3>Damage: +15</h3>
-          <br />
+        <label>
+          <span className="text-gray-300">Increments</span>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <h2>Extreme: 330 / 280 / 230</h2>
-          <h3>Base: 140</h3>
-          <h3>Power: 4</h3>
-          <h3>AOE: LARGE</h3>
-          <h3>Charge: 7</h3>
-          <h3>Damage: +20</h3>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
-        <div>
           <input
             type="number"
-            step="1"
-            min="0"
-            max="3"
+            min={0}
+            max={3}
+            step={1}
             value={increments}
-            onChange={(e) => setIncrement(Number(e.target.value))}
+            onChange={(e) =>
+              setIncrement(
+                Math.min(3, Math.max(0, Number(e.target.value) || 0)),
+              )
+            }
+            className="mt-1 w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
           />
+        </label>
+
+        <div className="mt-5 space-y-3 text-gray-300">
+          <div className="flex justify-between">
+            <span>Base</span>
+
+            <span className="font-semibold text-cyan-400">
+              {selectedStats.base}
+              {increments > 0 && ` → ${currentStats.base}`}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Power</span>
+
+            <span className="font-semibold text-cyan-400">
+              {selectedStats.power}
+              {increments > 0 && ` → ${currentStats.power}`}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Area of Effect</span>
+
+            <span className="font-semibold text-cyan-400">
+              {AOE[selectedStats.aoe]}
+              {increments > 1 && ` → ${AOE[currentStats.aoe]}`}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Charge Time</span>
+
+            <span className="font-semibold text-cyan-400">
+              {selectedStats.charge}
+              {increments > 1 && ` → ${currentStats.charge}`}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Damage</span>
+
+            <span className="font-semibold text-cyan-400">
+              +{selectedStats.damage * increments}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Scaling</span>
+
+            <span className="font-semibold text-cyan-400">0% / 50%</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Additional Cost</span>
+
+            <span className="font-semibold text-cyan-400">
+              +{masteryStats.costModifier * increments}
+            </span>
+          </div>
         </div>
-        <br />
-        <div>
-          <span>Base: {cost.base + cost.Damage * increments}</span>
-          <br />
-          <span>Scaling: 0% / 50%</span>
-          <br />
-          <span>Power: {cost.Power + increments > 1 ? 1 : 0}</span>
-          <br />
-          <span>AOE: {increments > 1 ? AOE[cost.AOE + 1] : AOE[cost.AOE]}</span>
-          <br />
-          <span>Charge Time: {cost.Charge + increments > 1 ? 1 : 0}</span>
-          <br />
-          <span>GRAVITY DAMAGE</span>
-          <br />
-          <span>RANGE - RADIAL / CLOUD</span>
-          <br />
-          <span>COST: {cost.Cost + cost.Mod * increments}</span>
-          <br />
+      </div>
+      {/* ==================================================
+    Spell Properties
+    ================================================== */}
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
+          Spell Properties
+        </h3>
+
+        <div className="space-y-3 text-gray-300">
+          <div className="flex justify-between">
+            <span>Base</span>
+
+            <span className="font-semibold text-cyan-400">
+              {currentStats.base}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Power</span>
+
+            <span className="font-semibold text-cyan-400">
+              {currentStats.power}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Area of Effect</span>
+
+            <span className="font-semibold text-cyan-400">
+              {AOE[currentStats.aoe]}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Charge Time</span>
+
+            <span className="font-semibold text-cyan-400">
+              {currentStats.charge}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Damage</span>
+
+            <span className="font-semibold text-cyan-400">
+              +{currentStats.damage * increments}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Scaling</span>
+
+            <span className="font-semibold text-cyan-400">0% / 50%</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Damage Type</span>
+
+            <span className="font-semibold text-cyan-400">GRAVITY DAMAGE</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Range</span>
+
+            <span className="font-semibold text-cyan-400">RADIAL / CLOUD</span>
+          </div>
+
+          <div className="flex justify-between border-t border-gray-700 pt-3">
+            <span>Final Cost</span>
+
+            <span className="font-semibold text-cyan-400">
+              {currentStats.cost}
+            </span>
+          </div>
         </div>
       </div>
     </>

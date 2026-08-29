@@ -1,55 +1,112 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { Spell } from "@/app/models";
 import Select from "@/app/Select";
 
 const AlterIntegrity = ({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [cost, setCost] = useState(0);
-   const [size, setSize] = useState("")
-  const sizes: string[] = ["Small AOE", "Moderate AOE", "Large AOE"]
+  const [disruption, setDisruption] = useState(0);
+  const [size, setSize] = useState("Small AOE");
 
-  let testMastery: Mastery = new Mastery();
-  let rate: number = 0
+  const sizes = ["Small AOE", "Moderate AOE", "Large AOE"];
 
+  const testMastery = new Mastery();
+
+  let rate = 0;
+
+  if (ParentMastery.getType() === testMastery.novice(true)) {
+    rate = 2;
+  } else if (ParentMastery.getType() === testMastery.intermediate(true)) {
+    rate = 3;
+  } else if (ParentMastery.getType() === testMastery.mastered(true)) {
+    rate = 4;
+  }
+
+  // Reset the spell whenever it becomes inactive.
   useEffect(() => {
-    if (!active) setCost(0
-  );
+    if (!active) {
+      setDisruption(0);
+      setSize("Small AOE");
+    }
   }, [active]);
 
-  if (!active) setCost(0);
+  const changeDisruption = (value: number) => {
+    const newDisruption = Math.max(0, value);
+    const mannaCost = rate > 0 ? Math.ceil(newDisruption / rate) : 0;
 
-  if (ParentMastery.getType() === testMastery.novice(true)) rate = 2;
-  else if (ParentMastery.getType() === testMastery.intermediate(true))
-    rate = 3;
-  else if (ParentMastery.getType() === testMastery.mastered(true)) rate = 4;
+    setDisruption(newDisruption);
+
+    // Update the parent spell with the calculated Manna cost.
+    updateSpell("cost", mannaCost);
+  };
+
+  const changeSize = (value: string) => {
+    setSize(value);
+
+    // Update the parent spell with the selected AOE.
+    updateSpell("range", value);
+  };
+
+  const mannaCost = rate > 0 ? Math.ceil(disruption / rate) : 0;
 
   return (
-    <>
-      <div>
-        <h1>Manna to Disruption</h1>
-        <h3>DIRECT DAMAGE</h3>
+    <div>
+      <h1>Alter Integrity</h1>
 
-        <h3>RANGE - DIRECT</h3>
-        <br />
+      <h3>DIRECT DAMAGE</h3>
+      <h3>RANGE - DIRECT</h3>
+
+      <div className="mt-4 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-semibold text-cyan-400">Disruption</h2>
+
+        <p className="mb-2 text-sm text-gray-400">
+          1 Manna = {rate} Disruption
+        </p>
+
         <input
           type="number"
           min="0"
           step="1"
-          value={cost}
-          onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
+          value={disruption}
+          onChange={(e) => changeDisruption(Number(e.target.value))}
+          className="w-full rounded border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
         />
-        <br />
-        <Select title="AOE" choices={sizes} changeChoice={()=>setSize}></Select>
       </div>
-      <h3>Disruption: {cost * rate}</h3>
-      <h3>Cost: {cost}</h3>
-    </>
+
+      <div className="mt-4">
+        <Select title="AOE" choices={sizes} changeChoice={changeSize} />
+      </div>
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
+          Final Spell Statistics
+        </h2>
+
+        <div className="space-y-2 text-gray-300">
+          <div className="flex justify-between">
+            <span>Disruption</span>
+            <span className="font-semibold text-cyan-400">{disruption}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>AOE</span>
+            <span className="font-semibold text-cyan-400">{size}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Manna</span>
+            <span className="font-semibold text-cyan-400">{mannaCost}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

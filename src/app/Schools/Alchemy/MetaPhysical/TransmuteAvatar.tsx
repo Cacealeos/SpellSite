@@ -1,98 +1,163 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+import { Mastery, Potency, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+type TransmuteAvatarProps = {
+  ParentMastery: Mastery;
+  active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
 
 const TransmuteAvatar = ({
   ParentMastery,
   active,
-}: {
-  ParentMastery: Mastery;
-  active: boolean;
-}) => {
-  const [cost, setCost] = useState({ cost: 0, SpellCraft: 0, MageTech: 0 });
-  const [pot, setPot] = useState(new Potency());
+  updateSpell,
+}: TransmuteAvatarProps) => {
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
-
-  useEffect(() => {
-    if (!active) setCost({ cost: 0, SpellCraft: 0, MageTech: 0 });
-  }, [active]);
-
-  function calculateCost(change: {
-    cost: number;
-    SpellCraft: number;
-    MageTech: number;
-  }) {
-    setCost(change);
-  }
-
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost({ cost: 20, SpellCraft: 2, MageTech: 75 });
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost({ cost: 60, SpellCraft: 3, MageTech: 100 });
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost({ cost: 100, SpellCraft: 4, MageTech: 125 });
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost({ cost: 10, SpellCraft: 2, MageTech: 75 });
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost({ cost: 40, SpellCraft: 3, MageTech: 100 });
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost({ cost: 80, SpellCraft: 4, MageTech: 125 });
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost({ cost: 0, SpellCraft: 2, MageTech: 75 });
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost({ cost: 20, SpellCraft: 3, MageTech: 100 });
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost({ cost: 60, SpellCraft: 4, MageTech: 125 });
-      setPot(SpellPotency);
-    }
+  const potencyStats = {
+    MINOR: {
+      NOVICE: { cost: 20, spellCraft: 2, mageTech: 75 },
+      INTERMEDIATE: { cost: 10, spellCraft: 2, mageTech: 75 },
+      MASTERED: { cost: 0, spellCraft: 2, mageTech: 75 },
+    },
+    MAJOR: {
+      NOVICE: { cost: 60, spellCraft: 3, mageTech: 100 },
+      INTERMEDIATE: { cost: 40, spellCraft: 3, mageTech: 100 },
+      MASTERED: { cost: 20, spellCraft: 3, mageTech: 100 },
+    },
+    EXTREME: {
+      NOVICE: { cost: 100, spellCraft: 4, mageTech: 125 },
+      INTERMEDIATE: { cost: 80, spellCraft: 4, mageTech: 125 },
+      MASTERED: { cost: 60, spellCraft: 4, mageTech: 125 },
+    },
   };
 
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: `Cost: ${potencyStats.MINOR.NOVICE.cost} / ${potencyStats.MINOR.INTERMEDIATE.cost} / ${potencyStats.MINOR.MASTERED.cost}`,
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: `Cost: ${potencyStats.MAJOR.NOVICE.cost} / ${potencyStats.MAJOR.INTERMEDIATE.cost} / ${potencyStats.MAJOR.MASTERED.cost}`,
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: `Cost: ${potencyStats.EXTREME.NOVICE.cost} / ${potencyStats.EXTREME.INTERMEDIATE.cost} / ${potencyStats.EXTREME.MASTERED.cost}`,
+    },
+  ];
+
+  const masteryType = ParentMastery.getType() as
+    | "NOVICE"
+    | "INTERMEDIATE"
+    | "MASTERED";
+
+  const selectedStats =
+    potencyStats[selectedPotency][masteryType] ??
+    potencyStats[selectedPotency].NOVICE;
+
+  // Reset local UI state whenever this spell is deselected.
+  useEffect(() => {
+    if (!active) {
+      setSelectedPotency("MINOR");
+    }
+  }, [active]);
+
+  // Synchronize the selected potency and calculated values
+  // with the parent Spell object.
+  useEffect(() => {
+    if (!active) return;
+
+    const pot = new Potency();
+
+    switch (selectedPotency) {
+      case "MINOR":
+        pot.minor();
+        break;
+
+      case "MAJOR":
+        pot.major();
+        break;
+
+      case "EXTREME":
+        pot.extreme();
+        break;
+    }
+
+    updateSpell("potency", pot);
+    updateSpell("cost", selectedStats.cost);
+
+    // Transmute Avatar does not intrinsically generate TTT.
+    updateSpell("ttt", 0);
+  }, [active, selectedPotency, selectedStats.cost, updateSpell]);
+
+  if (!active) return null;
+
   return (
-    <>
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {" "}
       <div>
-        <h1>Transmute Avatar</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor 20 / 10 / 0</p>
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major 60 / 40 / 20</p>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme 100 / 80 / 60</p>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
+        {" "}
+        <h1 className="mb-2 text-2xl font-bold text-gray-100">
+          Transmute Avatar{" "}
+        </h1>
+        <h3 className="text-sm font-semibold tracking-wide text-gray-400">
+          RANGE - DIRECT
+        </h3>
       </div>
-    </>
+      <div className="mt-6">
+        <h2 className="mb-3 border-b border-gray-700 pb-2 text-xl font-bold text-orange-400">
+          Spell Properties
+        </h2>
+
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Final Spell Statistics
+        </h2>
+
+        <div className="space-y-2 text-gray-300">
+          <div className="flex justify-between">
+            <span>Potency</span>
+            <span className="font-semibold text-orange-400">
+              {selectedPotency}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Manna</span>
+            <span className="font-semibold text-cyan-400">
+              {selectedStats.cost}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Spellcraft</span>
+            <span className="font-semibold text-cyan-400">
+              {selectedStats.spellCraft}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Mage Tech</span>
+            <span className="font-semibold text-cyan-400">
+              {selectedStats.mageTech}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

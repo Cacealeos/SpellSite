@@ -1,95 +1,141 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+type RepairSealProps = {
+  ParentMastery: Mastery;
+  active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
 
 const RepairSeal = ({
   ParentMastery,
   active,
-}: {
-  ParentMastery: Mastery;
-  active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  updateSpell,
+}: RepairSealProps) => {
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const getCost = (
+    masteryType: string,
+    potency: "MINOR" | "MAJOR" | "EXTREME",
+  ): number => {
+    switch (masteryType) {
+      case "NOVICE":
+        switch (potency) {
+          case "MINOR":
+            return 150;
+          case "MAJOR":
+            return 250;
+          case "EXTREME":
+            return 350;
+        }
+        break;
 
-  useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+      case "INTERMEDIATE":
+        switch (potency) {
+          case "MINOR":
+            return 100;
+          case "MAJOR":
+            return 175;
+          case "EXTREME":
+            return 225;
+        }
+        break;
 
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
-
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(150);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(250);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(350);
-      setPot(SpellPotency);
+      case "MASTERED":
+        switch (potency) {
+          case "MINOR":
+            return 50;
+          case "MAJOR":
+            return 100;
+          case "EXTREME":
+            return 150;
+        }
+        break;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(175);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(225);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(50);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(150);
-      setPot(SpellPotency);
-    }
+
+    return 0;
   };
 
+  const cost = getCost(ParentMastery.getType(), selectedPotency);
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "150 / 100 / 50 Manna",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "250 / 175 / 100 Manna",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "350 / 225 / 150 Manna",
+    },
+  ];
+
+  useEffect(() => {
+    if (!active) {
+      setSelectedPotency("MINOR");
+      return;
+    }
+
+    updateSpell("cost", cost);
+    updateSpell("ttt", 0);
+  }, [active, cost, updateSpell]);
+
   return (
-    <>
-      <div>
-        <h1>Revival</h1>
-        <br />
-        <h2>Revives Deceased Spirit</h2>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor 50 / 40 / 30</p>
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major 80 / 70 / 60</p>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme 120 / 110 / 100</p>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* Title */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h1 className="text-2xl font-bold text-cyan-400">Repair Seal</h1>
+        <p className="mt-2 text-sm text-gray-400">Revives Deceased Spirit</p>
       </div>
-    </>
+
+      {/* Potency */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+
+      {/* Spell Statistics */}
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-orange-400">
+          Spell Statistics
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Cost</p>
+            <p className="text-xl font-bold text-white">{cost}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">TTT</p>
+            <p className="text-xl font-bold text-white">0</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Potency</p>
+            <p className="text-xl font-bold text-white">
+              {
+                potencyOptions.find(
+                  (option) => option.value === selectedPotency,
+                )?.label
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

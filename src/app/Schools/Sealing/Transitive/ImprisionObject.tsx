@@ -1,124 +1,256 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "@/app/models";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useMemo, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+type Potency = "MINOR" | "MAJOR" | "EXTREME";
+
+type ImprisionObjectProps = {
+  ParentMastery: Mastery;
+  active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
 
 const ImprisionObject = ({
   ParentMastery,
   active,
-}: {
-  ParentMastery: Mastery;
-  active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [TTT, setTTT] = useState(0);
-  const [power, setPower] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  updateSpell,
+}: ImprisionObjectProps) => {
+  const [selectedPotency, setSelectedPotency] = useState<Potency>("MINOR");
+  const [ppp, setPpp] = useState(0);
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
-  let TTTrate = 0;
+  const masteryType = ParentMastery.getType();
 
-  if (ParentMastery.getType() == testMastery.novice()) TTTrate = 5;
-  if (ParentMastery.getType() == testMastery.intermediate()) TTTrate = 3;
-  if (ParentMastery.getType() == testMastery.mastered()) TTTrate = 1;
+  /*
+   * TTT required for each point of PPP.
+   */
+  const tttRate = useMemo(() => {
+    switch (masteryType) {
+      case "NOVICE":
+        return 5;
 
+      case "INTERMEDIATE":
+        return 3;
+
+      case "MASTERED":
+        return 1;
+
+      default:
+        return 0;
+    }
+  }, [masteryType]);
+
+  /*
+   * Potency cost varies by mastery.
+   */
+  const potencyCost = useMemo(() => {
+    switch (masteryType) {
+      case "NOVICE":
+        switch (selectedPotency) {
+          case "MINOR":
+            return 30;
+          case "MAJOR":
+            return 60;
+          case "EXTREME":
+            return 120;
+        }
+        break;
+
+      case "INTERMEDIATE":
+        switch (selectedPotency) {
+          case "MINOR":
+            return 25;
+          case "MAJOR":
+            return 50;
+          case "EXTREME":
+            return 100;
+        }
+        break;
+
+      case "MASTERED":
+        switch (selectedPotency) {
+          case "MINOR":
+            return 20;
+          case "MAJOR":
+            return 40;
+          case "EXTREME":
+            return 80;
+        }
+        break;
+    }
+
+    return 0;
+  }, [masteryType, selectedPotency]);
+
+  /*
+   * Potency provides a Res Check bonus:
+   * Minor   +1
+   * Major   +2
+   * Extreme +3
+   */
+  const resCheckBonus = useMemo(() => {
+    switch (selectedPotency) {
+      case "MINOR":
+        return 1;
+
+      case "MAJOR":
+        return 2;
+
+      case "EXTREME":
+        return 3;
+
+      default:
+        return 0;
+    }
+  }, [selectedPotency]);
+
+  /*
+   * TTT transferred into PPP.
+   */
+  const tttToPpp = ppp * tttRate;
+
+  /*
+   * Update parent spell statistics while active.
+   */
   useEffect(() => {
-    if (!active) setCost(0);
+    if (!active) return;
+
+    updateSpell("cost", potencyCost);
+    updateSpell("ttt", tttToPpp);
+  }, [active, potencyCost, tttToPpp, updateSpell]);
+
+  /*
+   * Reset spell-specific state when inactive.
+   */
+  useEffect(() => {
+    if (!active) {
+      setSelectedPotency("MINOR");
+      setPpp(0);
+    }
   }, [active]);
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(30);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(60);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(120);
-        setPower(1);
-      }
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(25);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(50);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(100);
-        setPower(1);
-      }
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(20);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(40);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(80);
-        setPower(1);
-      }
-      setPot(SpellPotency);
-    }
-  };
+  const potencyOptions = [
+    {
+      value: "MINOR" as Potency,
+      label: "Minor",
+      description: `Cost: ${potencyCost} • +1 Res Check`,
+    },
+    {
+      value: "MAJOR" as Potency,
+      label: "Major",
+      description: `Cost: ${potencyCost} • +2 Res Check`,
+    },
+    {
+      value: "EXTREME" as Potency,
+      label: "Extreme",
+      description: `Cost: ${potencyCost} • +3 Res Check`,
+    },
+  ];
 
   return (
-    <>
-      <div>
-        <h1>Imprision Object</h1>
-        <br />
-        <div>
-          <span>TTT to PPP</span>
-          <br />
-          <span> 5 / 3 / 1</span>
-          <br />
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* Title */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h1 className="text-2xl font-bold text-cyan-400">Imprison Object</h1>
+
+        <p className="mt-2 text-sm text-gray-400">
+          Transfer TTT into PPP to imprison an object.
+        </p>
+      </div>
+
+      {/* PPP */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-cyan-300">TTT to PPP</h2>
+
+        <div className="rounded border border-gray-700 bg-gray-900 p-3">
+          <p className="mb-2 text-sm text-gray-400">PPP</p>
+
           <input
             type="number"
             min="0"
             max="13"
             step="1"
-            value={power}
-            onChange={(e) => setTTT(Number(e.target.value) * TTTrate)}
+            value={ppp}
+            onChange={(e) => setPpp(Number(e.target.value) || 0)}
+            className="
+              w-28
+              rounded
+              border
+              border-gray-600
+              bg-gray-800
+              px-3
+              py-2
+              text-center
+              text-lg
+              text-white
+              outline-none
+              transition
+              focus:border-cyan-500
+              focus:ring-2
+              focus:ring-cyan-500/50
+            "
           />
+
+          <p className="mt-2 text-sm text-gray-500">
+            Rate: {tttRate} TTT per PPP
+          </p>
+
+          <p className="text-sm text-gray-500">TTT transferred: {tttToPpp}</p>
         </div>
-        <span>Potency</span>
-        <div>
-          <p>Minor – 30 / 25 / 20</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 60 / 50 / 40</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 120 / 100 / 80</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
       </div>
-    </>
+
+      {/* Potency */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+
+      {/* Res Check */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-cyan-300">Res Check</h2>
+
+        <div className="rounded border border-gray-700 bg-gray-900 p-3">
+          <p className="text-sm text-gray-400">Potency Bonus</p>
+
+          <p className="text-xl font-bold text-white">+{resCheckBonus}</p>
+        </div>
+      </div>
+
+      {/* Spell Statistics */}
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-orange-400">
+          Spell Statistics
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Cost</p>
+
+            <p className="text-xl font-bold text-white">{potencyCost}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">TTT</p>
+
+            <p className="text-xl font-bold text-white">{tttToPpp}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">PPP</p>
+
+            <p className="text-xl font-bold text-white">{ppp}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Res Check Bonus</p>
+
+            <p className="text-xl font-bold text-white">+{resCheckBonus}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,77 +1,110 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
-const DrawSoul = ({
-  ParentMastery,
-  active,
-}: {
+type DrawSoulProps = {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
+
+const DrawSoul = ({ ParentMastery, active, updateSpell }: DrawSoulProps) => {
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
+
   const TTT = 35;
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "100 Manna",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "200 Manna",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "300 Manna",
+    },
+  ];
 
-  useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
-
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
-
-  const changeChoice = (potency: string | void) => {
-    if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(100);
-    if (SpellPotency.getType() === testPotency.major(true)) calculateCost(200);
-    if (SpellPotency.getType() === testPotency.extreme(true))
-      calculateCost(300);
-    setPot(SpellPotency);
+  const costMap = {
+    MINOR: 100,
+    MAJOR: 200,
+    EXTREME: 300,
   };
 
+  const cost = costMap[selectedPotency];
+
+  useEffect(() => {
+    if (!active) {
+      setSelectedPotency("MINOR");
+      return;
+    }
+
+    updateSpell("cost", cost);
+    updateSpell("ttt", TTT);
+  }, [active, cost, updateSpell]);
+
   return (
-    <>
-      <div>
-        <h1>Draw Catalyst</h1>
-        <br />
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h1 className="text-2xl font-bold text-cyan-400">Draw Soul</h1>
+      </div>
 
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor – 100</p>
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 200</p>
-          <br />
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-cyan-300">Spell Effect</h2>
 
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 300</p>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
-        <div>
-          <p>{TTT}</p>
+        <div className="rounded border border-gray-700 bg-gray-900 p-3">
+          <p className="text-sm font-semibold text-gray-300">Draw Soul</p>
         </div>
       </div>
-    </>
+
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-orange-400">
+          Spell Statistics
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Cost</p>
+            <p className="text-xl font-bold text-white">{cost}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">TTT</p>
+            <p className="text-xl font-bold text-white">{TTT}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Potency</p>
+            <p className="text-xl font-bold text-white">{selectedPotency}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-orange-400">Secondary</h2>
+
+        <div className="rounded border border-gray-700 bg-gray-900 p-3">
+          <p className="text-sm font-semibold text-gray-300">SOUL</p>
+          <p className="text-sm text-gray-400">TTT - {TTT}</p>
+        </div>
+      </div>
+    </div>
   );
 };
 

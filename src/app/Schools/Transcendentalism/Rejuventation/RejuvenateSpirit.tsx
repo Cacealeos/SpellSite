@@ -1,43 +1,130 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+
+type RejuvenateSpiritProps = {
+  ParentMastery: Mastery;
+  active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
 
 const RejuvenateSpirit = ({
   ParentMastery,
   active,
-}: {
-  ParentMastery: Mastery;
-  active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
+  updateSpell,
+}: RejuvenateSpiritProps) => {
+  const [spirit, setSpirit] = useState(0);
 
-  let testMastery: Mastery = new Mastery();
-  let rate: number = 0;
+  const getRate = (masteryType: string): number => {
+    switch (masteryType) {
+      case "NOVICE":
+        return 6;
+      case "INTERMEDIATE":
+        return 4;
+      case "MASTERED":
+        return 2;
+      default:
+        return 0;
+    }
+  };
+
+  const rate = getRate(ParentMastery.getType());
+  const cost = spirit * rate;
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      setSpirit(0);
+      return;
+    }
 
-  if (ParentMastery.getType() == testMastery.novice()) rate = 6;
-  else if (ParentMastery.getType() == testMastery.intermediate()) rate = 4;
-  else if (ParentMastery.getType() == testMastery.mastered()) rate = 2;
+    updateSpell("cost", cost);
+    updateSpell("ttt", 0);
+  }, [active, cost, updateSpell]);
 
   return (
-    <>
-      <div>
-        <h1>Rejuvenate Spirit</h1>
-        <br />
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* Title */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h1 className="text-2xl font-bold text-cyan-400">Rejuvenate Spirit</h1>
+      </div>
+
+      {/* Spirit Input */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-cyan-300">Spirit</h2>
+
+        <div className="mb-3 rounded border border-gray-700 bg-gray-900 p-3">
+          <p className="text-sm font-semibold text-gray-300">Restore Spirit</p>
+          <p className="text-sm text-gray-400">
+            Manna cost is {rate} per point of Spirit restored.
+          </p>
+        </div>
+
         <input
           type="number"
           min="0"
           step="1"
-          value="0"
-          onChange={(e) => setCost(Number(e.target.value) * rate || 0)}
+          value={spirit}
+          onChange={(e) => setSpirit(Number(e.target.value) || 0)}
+          className="
+            w-24
+            rounded
+            border
+            border-gray-600
+            bg-gray-800
+            px-3
+            py-2
+            text-center
+            text-lg
+            text-white
+            outline-none
+            transition
+            focus:border-cyan-500
+            focus:ring-2
+            focus:ring-cyan-500/50
+          "
         />
-        <br />
-        <p>Info: Restore Spirit</p>
       </div>
-    </>
+
+      {/* Spell Statistics */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-orange-400">
+          Spell Statistics
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Spirit</p>
+            <p className="text-xl font-bold text-white">{spirit}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Cost</p>
+            <p className="text-xl font-bold text-white">{cost}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Rate</p>
+            <p className="text-xl font-bold text-white">
+              {rate} Manna / Spirit
+            </p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">TTT</p>
+            <p className="text-xl font-bold text-white">0</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary */}
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-3 text-lg font-bold text-orange-400">Secondary</h2>
+
+        <div className="rounded border border-gray-700 bg-gray-900 p-3">
+          <p className="text-sm font-semibold text-gray-300">SPIRIT</p>
+          <p className="text-sm text-gray-400">Restore {spirit} Spirit</p>
+        </div>
+      </div>
+    </div>
   );
 };
 

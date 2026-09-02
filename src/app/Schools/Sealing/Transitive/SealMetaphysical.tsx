@@ -1,125 +1,136 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "@/app/models";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
 
-const SealMetaphysical = ({
-  ParentMastery,
-  active,
-}: {
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+type SealMetaphysicalProps = {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [TTT, setTTT] = useState(0);
-  const [power, setPower] = useState(0);
-  const [pot, setPot] = useState(new Potency());
-
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
-  let TTTrate = 0;
-
-  if (ParentMastery.getType() == testMastery.novice()) TTTrate = 5;
-  if (ParentMastery.getType() == testMastery.intermediate()) TTTrate = 3;
-  if (ParentMastery.getType() == testMastery.mastered()) TTTrate = 1;
-
-  useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
-
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(40);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(70);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(100);
-        setPower(1);
-      }
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(30);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(60);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(90);
-        setPower(1);
-      }
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(20);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(50);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(80);
-        setPower(1);
-      }
-      setPot(SpellPotency);
-    }
-  };
-
-  return (
-    <>
-      <div>
-        <h1>Seal Metaphysical |Requires Sorcery Training|</h1>
-        <br />
-        <div>
-          <span>TTT to PPP</span>
-          <br />
-          <span> 6 / 4 / 2</span>
-          <br />
-          <input
-            type="number"
-            min="0"
-            max="13"
-            step="1"
-            value={power}
-            onChange={(e) => setTTT(Number(e.target.value) * TTTrate)}
-          />
-        </div>
-        <span>Potency</span>
-        <div>
-          <p>Minor – 40 / 30 / 20</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 70 / 60 / 50</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 100 / 90 / 80</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
-      </div>
-    </>
-  );
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 };
 
-export default SealMetaphysical;
+type PotencyType = "MINOR" | "MAJOR" | "EXTREME";
+
+export default function SealMetaphysical({
+  ParentMastery,
+  active,
+  updateSpell,
+}: SealMetaphysicalProps) {
+  const [potency, setPotency] = useState<PotencyType>("MINOR");
+  const [power, setPower] = useState(0);
+
+  const mastery = ParentMastery.getType();
+
+  const tttRate = mastery === "NOVICE" ? 6 : mastery === "INTERMEDIATE" ? 4 : 2;
+
+  const potencyCosts = {
+    MINOR: {
+      NOVICE: 40,
+      INTERMEDIATE: 30,
+      MASTERED: 20,
+    },
+    MAJOR: {
+      NOVICE: 70,
+      INTERMEDIATE: 60,
+      MASTERED: 50,
+    },
+    EXTREME: {
+      NOVICE: 100,
+      INTERMEDIATE: 90,
+      MASTERED: 80,
+    },
+  };
+
+  const cost = potencyCosts[potency][mastery];
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "40 / 30 / 20 • Generates 1 PPP",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "70 / 60 / 50 • Generates 1 PPP",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "100 / 90 / 80 • Generates 1 PPP",
+    },
+  ];
+
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      updateSpell("ttt", 0);
+      return;
+    }
+
+    updateSpell("cost", cost);
+    updateSpell("ttt", power * tttRate);
+  }, [active, cost, power, tttRate, updateSpell]);
+
+  const handlePotencyChange = (value: PotencyType) => {
+    setPotency(value);
+  };
+
+  if (!active) return null;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-lg font-semibold text-gray-100">
+          Seal Metaphysical
+        </h1>
+
+        <div className="mt-3 rounded-md border border-gray-700 bg-gray-900/60 px-3 py-2">
+          <p className="text-sm text-gray-400">
+            <span className="font-medium text-gray-300">
+              Training Required:
+            </span>{" "}
+            Sorcery
+          </p>
+        </div>
+      </div>
+
+      {/* PPP Generation */}
+      <section className="rounded-lg border border-gray-700 bg-gray-800/60 p-4">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-300">
+          Generate PPP
+        </h2>
+
+        <label className="mb-2 block text-sm font-medium text-gray-300">
+          PPP Generated
+        </label>
+
+        <input
+          type="number"
+          min={0}
+          max={13}
+          step={1}
+          value={power}
+          onChange={(e) => setPower(Number(e.target.value))}
+          className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-gray-100 outline-none transition focus:border-blue-500"
+        />
+
+        <p className="mt-2 text-sm text-gray-400">
+          TTT cost: <span className="font-medium text-gray-200">{tttRate}</span>{" "}
+          per PPP
+        </p>
+
+        <p className="mt-1 text-xs text-gray-500">Maximum PPP: 13</p>
+      </section>
+
+      {/* Potency */}
+      <section className="rounded-lg border border-gray-700 bg-gray-800/60 p-4">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={potency}
+          setSelectedPotency={handlePotencyChange}
+        />
+      </section>
+    </div>
+  );
+}

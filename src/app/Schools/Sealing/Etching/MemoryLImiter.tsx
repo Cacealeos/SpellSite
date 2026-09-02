@@ -1,66 +1,53 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "@/app/models";
-import { Potency } from "@/app/models/Potency";
+import { useState } from "react";
 
-const MemoryLimiter = ({
-  ParentMastery,
-  active,
-}: {
+import { Mastery } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+
+type MemoryLimiterProps = {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [currentIncrement, setCurrentIncrement] = useState(0);
-  const [value, setValue] = useState(0);
-
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-
-  //   useEffect(() => {
-  //     if (!active) setCost(0);
-  //   }, [active]);
-
-  const changeChoice = (potency: string | void) => {
-    if (SpellPotency.getType() === testPotency.minor()) {
-      setValue(7);
-    } else if (SpellPotency.getType() === testPotency.major()) {
-      setValue(9);
-    } else if (SpellPotency.getType() === testPotency.extreme()) {
-      setValue(11);
-    }
-  };
-
-  return (
-    <>
-      <div>
-        <h1>Memory Limiter</h1>
-
-        <br />
-        <span>Potency|Res Check|</span>
-        <div>
-          <p>Minor: |7|</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major: |9|</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme: |11|</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
-      </div>
-    </>
-  );
 };
 
-export default MemoryLimiter;
+type PotencyType = "MINOR" | "MAJOR" | "EXTREME";
+
+export default function MemoryLimiter({
+  ParentMastery,
+  active,
+}: MemoryLimiterProps) {
+  const [potency, setPotency] = useState<PotencyType>("MINOR");
+
+  if (!active) return null;
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: "Res Check: +7",
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: "Res Check: +9",
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: "Res Check: +11",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-lg font-semibold text-gray-100">Memory Seal</h1>
+
+      {/* Potency */}
+      <section className="rounded-lg border border-gray-700 bg-gray-800/60 p-4">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={potency}
+          setSelectedPotency={setPotency}
+        />
+      </section>
+    </div>
+  );
+}

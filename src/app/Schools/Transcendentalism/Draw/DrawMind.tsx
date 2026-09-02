@@ -1,92 +1,104 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useMemo, useState } from "react";
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
 
-const DrawMind = ({
-  ParentMastery,
-  active,
-}: {
+type Potency = "MINOR" | "MAJOR" | "EXTREME";
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+type DrawMindProps = {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+// Lookups defined outside the component to avoid recreating them on every render
+const COST_MAP: Record<MasteryType, Record<Potency, number>> = {
+  NOVICE: { MINOR: 60, MAJOR: 120, EXTREME: 180 },
+  INTERMEDIATE: { MINOR: 40, MAJOR: 100, EXTREME: 160 },
+  MASTERED: { MINOR: 20, MAJOR: 80, EXTREME: 140 },
+};
 
+const POTENCY_OPTIONS: Array<{
+  value: Potency;
+  label: string;
+  description: string;
+}> = [
+  { value: "MINOR", label: "Minor", description: "60 / 40 / 20 Manna" },
+  { value: "MAJOR", label: "Major", description: "120 / 100 / 80 Manna" },
+  { value: "EXTREME", label: "Extreme", description: "180 / 160 / 140 Manna" },
+];
+
+export const DrawMind = ({
+  ParentMastery,
+  active,
+  updateSpell,
+}: DrawMindProps) => {
+  const [potency, setPotency] = useState<Potency>("MINOR");
+
+  // Calculate cost declaratively using object lookup and memoization
+  const cost = useMemo(() => {
+    const masteryType = ParentMastery.getType() as MasteryType;
+    return COST_MAP[masteryType]?.[potency] ?? 0;
+  }, [ParentMastery, potency]);
+
+  // Synchronize state changes with parent callback
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      setPotency("MINOR");
+      updateSpell("cost", 0 as Spell["cost"]);
+      return;
+    }
 
-  function calculateCost(cost: number) {
-    setCost(cost);
-  }
-
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(60);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(120);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(180);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(40);
-      if (SpellPotency.getType() === testPotency.major(true))
-        calculateCost(100);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(160);
-      setPot(SpellPotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) calculateCost(20);
-      if (SpellPotency.getType() === testPotency.major(true)) calculateCost(80);
-      if (SpellPotency.getType() === testPotency.extreme(true))
-        calculateCost(140);
-      setPot(SpellPotency);
-    }
-  };
+    updateSpell("cost", cost as Spell["cost"]);
+  }, [active, cost, updateSpell]);
 
   return (
-    <>
-      <div>
-        <h1>Draw Catalyst</h1>
-        <br />
-
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor – 60 / 40 / 20</p>
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 120 / 100 / 80</p>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 180 / 160 / 140</p>
-          <br />
-
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* Spell Title */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h1 className="text-2xl font-bold text-cyan-400">Draw Mind</h1>
       </div>
-    </>
+
+      {/* Potency */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <PotencySelector
+          options={POTENCY_OPTIONS}
+          selectedPotency={potency}
+          setSelectedPotency={setPotency}
+        />
+
+        <div className="mt-4 rounded border border-gray-700 bg-gray-900 p-3">
+          <p className="text-sm font-semibold text-gray-300">
+            Spell-craft Lore Threshold
+          </p>
+
+          <div className="mt-2 space-y-1 text-sm text-gray-400">
+            <p>Minor — Lore 1</p>
+            <p>Major — Lore 2</p>
+            <p>Extreme — Lore 3</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Spell Statistics */}
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+        <h2 className="mb-4 text-xl font-bold text-orange-400">
+          Spell Statistics
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Cost</p>
+            <p className="text-xl font-bold text-white">{cost}</p>
+          </div>
+
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Potency</p>
+            <p className="text-xl font-bold text-white">{potency}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

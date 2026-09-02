@@ -1,106 +1,113 @@
-import React, { useState, useEffect } from "react";
-import { Mastery } from "@/app/models";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
 
-const RecallSeal = ({
-  ParentMastery,
-  active,
-}: {
+import { Mastery, Spell } from "@/app/models";
+import { Potency } from "@/app/models/Potency";
+import PotencySelector from "@/app/PotencyDisplay";
+
+type RecallSealProps = {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [power, setPower] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
 
-  let SpellPotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+export default function RecallSeal({
+  ParentMastery,
+  active,
+  updateSpell,
+}: RecallSealProps) {
+  const [pot, setPot] = useState<Potency>(new Potency());
+
+  const mastery = ParentMastery.getType();
+
+  const potencyCosts = {
+    MINOR: mastery === "NOVICE" ? 40 : mastery === "INTERMEDIATE" ? 30 : 20,
+    MAJOR: mastery === "NOVICE" ? 70 : mastery === "INTERMEDIATE" ? 60 : 50,
+    EXTREME: mastery === "NOVICE" ? 100 : mastery === "INTERMEDIATE" ? 90 : 80,
+  };
+
+  const potencyOptions = [
+    {
+      value: "MINOR" as const,
+      label: "Minor",
+      description: `Cost: ${potencyCosts.MINOR} • Power: 1`,
+    },
+    {
+      value: "MAJOR" as const,
+      label: "Major",
+      description: `Cost: ${potencyCosts.MAJOR} • Power: 1`,
+    },
+    {
+      value: "EXTREME" as const,
+      label: "Extreme",
+      description: `Cost: ${potencyCosts.EXTREME} • Power: 1`,
+    },
+  ];
 
   useEffect(() => {
-    if (!active) setCost(0);
-  }, [active]);
+    if (!active) {
+      updateSpell("cost", 0);
+      setPot(new Potency());
+    }
+  }, [active, updateSpell]);
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(40);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(70);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(100);
-        setPower(1);
-      }
-      setPot(SpellPotency);
+  useEffect(() => {
+    if (!active) return;
+
+    let cost = 0;
+
+    switch (pot.getType()) {
+      case "MINOR":
+        cost = potencyCosts.MINOR;
+        break;
+      case "MAJOR":
+        cost = potencyCosts.MAJOR;
+        break;
+      case "EXTREME":
+        cost = potencyCosts.EXTREME;
+        break;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(30);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(60);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(90);
-        setPower(1);
-      }
-      setPot(SpellPotency);
+
+    updateSpell("cost", cost);
+  }, [
+    active,
+    pot,
+    potencyCosts.MINOR,
+    potencyCosts.MAJOR,
+    potencyCosts.EXTREME,
+    updateSpell,
+  ]);
+
+  const handlePotencyChange = (
+    value: Potency["getType"] extends () => infer T ? T : never,
+  ) => {
+    const newPotency = new Potency();
+
+    switch (value) {
+      case "MINOR":
+        newPotency.minor();
+        break;
+      case "MAJOR":
+        newPotency.major();
+        break;
+      case "EXTREME":
+        newPotency.extreme();
+        break;
     }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (SpellPotency.getType() === testPotency.minor(true)) {
-        setCost(20);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.major(true)) {
-        setCost(50);
-        setPower(1);
-      }
-      if (SpellPotency.getType() === testPotency.extreme(true)) {
-        setCost(80);
-        setPower(1);
-      }
-      setPot(SpellPotency);
-    }
+
+    setPot(newPotency);
   };
 
   return (
-    <>
-      <div>
-        <h1>Recall Seal</h1>
-        <br />
+    <div>
+      <h1>Recall Seal</h1>
 
-        <span>Potency</span>
-        <div>
-          <p>Minor – 40 / 30 / 20</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.minor())}
-          />
-        </div>
-        <div>
-          <p>Major – 70 / 60 / 50</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 100 / 90 / 80</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(SpellPotency.extreme())}
-          />
-        </div>
-        <br />
+      <div className="mt-4">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={pot.getType()}
+          setSelectedPotency={handlePotencyChange}
+        />
       </div>
-    </>
+    </div>
   );
-};
-
-export default RecallSeal;
+}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 import { Mastery, Spell, Potency } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 const CollapseSaturation = ({
   ParentMastery,
@@ -66,6 +67,35 @@ const CollapseSaturation = ({
       ratio: 0.5,
     },
   };
+  // ==================================================
+  // Technique State
+  // ==================================================
+
+  const [spellCharge, setSpellCharge] = useState(false);
+  const [hyperSpell, setHyperSpell] = useState(false);
+
+  // ==================================================
+  // Spell Techniques
+  // ==================================================
+
+  const Techniques = {
+    "Quick Spell": true,
+    "Spell Reflex": false,
+    "Double Cast": true,
+    "Double Pulse": false,
+    "Carry Spell": true,
+    "Spell Shift": false,
+    "Counter Spell": true,
+    "Spell Surge": false,
+    "Junction Cast": true,
+    "Spell Charge": true,
+    "Focus Spell": true,
+    "Hyper Spell": true,
+    "Auto Cast": false,
+    "Rivet Cast": true,
+    "Spell Recovery": true,
+    "Father Spell": false,
+  };
 
   const mastery = ParentMastery.getType() as
     | "NOVICE"
@@ -87,6 +117,14 @@ const CollapseSaturation = ({
       : selectedPotency === "MAJOR"
         ? damage
         : Math.ceil(damage / 2);
+
+  // ==================================================
+  // Technique Effects
+  // ==================================================
+
+  const hyperCost = hyperSpell ? Math.floor(totalCost * 0.75) : totalCost;
+  const spellChargeDamage = Math.floor(damage * 0.2);
+  const hyperSpellDamage = Math.floor(damage * 0.3);
 
   // ==================================================
   // Potency Options
@@ -147,6 +185,8 @@ const CollapseSaturation = ({
 
   return (
     <>
+      <SpellTechniquesTable techniques={Techniques} />
+
       <h2 className="mb-6 border-b border-gray-700 pb-2 text-2xl font-bold text-orange-400">
         Collapse Saturation
       </h2>
@@ -160,14 +200,72 @@ const CollapseSaturation = ({
       {/* Statistics */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-          Collapse Statistics
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-orange-400">
+            Collapse Statistics
+          </h3>
 
-        <div className="space-y-3">
+          {/* Technique Controls */}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setSpellCharge((prev) => !prev)}
+              className={`
+          rounded-lg border px-3 py-1.5 text-sm font-semibold
+          transition-all
+          ${
+            spellCharge
+              ? "border-cyan-400 bg-cyan-500/10 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.5)]"
+              : "border-gray-700 bg-gray-900 text-gray-300 hover:border-cyan-400 hover:text-cyan-300"
+          }
+        `}
+            >
+              Spell Charge
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setHyperSpell((prev) => !prev)}
+              className={`
+          rounded-lg border px-3 py-1.5 text-sm font-semibold
+          transition-all
+          ${
+            hyperSpell
+              ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
+              : "border-gray-700 bg-gray-900 text-gray-300 hover:border-purple-400 hover:text-purple-300"
+          }
+        `}
+            >
+              Hyper Spell
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-2 h-px bg-gray-700" />
+
+        <div className="mt-3 space-y-3">
+          {hyperSpell && (
+            <p className="text-right text-sm text-purple-300 drop-shadow-[0_0_6px_rgba(192,132,252,0.8)]">
+              Hyper Spell: +1 Power*
+            </p>
+          )}
+
           <div className="flex justify-between">
             <span>Base Cost</span>
-            <span>{baseCost}</span>
+            <span>
+              {hyperSpell ? (
+                <>
+                  {hyperCost}
+                  <span className="text-purple-300 drop-shadow-[0_0_6px_rgba(192,132,252,0.8)]">
+                    {" "}
+                    ({totalCost}*)
+                  </span>
+                </>
+              ) : (
+                totalCost
+              )}
+            </span>
           </div>
 
           <div className="flex justify-between">
@@ -182,9 +280,30 @@ const CollapseSaturation = ({
 
           <div className="flex justify-between">
             <span>Current Damage</span>
-            <span>{damage}</span>
+
+            <span className="text-cyan-400">
+              {damage}
+
+              {spellCharge && (
+                <span className="ml-2 text-cyan-300 drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]">
+                  (+{spellChargeDamage})
+                </span>
+              )}
+
+              {hyperSpell && (
+                <span className="ml-2 text-purple-300 drop-shadow-[0_0_6px_rgba(192,132,252,0.6)]">
+                  (+{hyperSpellDamage})
+                </span>
+              )}
+            </span>
           </div>
         </div>
+
+        {hyperSpell && (
+          <p className="mt-4 text-center text-purple-300 drop-shadow-[0_0_6px_rgba(192,132,252,0.8)]">
+            Hyper Spell: +1 Power • +30% Damage • −25% Cost
+          </p>
+        )}
       </div>
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">

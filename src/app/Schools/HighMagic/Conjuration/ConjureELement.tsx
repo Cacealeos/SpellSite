@@ -413,9 +413,8 @@ const ConjureElement = ({
                 (
                 {POTENCY_STATS[selectedPotency].power +
                   (intensity > 0 ? 1 : 0) +
-                  (hyperSpell ? 1 : 0) +
                   (spellCharge ? 1 : 0)}
-                {(hyperSpell || spellCharge) && "*"})
+                {spellCharge && "*"})
               </span>
             </span>
           </div>

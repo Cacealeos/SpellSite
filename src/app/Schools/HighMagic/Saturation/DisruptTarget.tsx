@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 // ==================================================
 // Static Data
@@ -21,17 +22,36 @@ const masteryData = {
   },
 };
 
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": false,
+  "Carry Spell": true,
+  "Spell Shift": false,
+  "Counter Spell": false,
+  "Spell Surge": false,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": false,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": true,
+  "Father Spell": false,
+};
+
 const aoeOptions = [
   {
     value: "SMALL" as const,
     label: "Small AOE",
-    description: "TTT ×1",
+    description: "Cost ×1",
     multiplier: 1,
   },
   {
     value: "MODERATE" as const,
     label: "Moderate AOE",
-    description: "TTT ×3",
+    description: "Cost ×3",
     multiplier: 3,
   },
 ];
@@ -52,6 +72,7 @@ export default function DiluteSaturation({
   const [disruption, setDisruption] = useState(0);
 
   const [selectedAOE, setSelectedAOE] = useState<"SMALL" | "MODERATE">("SMALL");
+  const [spellCharge, setSpellCharge] = useState(false);
 
   // ==================================================
   // Derived Values
@@ -68,7 +89,9 @@ export default function DiluteSaturation({
   const aoeMultiplier =
     aoeOptions.find((option) => option.value === selectedAOE)?.multiplier ?? 1;
 
-  const ttt = Math.round(disruption * rate * aoeMultiplier);
+  const cost = Math.round(disruption * rate * aoeMultiplier);
+
+  const spellChargeDamage = Math.floor(disruption * 0.2);
 
   // ==================================================
   // Spell Updates
@@ -76,12 +99,12 @@ export default function DiluteSaturation({
 
   useEffect(() => {
     if (!active) {
-      updateSpell("ttt", 0);
+      updateSpell("cost", 0);
       return;
     }
 
-    updateSpell("ttt", ttt);
-  }, [active, ttt, updateSpell]);
+    updateSpell("cost", cost);
+  }, [active, cost, updateSpell]);
 
   // ==================================================
   // Render
@@ -89,6 +112,7 @@ export default function DiluteSaturation({
 
   return (
     <>
+      <SpellTechniquesTable techniques={Techniques} />
       {/*  Calibration */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
@@ -125,9 +149,28 @@ export default function DiluteSaturation({
       {/* Statistics */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-          Disruption Statistics
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-orange-400">
+            Disruption Statistics
+          </h3>
+
+          <button
+            type="button"
+            onClick={() => setSpellCharge((prev) => !prev)}
+            className={`
+      rounded-lg border px-3 py-1.5 text-sm font-semibold
+      transition-all
+      ${
+        spellCharge
+          ? "border-cyan-400 bg-cyan-500/10 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.5)]"
+          : "border-gray-700 bg-gray-900 text-gray-300 hover:border-cyan-400 hover:text-cyan-300"
+      }
+    `}
+          >
+            Spell Charge
+          </button>
+        </div>
+        <div className="mt-2 h-px bg-gray-700" />
 
         <div className="space-y-3">
           <div className="flex justify-between">
@@ -142,12 +185,26 @@ export default function DiluteSaturation({
 
           <div className="flex justify-between">
             <span className="text-gray-300">Current Disruption</span>
-            <span className="font-semibold text-cyan-400">{disruption}</span>
+
+            <span className="font-semibold text-cyan-400">
+              {disruption}
+
+              {spellCharge && (
+                <span className="ml-2 text-cyan-300 drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]">
+                  (+{spellChargeDamage})
+                </span>
+              )}
+            </span>
           </div>
+          {spellCharge && (
+            <p className="mt-4 text-center text-cyan-300 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]">
+              Spell Charge: +20% Damage per charge • Maximum +100% Damage
+            </p>
+          )}
 
           <div className="flex justify-between">
-            <span className="text-gray-300">TTT Cost</span>
-            <span className="font-semibold text-cyan-400">{ttt}</span>
+            <span className="text-gray-300">Cost</span>
+            <span className="font-semibold text-cyan-400">{cost}</span>
           </div>
         </div>
       </div>

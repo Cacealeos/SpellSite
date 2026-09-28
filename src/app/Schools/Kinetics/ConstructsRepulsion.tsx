@@ -14,6 +14,11 @@ const ConstructsRepulsion = ({
   const [damage, setDamage] = useState(0);
   const [aoe, setAoe] = useState(1);
   const [cost, setCost] = useState(0);
+  const [hyperSpell, setHyperSpell] = useState(false);
+
+  // ==================================================
+  // Area of Effect Cost
+  // ==================================================
 
   const getAOECost = (masteryType: string, aoeSize: number): number => {
     switch (masteryType) {
@@ -40,6 +45,10 @@ const ConstructsRepulsion = ({
     }
   };
 
+  // ==================================================
+  // AOE Name
+  // ==================================================
+
   const getAOEName = () => {
     switch (aoe) {
       case 1:
@@ -56,20 +65,34 @@ const ConstructsRepulsion = ({
     }
   };
 
+  // ==================================================
+  // Spell Cost
+  // ==================================================
+
   useEffect(() => {
     if (!active) {
       setPower(0);
       setDamage(0);
       setAoe(1);
       setCost(0);
+      setHyperSpell(false);
       return;
     }
 
     const masteryType = ParentMastery.getType();
     const aoeCost = getAOECost(masteryType, aoe);
 
-    setCost(aoeCost + damage);
-  }, [active, damage, aoe, ParentMastery]);
+    const baseCost = aoeCost + damage;
+
+    // Hyper Spell reduces the final cost by 67%.
+    const finalCost = hyperSpell ? Math.ceil(baseCost * 0.33) : baseCost;
+
+    setCost(finalCost);
+  }, [active, damage, aoe, hyperSpell, ParentMastery]);
+
+  // ==================================================
+  // Damage Limit
+  // ==================================================
 
   useEffect(() => {
     const maxDamage = power * 15 + 5;
@@ -79,14 +102,30 @@ const ConstructsRepulsion = ({
     }
   }, [power, damage]);
 
+  // ==================================================
+  // Hyper Spell Damage
+  // ==================================================
+
+  const finalDamage = hyperSpell ? Math.ceil(damage * 1.5) : damage;
+
+  // ==================================================
+  // Render
+  // ==================================================
+
   return (
     <div className="space-y-6 rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* ================================================== */}
       {/* Title */}
+      {/* ================================================== */}
+
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 text-center shadow-md">
         <h1 className="text-2xl font-bold text-gray-100">Repulsion</h1>
       </div>
 
+      {/* ================================================== */}
       {/* Spell Information */}
+      {/* ================================================== */}
+
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-md">
         <div className="space-y-2 text-center">
           <h3 className="text-sm font-semibold tracking-wide text-cyan-400">
@@ -99,7 +138,10 @@ const ConstructsRepulsion = ({
         </div>
       </div>
 
+      {/* ================================================== */}
       {/* Power */}
+      {/* ================================================== */}
+
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-md">
         <h2 className="mb-3 text-lg font-bold text-orange-400">
           Manna to Power
@@ -136,7 +178,10 @@ const ConstructsRepulsion = ({
         </p>
       </div>
 
+      {/* ================================================== */}
       {/* Damage */}
+      {/* ================================================== */}
+
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-md">
         <h2 className="mb-3 text-lg font-bold text-orange-400">
           Manna to Damage
@@ -177,7 +222,10 @@ const ConstructsRepulsion = ({
         </p>
       </div>
 
+      {/* ================================================== */}
       {/* AOE */}
+      {/* ================================================== */}
+
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-md">
         <h2 className="mb-3 text-lg font-bold text-orange-400">
           Area of Effect
@@ -222,11 +270,32 @@ const ConstructsRepulsion = ({
         </div>
       </div>
 
+      {/* ================================================== */}
       {/* Final Statistics */}
+      {/* ================================================== */}
+
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h2 className="mb-4 border-b border-gray-700 pb-3 text-xl font-bold text-gray-100">
-          Final Statistics
-        </h2>
+        <div className="mb-4 flex items-center justify-between border-b border-gray-700 pb-3">
+          <h2 className="text-xl font-bold text-gray-100">Final Statistics</h2>
+
+          <button
+            type="button"
+            onClick={() => setHyperSpell((prev) => !prev)}
+            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+              hyperSpell
+                ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
+                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-purple-500 hover:text-purple-300"
+            }`}
+          >
+            Hyper Spell
+          </button>
+        </div>
+
+        {hyperSpell && (
+          <p className="mb-4 border-b border-gray-700 pb-3 text-sm text-purple-300">
+            Reduces Cost by 67% and increases Damage by 50%.
+          </p>
+        )}
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -238,7 +307,7 @@ const ConstructsRepulsion = ({
           <div className="flex items-center justify-between">
             <span className="text-gray-400">Damage</span>
 
-            <span className="font-semibold text-white">{damage}</span>
+            <span className="font-semibold text-white">{finalDamage}</span>
           </div>
 
           <div className="flex items-center justify-between">

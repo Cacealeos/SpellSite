@@ -20,6 +20,9 @@ const CollapseSaturation = ({
   const [selectedPotency, setSelectedPotency] = useState<
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
+  const [size, setSize] = useState<
+    "TINY" | "SIZEABLE" | "ENORMOUS" | "GARGANTUAN"
+  >("TINY");
 
   const [damage, setDamage] = useState(0);
   const [vitalityInvestment, setVitalityInvestment] = useState(0);
@@ -46,9 +49,9 @@ const CollapseSaturation = ({
         MASTERED: 100,
       },
       vitality: {
-        NOVICE: 200,
-        INTERMEDIATE: 300,
-        MASTERED: 400,
+        NOVICE: 100,
+        INTERMEDIATE: 200,
+        MASTERED: 300,
       },
       ratio: 1,
     },
@@ -60,13 +63,40 @@ const CollapseSaturation = ({
         MASTERED: 300,
       },
       vitality: {
-        NOVICE: 500,
-        INTERMEDIATE: 700,
-        MASTERED: 900,
+        NOVICE: 150,
+        INTERMEDIATE: 300,
+        MASTERED: 450,
       },
       ratio: 0.5,
     },
   };
+  // ==================================================
+  // Size Options
+  // ==================================================
+
+  const sizeOptions = {
+    MINOR: [
+      { value: "TINY", label: "Tiny" },
+      { value: "SIZEABLE", label: "Sizeable" },
+    ],
+    MAJOR: [
+      { value: "SIZEABLE", label: "Sizeable" },
+      { value: "ENORMOUS", label: "Enormous" },
+    ],
+    EXTREME: [
+      { value: "ENORMOUS", label: "Enormous" },
+      { value: "GARGANTUAN", label: "Gargantuan" },
+    ],
+  };
+
+  const availableSizes = sizeOptions[selectedPotency];
+
+  useEffect(() => {
+    if (!sizeOptions[selectedPotency].some((option) => option.value === size)) {
+      setSize(sizeOptions[selectedPotency][0].value);
+    }
+  }, [selectedPotency, size]);
+
   // ==================================================
   // Technique State
   // ==================================================
@@ -85,7 +115,7 @@ const CollapseSaturation = ({
     "Double Pulse": false,
     "Carry Spell": true,
     "Spell Shift": false,
-    "Counter Spell": true,
+    "Counter Spell": false,
     "Spell Surge": false,
     "Junction Cast": true,
     "Spell Charge": true,
@@ -177,7 +207,7 @@ const CollapseSaturation = ({
     }
 
     updateSpell("potency", potency);
-  }, [active, totalCost, requiredTTT, selectedPotency, updateSpell]);
+  }, [active, size, totalCost, requiredTTT, selectedPotency, updateSpell]);
 
   // ==================================================
   // Render
@@ -196,6 +226,35 @@ const CollapseSaturation = ({
         selectedPotency={selectedPotency}
         setSelectedPotency={setSelectedPotency}
       />
+
+      {/* ================================================== */}
+      {/* Construct Size */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Construct Size
+        </h3>
+
+        <div className="space-y-3">
+          {availableSizes.map((option) => (
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-4 py-3 hover:border-orange-500"
+            >
+              <p className="font-medium text-gray-100">{option.label}</p>
+
+              <input
+                type="radio"
+                name="collapse-size"
+                checked={size === option.value}
+                onChange={() => setSize(option.value)}
+                className="h-5 w-5 accent-orange-500"
+              />
+            </label>
+          ))}
+        </div>
+      </div>
 
       {/* Statistics */}
 

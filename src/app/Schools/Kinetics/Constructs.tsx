@@ -14,13 +14,22 @@ const Constructs = ({
   active,
   updateSpell,
 }: ConstructsProps) => {
+  // ==================================================
+  // State
+  // ==================================================
+
   const [power, setPower] = useState(0);
   const [damage, setDamage] = useState(0);
   const [size, setSize] = useState("Tiny");
+  const [hyperSpell, setHyperSpell] = useState(false);
 
   const [selectedPotency, setSelectedPotency] = useState<
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
+
+  // ==================================================
+  // Potency Options
+  // ==================================================
 
   const potencyOptions = [
     {
@@ -39,6 +48,10 @@ const Constructs = ({
       description: "135 / 90 / 45",
     },
   ];
+
+  // ==================================================
+  // Mastery Rates
+  // ==================================================
 
   const getMasteryRates = () => {
     switch (ParentMastery.getType()) {
@@ -67,6 +80,10 @@ const Constructs = ({
         };
     }
   };
+
+  // ==================================================
+  // Base Cost
+  // ==================================================
 
   const getBaseCost = () => {
     switch (ParentMastery.getType()) {
@@ -107,6 +124,10 @@ const Constructs = ({
     return 0;
   };
 
+  // ==================================================
+  // Vitality
+  // ==================================================
+
   const getBaseVitality = () => {
     switch (selectedPotency) {
       case "MINOR":
@@ -122,6 +143,10 @@ const Constructs = ({
         return 10;
     }
   };
+
+  // ==================================================
+  // Size
+  // ==================================================
 
   const getSizeOptions = () => {
     switch (selectedPotency) {
@@ -158,6 +183,10 @@ const Constructs = ({
     }
   };
 
+  // ==================================================
+  // Derived Values
+  // ==================================================
+
   const rates = getMasteryRates();
   const baseVitality = getBaseVitality();
   const sizeOptions = getSizeOptions();
@@ -167,7 +196,14 @@ const Constructs = ({
   // Only Power/Endurance generate TTT.
   const ttt = power * rates.powerRate;
 
-  const cost = getBaseCost() + damage * rates.damageRate;
+  const baseCost = getBaseCost() + damage * rates.damageRate;
+
+  // Hyper Spell reduces cost by 67%.
+  const cost = hyperSpell ? Math.ceil(baseCost * 0.33) : baseCost;
+
+  // ==================================================
+  // Spell Reset
+  // ==================================================
 
   useEffect(() => {
     if (!active) {
@@ -175,8 +211,13 @@ const Constructs = ({
       setDamage(0);
       setSize("Tiny");
       setSelectedPotency("MINOR");
+      setHyperSpell(false);
     }
   }, [active]);
+
+  // ==================================================
+  // Size Validation
+  // ==================================================
 
   useEffect(() => {
     if (!active) return;
@@ -187,6 +228,10 @@ const Constructs = ({
       setSize(validSizes[0]);
     }
   }, [active, selectedPotency, size]);
+
+  // ==================================================
+  // Spell Updates
+  // ==================================================
 
   useEffect(() => {
     if (!active) return;
@@ -212,10 +257,18 @@ const Constructs = ({
     updateSpell("ttt", ttt);
   }, [active, selectedPotency, cost, ttt, updateSpell]);
 
+  // ==================================================
+  // Render
+  // ==================================================
+
   if (!active) return null;
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* ================================================== */}
+      {/* Spell Header */}
+      {/* ================================================== */}
+
       <div>
         <h1 className="text-2xl font-bold text-gray-100">Constructs</h1>
 
@@ -226,6 +279,10 @@ const Constructs = ({
         </div>
       </div>
 
+      {/* ================================================== */}
+      {/* Potency */}
+      {/* ================================================== */}
+
       <div className="mt-6">
         <PotencySelector
           options={potencyOptions}
@@ -233,6 +290,10 @@ const Constructs = ({
           setSelectedPotency={setSelectedPotency}
         />
       </div>
+
+      {/* ================================================== */}
+      {/* Power & Endurance */}
+      {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
         <h2 className="mb-4 border-b border-gray-700 pb-2 text-xl font-bold text-orange-400">
@@ -275,6 +336,10 @@ const Constructs = ({
         </div>
       </div>
 
+      {/* ================================================== */}
+      {/* Damage */}
+      {/* ================================================== */}
+
       <div className="mt-4 rounded-lg border border-gray-700 bg-gray-800 p-4">
         <h2 className="mb-4 border-b border-gray-700 pb-2 text-xl font-bold text-orange-400">
           Damage
@@ -297,10 +362,29 @@ const Constructs = ({
         </p>
       </div>
 
+      {/* ================================================== */}
+      {/* Final Spell Statistics */}
+      {/* ================================================== */}
+
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
-        <h2 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-          Final Spell Statistics
-        </h2>
+        <div className="mb-3 flex items-center justify-between border-b border-gray-700 pb-2">
+          <h2 className="text-lg font-semibold text-orange-400">
+            Final Spell Statistics
+          </h2>
+
+          {/* Hyper Spell */}
+          <button
+            type="button"
+            onClick={() => setHyperSpell((prev) => !prev)}
+            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+              hyperSpell
+                ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
+                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-purple-500 hover:text-purple-300"
+            }`}
+          >
+            Hyper Spell
+          </button>
+        </div>
 
         <div className="space-y-2 text-gray-300">
           <div className="flex justify-between">
@@ -340,6 +424,13 @@ const Constructs = ({
             <span className="font-semibold text-orange-400">{ttt}</span>
           </div>
         </div>
+
+        {/* Hyper Spell Effect */}
+        {hyperSpell && (
+          <p className="mt-4 border-t border-gray-700 pt-3 text-sm text-purple-300">
+            Reduces Cost by 67%.
+          </p>
+        )}
       </div>
     </div>
   );

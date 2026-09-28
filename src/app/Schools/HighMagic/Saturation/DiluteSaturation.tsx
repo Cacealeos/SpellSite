@@ -1,10 +1,29 @@
 import { useEffect, useState } from "react";
-
 import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 // ==================================================
 // Static Data
 // ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": false,
+  "Carry Spell": true,
+  "Spell Shift": false,
+  "Counter Spell": true,
+  "Spell Surge": false,
+  "Junction Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": true,
+  "Father Spell": false,
+};
 
 const masteryData = {
   NOVICE: {
@@ -105,6 +124,8 @@ export default function DiluteSaturation({
 
   return (
     <>
+      <SpellTechniquesTable techniques={Techniques} />
+
       {/* Saturation Calibration */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">

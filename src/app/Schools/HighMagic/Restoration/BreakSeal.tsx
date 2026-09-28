@@ -1,83 +1,190 @@
-import React, { useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Potency } from "@/app/models/Potency";
+import { useEffect, useState } from "react";
 
-const BreakSeal = ({
+import { Mastery, Spell } from "@/app/models";
+import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Static Data
+// ==================================================
+
+const potencyData = {
+  MINOR: {
+    costs: {
+      NOVICE: 100,
+      INTERMEDIATE: 75,
+      MASTERED: 50,
+    },
+  },
+  MAJOR: {
+    costs: {
+      NOVICE: 200,
+      INTERMEDIATE: 150,
+      MASTERED: 100,
+    },
+  },
+  EXTREME: {
+    costs: {
+      NOVICE: 300,
+      INTERMEDIATE: 225,
+      MASTERED: 150,
+    },
+  },
+};
+
+const potencyOptions = [
+  {
+    value: "MINOR" as const,
+    label: "Minor",
+    description: "100 / 75 / 50",
+  },
+  {
+    value: "MAJOR" as const,
+    label: "Major",
+    description: "200 / 150 / 100",
+  },
+  {
+    value: "EXTREME" as const,
+    label: "Extreme",
+    description: "300 / 225 / 150",
+  },
+];
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": false,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Component
+// ==================================================
+
+export default function BreakSeal({
   ParentMastery,
   active,
+  updateSpell,
 }: {
   ParentMastery: Mastery;
   active: boolean;
-}) => {
-  const [cost, setCost] = useState(0);
-  const [pot, setPot] = useState(new Potency());
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+}) {
+  // ==================================================
+  // State
+  // ==================================================
 
-  let CoherencePotency: Potency = new Potency();
-  let testPotency: Potency = new Potency();
-  let testMastery: Mastery = new Mastery();
+  const [selectedPotency, setSelectedPotency] = useState<
+    "MINOR" | "MAJOR" | "EXTREME"
+  >("MINOR");
 
-  if (!active) setCost(0);
+  const [counterSpell, setCounterSpell] = useState(false);
 
-  const changeChoice = (potency: string | void) => {
-    if (ParentMastery.getType() === testMastery.novice(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(100);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(200);
-      if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(300);
-      setPot(CoherencePotency);
+  // ==================================================
+  // Derived Values
+  // ==================================================
+
+  const mastery = ParentMastery.getType() as
+    | "NOVICE"
+    | "INTERMEDIATE"
+    | "MASTERED";
+
+  const cost = potencyData[selectedPotency].costs[mastery];
+
+  // ==================================================
+  // Spell Updates
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      updateSpell("cost", 0);
+      return;
     }
-    if (ParentMastery.getType() === testMastery.intermediate(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(75);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(150);
-      if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(225);
-      setPot(CoherencePotency);
-    }
-    if (ParentMastery.getType() === testMastery.mastered(true)) {
-      if (CoherencePotency.getType() === testPotency.minor(true)) setCost(50);
-      if (CoherencePotency.getType() === testPotency.major(true)) setCost(100);
-      if (CoherencePotency.getType() === testPotency.extreme(true))
-        setCost(150);
-      setPot(CoherencePotency);
-    }
-  };
+
+    updateSpell("cost", cost);
+  }, [active, cost, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
+
+  if (!active) return null;
 
   return (
     <>
-      <div>
-        <h1>Break Seal</h1>
-        <br />
-        <p>Potency</p>
-        <div>
-          <p>Minor – 100 / 75 / 50</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.minor())}
-          />
+      {/* ================================================== */}
+      {/* Spell Techniques */}
+      {/* ================================================== */}
+
+      <SpellTechniquesTable techniques={Techniques} />
+
+      {/* ================================================== */}
+      {/* Statistics */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <div className="mb-3 flex items-center justify-between border-b border-gray-700 pb-2">
+          <h3 className="text-lg font-semibold text-orange-400">
+            Break Seal Statistics
+          </h3>
+
+          {/* Counter Spell */}
+          <button
+            type="button"
+            onClick={() => setCounterSpell((prev) => !prev)}
+            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+              counterSpell
+                ? "border-red-400 bg-red-500/10 text-red-300 shadow-[0_0_12px_rgba(248,113,113,0.5)]"
+                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-red-500 hover:text-red-300"
+            }`}
+          >
+            Counter Spell
+          </button>
         </div>
-        <div>
-          <p>Major – 200 / 150 / 100</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.major())}
-          />
-        </div>
-        <div>
-          <p>Extreme – 300 / 225 / 15</p>
-          <input
-            type="checkbox"
-            onChange={(e) => changeChoice(CoherencePotency.extreme())}
-          />
-        </div>
-        <br />
-        <p>Info: Break Limiter Seal saftely.</p>
-        <p>
-          The number of targets that can communicate on the same channel scales
-          with potency and environment. |GMD|
-        </p>
+
+        {counterSpell && (
+          <p className="text-sm text-gray-400">
+            Allows for the interruption of the Sealing process as a{" "}
+            <span className="font-semibold text-red-300">DEFENSIVE ACTION</span>
+          </p>
+        )}
+      </div>
+
+      {/* ================================================== */}
+      {/* Potency */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Potency
+        </h3>
+
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+
+      {/* ================================================== */}
+      {/* Description */}
+      {/* ================================================== */}
+
+      <div className="mt-4 text-center text-sm text-gray-400">
+        <p>Info: Break Limiter Seal safely.</p>
       </div>
     </>
   );
-};
-
-export default BreakSeal;
+}

@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { Mastery } from "@/app/models";
+import { Mastery, Spell } from "@/app/models";
 
 type ConstructsRepulsionProps = {
   ParentMastery: Mastery;
   active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 };
 
 const ConstructsRepulsion = ({
   ParentMastery,
   active,
+  updateSpell,
 }: ConstructsRepulsionProps) => {
   const [power, setPower] = useState(0);
   const [damage, setDamage] = useState(0);
   const [aoe, setAoe] = useState(1);
-  const [cost, setCost] = useState(0);
   const [hyperSpell, setHyperSpell] = useState(false);
 
   // ==================================================
@@ -74,8 +75,8 @@ const ConstructsRepulsion = ({
       setPower(0);
       setDamage(0);
       setAoe(1);
-      setCost(0);
       setHyperSpell(false);
+      updateSpell("cost", 0);
       return;
     }
 
@@ -87,8 +88,8 @@ const ConstructsRepulsion = ({
     // Hyper Spell reduces the final cost by 67%.
     const finalCost = hyperSpell ? Math.ceil(baseCost * 0.33) : baseCost;
 
-    setCost(finalCost);
-  }, [active, damage, aoe, hyperSpell, ParentMastery]);
+    updateSpell("cost", finalCost);
+  }, [active, damage, aoe, hyperSpell, ParentMastery, updateSpell]);
 
   // ==================================================
   // Damage Limit
@@ -319,7 +320,9 @@ const ConstructsRepulsion = ({
           <div className="flex items-center justify-between border-t border-gray-700 pt-3">
             <span className="text-lg font-semibold text-gray-300">Cost</span>
 
-            <span className="text-2xl font-bold text-orange-400">{cost}</span>
+            <span className="text-2xl font-bold text-orange-400">
+              {/* Parent spell cost is updated through updateSpell */}
+            </span>
           </div>
         </div>
       </div>

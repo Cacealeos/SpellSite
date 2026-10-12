@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Types
+// ==================================================
 
 type TransmuteMassProps = {
   ParentMastery: Mastery;
@@ -8,34 +13,71 @@ type TransmuteMassProps = {
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 };
 
+// ==================================================
+// Potency Options
+// ==================================================
+
+const potencyOptions = [
+  {
+    value: "MINOR" as const,
+    label: "Minor",
+    description: "100 / 75 / 50",
+  },
+  {
+    value: "MAJOR" as const,
+    label: "Major",
+    description: "300 / 225 / 150",
+  },
+  {
+    value: "EXTREME" as const,
+    label: "Extreme",
+    description: "900 / 675 / 450",
+  },
+];
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
 const TransmuteMass = ({
   ParentMastery,
   active,
   updateSpell,
 }: TransmuteMassProps) => {
+  // ==================================================
+  // State
+  // ==================================================
+
   const [endurance, setEndurance] = useState(0);
 
   const [selectedPotency, setSelectedPotency] = useState<
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
 
-  const potencyOptions = [
-    {
-      value: "MINOR" as const,
-      label: "Minor",
-      description: "100 / 75 / 50",
-    },
-    {
-      value: "MAJOR" as const,
-      label: "Major",
-      description: "300 / 225 / 150",
-    },
-    {
-      value: "EXTREME" as const,
-      label: "Extreme",
-      description: "900 / 675 / 450",
-    },
-  ];
+  const [counterSpell, setCounterSpell] = useState(false);
+
+  // ==================================================
+  // Mastery / Potency Costs
+  // ==================================================
 
   const getCost = (masteryType: string, potencyType: string): number => {
     switch (masteryType) {
@@ -76,6 +118,10 @@ const TransmuteMass = ({
     return 0;
   };
 
+  // ==================================================
+  // Endurance Modifiers
+  // ==================================================
+
   const getEnduranceModifier = (masteryType: string): number => {
     switch (masteryType) {
       case "NOVICE":
@@ -92,15 +138,36 @@ const TransmuteMass = ({
     }
   };
 
-  // Reset local UI state whenever this spell is deselected.
+  // ==================================================
+  // Spell Statistics
+  // ==================================================
+
+  const masteryType = ParentMastery.getType();
+
+  const baseCost = getCost(masteryType, selectedPotency);
+
+  const enduranceModifier = getEnduranceModifier(masteryType);
+
+  const finalCost = Math.round(
+    baseCost + baseCost * enduranceModifier * endurance,
+  );
+
+  // ==================================================
+  // Reset Local State
+  // ==================================================
+
   useEffect(() => {
     if (active) return;
 
     setEndurance(0);
     setSelectedPotency("MINOR");
+    setCounterSpell(false);
   }, [active]);
 
-  // Synchronize the final spell statistics with the parent Spell object.
+  // ==================================================
+  // Update Parent Spell
+  // ==================================================
+
   useEffect(() => {
     if (!active) return;
 
@@ -120,30 +187,42 @@ const TransmuteMass = ({
         break;
     }
 
-    const masteryType = ParentMastery.getType();
-
-    const baseCost = getCost(masteryType, pot.getType());
-
-    const modifier = getEnduranceModifier(masteryType);
-
-    const finalCost = Math.round(baseCost + baseCost * modifier * endurance);
-
     updateSpell("potency", pot);
     updateSpell("cost", finalCost);
 
     // This spell does not intrinsically generate TTT.
     updateSpell("ttt", 0);
-  }, [active, selectedPotency, endurance, ParentMastery, updateSpell]);
+  }, [active, selectedPotency, finalCost, updateSpell]);
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mb-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Potency Selection */}
+      {/* ================================================== */}
+
       <PotencySelector
         options={potencyOptions}
         selectedPotency={selectedPotency}
         setSelectedPotency={setSelectedPotency}
       />
 
-      <div className="border-t border-gray-700 pt-6">
+      {/* ================================================== */}
+      {/* Manna to Endurance */}
+      {/* ================================================== */}
+
+      <div className="mt-6 border-t border-gray-700 pt-6">
         <h2 className="mb-3 text-xl font-bold text-orange-400">
           Manna to Endurance
         </h2>
@@ -155,7 +234,9 @@ const TransmuteMass = ({
           step="1"
           value={endurance}
           onChange={(e) =>
-            setEndurance(Math.min(4, Math.max(0, Number(e.target.value))))
+            setEndurance(
+              Math.max(0, Math.min(4, Math.floor(Number(e.target.value) || 0))),
+            )
           }
           className="
             w-24
@@ -179,44 +260,73 @@ const TransmuteMass = ({
         <p className="mt-2 text-sm text-gray-400">
           Each Endurance increment increases Manna cost relative to the selected
           Potency.
-          <br />
-          (NOVICE +20%, INTERMEDIATE +15%, MASTERED +10% of base cost per
-          increment. Max of 4. Starts at 0).
+        </p>
+
+        <p className="mt-1 text-sm text-gray-500">
+          NOVICE +20%, INTERMEDIATE +15%, MASTERED +10% of base cost per
+          increment. Max of 4. Starts at 0.
         </p>
       </div>
 
+      {/* ================================================== */}
+      {/* Final Spell Statistics */}
+      {/* ================================================== */}
+
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
-        <h2 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
-          Final Spell Statistics
-        </h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-orange-400">
+            Final Spell Statistics
+          </h2>
 
-        <div className="space-y-2 text-gray-300">
-          <div className="flex justify-between">
-            <span>Base Cost</span>
-            <span className="font-semibold text-cyan-400">
-              {getCost(ParentMastery.getType(), selectedPotency)}
-            </span>
+          {/* Counter Spell Toggle */}
+
+          <button
+            type="button"
+            onClick={() => setCounterSpell((prev) => !prev)}
+            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+              counterSpell
+                ? "border-red-400 bg-red-500/10 text-red-300 shadow-[0_0_12px_rgba(248,113,113,0.5)]"
+                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-red-500 hover:text-red-300"
+            }`}
+          >
+            Counter Spell
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* Technique Effects */}
+        {/* ================================================== */}
+
+        {counterSpell && (
+          <p className="mb-4 border-t border-gray-700 pt-3 text-sm text-red-300">
+            Allows Transmute Mass to be used as a{" "}
+            <span className="font-semibold">DEFENSIVE MEASURE</span>.
+          </p>
+        )}
+
+        {/* ================================================== */}
+        {/* Statistics */}
+        {/* ================================================== */}
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Potency</p>
+            <p className="text-xl font-bold text-white">{selectedPotency}</p>
           </div>
 
-          <div className="flex justify-between">
-            <span>Endurance</span>
-            <span className="font-semibold text-cyan-400">{endurance}</span>
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Endurance</p>
+            <p className="text-xl font-bold text-white">{endurance}</p>
           </div>
 
-          <div className="flex justify-between">
-            <span>Final Cost</span>
-            <span className="font-semibold text-cyan-400">
-              {(() => {
-                const baseCost = getCost(
-                  ParentMastery.getType(),
-                  selectedPotency,
-                );
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Base Cost</p>
+            <p className="text-xl font-bold text-white">{baseCost}</p>
+          </div>
 
-                const modifier = getEnduranceModifier(ParentMastery.getType());
-
-                return Math.round(baseCost + baseCost * modifier * endurance);
-              })()}
-            </span>
+          <div className="rounded border border-gray-700 bg-gray-900 p-3">
+            <p className="text-sm text-gray-400">Final Cost</p>
+            <p className="text-xl font-bold text-white">{finalCost}</p>
           </div>
         </div>
       </div>

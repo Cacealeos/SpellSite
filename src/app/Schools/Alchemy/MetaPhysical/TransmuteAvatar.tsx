@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+import { UserCircleIcon } from "@heroicons/react/24/solid";
+
+// ==================================================
+// Types
+// ==================================================
 
 type TransmuteAvatarProps = {
   ParentMastery: Mastery;
@@ -8,50 +14,89 @@ type TransmuteAvatarProps = {
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 };
 
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Potency Statistics
+// ==================================================
+
+const potencyStats = {
+  MINOR: {
+    NOVICE: { cost: 20, spellCraft: 2, mageTech: 75 },
+    INTERMEDIATE: { cost: 10, spellCraft: 2, mageTech: 75 },
+    MASTERED: { cost: 0, spellCraft: 2, mageTech: 75 },
+  },
+  MAJOR: {
+    NOVICE: { cost: 60, spellCraft: 3, mageTech: 100 },
+    INTERMEDIATE: { cost: 40, spellCraft: 3, mageTech: 100 },
+    MASTERED: { cost: 20, spellCraft: 3, mageTech: 100 },
+  },
+  EXTREME: {
+    NOVICE: { cost: 100, spellCraft: 4, mageTech: 125 },
+    INTERMEDIATE: { cost: 80, spellCraft: 4, mageTech: 125 },
+    MASTERED: { cost: 60, spellCraft: 4, mageTech: 125 },
+  },
+};
+
+// ==================================================
+// Potency Options
+// ==================================================
+
+const potencyOptions = [
+  {
+    value: "MINOR" as const,
+    label: "Minor",
+    description: `Cost: ${potencyStats.MINOR.NOVICE.cost} / ${potencyStats.MINOR.INTERMEDIATE.cost} / ${potencyStats.MINOR.MASTERED.cost}`,
+  },
+  {
+    value: "MAJOR" as const,
+    label: "Major",
+    description: `Cost: ${potencyStats.MAJOR.NOVICE.cost} / ${potencyStats.MAJOR.INTERMEDIATE.cost} / ${potencyStats.MAJOR.MASTERED.cost}`,
+  },
+  {
+    value: "EXTREME" as const,
+    label: "Extreme",
+    description: `Cost: ${potencyStats.EXTREME.NOVICE.cost} / ${potencyStats.EXTREME.INTERMEDIATE.cost} / ${potencyStats.EXTREME.MASTERED.cost}`,
+  },
+];
+
 const TransmuteAvatar = ({
   ParentMastery,
   active,
   updateSpell,
 }: TransmuteAvatarProps) => {
+  // ==================================================
+  // State
+  // ==================================================
+
   const [selectedPotency, setSelectedPotency] = useState<
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
 
-  const potencyStats = {
-    MINOR: {
-      NOVICE: { cost: 20, spellCraft: 2, mageTech: 75 },
-      INTERMEDIATE: { cost: 10, spellCraft: 2, mageTech: 75 },
-      MASTERED: { cost: 0, spellCraft: 2, mageTech: 75 },
-    },
-    MAJOR: {
-      NOVICE: { cost: 60, spellCraft: 3, mageTech: 100 },
-      INTERMEDIATE: { cost: 40, spellCraft: 3, mageTech: 100 },
-      MASTERED: { cost: 20, spellCraft: 3, mageTech: 100 },
-    },
-    EXTREME: {
-      NOVICE: { cost: 100, spellCraft: 4, mageTech: 125 },
-      INTERMEDIATE: { cost: 80, spellCraft: 4, mageTech: 125 },
-      MASTERED: { cost: 60, spellCraft: 4, mageTech: 125 },
-    },
-  };
-
-  const potencyOptions = [
-    {
-      value: "MINOR" as const,
-      label: "Minor",
-      description: `Cost: ${potencyStats.MINOR.NOVICE.cost} / ${potencyStats.MINOR.INTERMEDIATE.cost} / ${potencyStats.MINOR.MASTERED.cost}`,
-    },
-    {
-      value: "MAJOR" as const,
-      label: "Major",
-      description: `Cost: ${potencyStats.MAJOR.NOVICE.cost} / ${potencyStats.MAJOR.INTERMEDIATE.cost} / ${potencyStats.MAJOR.MASTERED.cost}`,
-    },
-    {
-      value: "EXTREME" as const,
-      label: "Extreme",
-      description: `Cost: ${potencyStats.EXTREME.NOVICE.cost} / ${potencyStats.EXTREME.INTERMEDIATE.cost} / ${potencyStats.EXTREME.MASTERED.cost}`,
-    },
-  ];
+  // ==================================================
+  // Spell Statistics
+  // ==================================================
 
   const masteryType = ParentMastery.getType() as
     | "NOVICE"
@@ -62,15 +107,20 @@ const TransmuteAvatar = ({
     potencyStats[selectedPotency][masteryType] ??
     potencyStats[selectedPotency].NOVICE;
 
-  // Reset local UI state whenever this spell is deselected.
+  // ==================================================
+  // Reset Local State
+  // ==================================================
+
   useEffect(() => {
     if (!active) {
       setSelectedPotency("MINOR");
     }
   }, [active]);
 
-  // Synchronize the selected potency and calculated values
-  // with the parent Spell object.
+  // ==================================================
+  // Update Parent Spell
+  // ==================================================
+
   useEffect(() => {
     if (!active) return;
 
@@ -97,20 +147,36 @@ const TransmuteAvatar = ({
     updateSpell("ttt", 0);
   }, [active, selectedPotency, selectedStats.cost, updateSpell]);
 
+  // ==================================================
+  // Render
+  // ==================================================
+
   if (!active) return null;
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
-      {" "}
-      <div>
-        {" "}
-        <h1 className="mb-2 text-2xl font-bold text-gray-100">
-          Transmute Avatar{" "}
-        </h1>
-        <h3 className="text-sm font-semibold tracking-wide text-gray-400">
-          RANGE - DIRECT
-        </h3>
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
+
+      <div className="flex items-center gap-3">
+        <UserCircleIcon className="h-8 w-8 text-cyan-400" />
+
+        <h1 className="text-2xl font-bold text-cyan-400">Transmute Avatar</h1>
       </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Properties */}
+      {/* ================================================== */}
+
       <div className="mt-6">
         <h2 className="mb-3 border-b border-gray-700 pb-2 text-xl font-bold text-orange-400">
           Spell Properties
@@ -122,12 +188,17 @@ const TransmuteAvatar = ({
           setSelectedPotency={setSelectedPotency}
         />
       </div>
+
+      {/* ================================================== */}
+      {/* Final Spell Statistics */}
+      {/* ================================================== */}
+
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
         <h2 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
           Final Spell Statistics
         </h2>
 
-        <div className="space-y-2 text-gray-300">
+        <div className="space-y-3 text-gray-300">
           <div className="flex justify-between">
             <span>Potency</span>
             <span className="font-semibold text-orange-400">
@@ -136,23 +207,28 @@ const TransmuteAvatar = ({
           </div>
 
           <div className="flex justify-between">
-            <span>Manna</span>
-            <span className="font-semibold text-cyan-400">
-              {selectedStats.cost}
-            </span>
+            <span>Range</span>
+            <span className="font-semibold text-orange-400">Direct</span>
           </div>
 
           <div className="flex justify-between">
             <span>Spellcraft</span>
-            <span className="font-semibold text-cyan-400">
+            <span className="font-semibold text-orange-400">
               {selectedStats.spellCraft}
             </span>
           </div>
 
           <div className="flex justify-between">
             <span>Mage Tech</span>
-            <span className="font-semibold text-cyan-400">
+            <span className="font-semibold text-orange-400">
               {selectedStats.mageTech}
+            </span>
+          </div>
+
+          <div className="flex justify-between border-t border-gray-700 pt-3">
+            <span>Manna</span>
+            <span className="font-semibold text-orange-400">
+              {selectedStats.cost}
             </span>
           </div>
         </div>

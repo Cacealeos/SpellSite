@@ -1,28 +1,36 @@
 import { useEffect, useState } from "react";
+import { EyeIcon } from "@heroicons/react/24/solid";
 
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
-const aoeOptions = [
-  {
-    value: "SMALL" as const,
-    label: "Small Area",
-    description: "Cost ×1",
-    multiplier: 1,
-  },
-  {
-    value: "MODERATE" as const,
-    label: "Moderate Area",
-    description: "Cost ×1.5",
-    multiplier: 1.5,
-  },
-  {
-    value: "LARGE" as const,
-    label: "Large Area",
-    description: "Cost ×3",
-    multiplier: 3,
-  },
-];
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Component
+// ==================================================
 
 const Presage = ({
   ParentMastery,
@@ -62,6 +70,10 @@ const Presage = ({
       description: "120 / 90 / 60",
     },
   ];
+
+  // ==================================================
+  // Deliverance Aspect
+  // ==================================================
 
   const deliveranceAspect =
     selectedPotency === "MINOR"
@@ -144,11 +156,39 @@ const Presage = ({
 
   return (
     <>
-      <PotencySelector
-        options={potencyOptions}
-        selectedPotency={selectedPotency}
-        setSelectedPotency={setSelectedPotency}
-      />
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
+
+      <div className="flex items-center gap-3">
+        <EyeIcon className="h-8 w-8 text-cyan-400" />
+
+        <h1 className="text-2xl font-bold text-cyan-400">Presage</h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Potency Selection */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+
+      {/* ================================================== */}
+      {/* Deliverance Aspect */}
+      {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">

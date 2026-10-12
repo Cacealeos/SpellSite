@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 const EtherealTempest = ({
   ParentMastery,
@@ -34,6 +35,29 @@ const EtherealTempest = ({
       description: "440 / 330 / 220",
     },
   ];
+
+  // ==================================================
+  // Spell Techniques
+  // ==================================================
+
+  const Techniques = {
+    "Quick Spell": true,
+    "Spell Reflex": false,
+    "Double Cast": true,
+    "Double Pulse": true,
+    "Carry Spell": true,
+    "Spell Shift": true,
+    "Counter Spell": true,
+    "Spell Surge": true,
+    "Junction Cast": true,
+    "Spell Charge": true,
+    "Focus Spell": true,
+    "Hyper Spell": true,
+    "Auto Cast": false,
+    "Rivet Cast": true,
+    "Spell Recovery": false,
+    "Father Spell": false,
+  };
 
   // ==================================================
   // Spell Calculation
@@ -91,6 +115,9 @@ const EtherealTempest = ({
       <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
         Ethereal Tempest
       </h2>
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
 
       {/* ==================================================
           Spell Properties

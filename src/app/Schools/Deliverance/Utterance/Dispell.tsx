@@ -1,7 +1,36 @@
 import { useEffect, useState } from "react";
+import { ShieldExclamationIcon } from "@heroicons/react/24/solid";
 
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Component
+// ==================================================
 
 const Dispell = ({
   ParentMastery,
@@ -19,6 +48,7 @@ const Dispell = ({
   const [selectedPotency, setSelectedPotency] = useState<
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
+
   const [intelligence, setIntelligence] = useState(0);
   const [baseCheck, setBaseCheck] = useState(5);
 
@@ -124,17 +154,48 @@ const Dispell = ({
 
   return (
     <>
-      <PotencySelector
-        options={potencyOptions}
-        selectedPotency={selectedPotency}
-        setSelectedPotency={setSelectedPotency}
-      />
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
 
-      {/* Intelligence */}
+      <div className="flex items-center gap-3">
+        <ShieldExclamationIcon className="h-8 w-8 text-cyan-400" />
+
+        <h1 className="text-2xl font-bold text-cyan-400">Dispell</h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Potency Selection */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+
+      {/* ================================================== */}
+      {/* Resistance Check */}
+      {/* ================================================== */}
+
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
           Resistance Check
         </h3>
+
+        {/* ================================================== */}
+        {/* Intelligence Input */}
+        {/* ================================================== */}
 
         <label className="mb-2 block text-sm text-gray-300">
           Intelligence (Optional)
@@ -157,14 +218,20 @@ const Dispell = ({
           className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 focus:border-cyan-500 focus:outline-none"
         />
 
-        <div className="mt-4 rounded-md border border-gray-700 bg-gray-900 p-4 space-y-2">
+        {/* ================================================== */}
+        {/* Resistance Calculation */}
+        {/* ================================================== */}
+
+        <div className="mt-4 space-y-2 rounded-md border border-gray-700 bg-gray-900 p-4">
           <div className="flex justify-between">
             <span className="text-gray-300">Base</span>
+
             <span className="font-semibold text-cyan-400">{baseCheck}</span>
           </div>
 
           <div className="flex justify-between">
             <span className="text-gray-300">INT Bonus</span>
+
             <span className="font-semibold text-cyan-400">
               {Math.floor(intelligence / 2)}
             </span>

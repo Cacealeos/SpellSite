@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 const UsherEthereal = ({
   ParentMastery,
@@ -32,6 +33,29 @@ const UsherEthereal = ({
       description: "450 / 400 / 350",
     },
   ];
+
+  // ==================================================
+  // Spell Techniques
+  // ==================================================
+
+  const Techniques = {
+    "Quick Spell": true,
+    "Spell Reflex": false,
+    "Double Cast": true,
+    "Double Pulse": true,
+    "Carry Spell": true,
+    "Spell Shift": true,
+    "Counter Spell": true,
+    "Spell Surge": true,
+    "Junction Cast": true,
+    "Spell Charge": true,
+    "Focus Spell": true,
+    "Hyper Spell": true,
+    "Auto Cast": false,
+    "Rivet Cast": true,
+    "Spell Recovery": false,
+    "Father Spell": false,
+  };
 
   // ==================================================
   // Spell Calculation
@@ -113,6 +137,9 @@ const UsherEthereal = ({
       <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
         Usher Ethereal
       </h2>
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
 
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">

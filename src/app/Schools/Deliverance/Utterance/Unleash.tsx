@@ -1,7 +1,36 @@
 import { useEffect, useState } from "react";
+import { BoltIcon } from "@heroicons/react/24/solid";
 
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Area of Effect Options
+// ==================================================
 
 const aoeOptions = [
   {
@@ -23,6 +52,10 @@ const aoeOptions = [
     multiplier: 3,
   },
 ];
+
+// ==================================================
+// Component
+// ==================================================
 
 const Unleash = ({
   ParentMastery,
@@ -147,13 +180,40 @@ const Unleash = ({
 
   return (
     <>
-      <PotencySelector
-        options={potencyOptions}
-        selectedPotency={selectedPotency}
-        setSelectedPotency={setSelectedPotency}
-      />
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
 
+      <div className="flex items-center gap-3">
+        <BoltIcon className="h-8 w-8 text-cyan-400" />
+
+        <h1 className="text-2xl font-bold text-cyan-400">Unleash</h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Potency Selection */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+
+      {/* ================================================== */}
       {/* Area of Effect */}
+      {/* ================================================== */}
+
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
           Area of Effect

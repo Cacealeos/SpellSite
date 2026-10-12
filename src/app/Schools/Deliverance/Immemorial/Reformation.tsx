@@ -1,7 +1,45 @@
 import { useEffect, useState } from "react";
-
+import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/solid";
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Types
+// ==================================================
+
+type ReformationProps = {
+  ParentMastery: Mastery;
+  active: boolean;
+  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
+};
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Spell Table
+// ==================================================
 
 const spellTable = {
   NOVICE: {
@@ -21,15 +59,33 @@ const spellTable = {
   },
 };
 
-const ReAwaken = ({
+// ==================================================
+// Potency Options
+// ==================================================
+
+const potencyOptions = [
+  {
+    value: "MINOR" as const,
+    label: "Minor",
+    description: "90 / 70 / 50",
+  },
+  {
+    value: "MAJOR" as const,
+    label: "Major",
+    description: "190 / 150 / 110",
+  },
+  {
+    value: "EXTREME" as const,
+    label: "Extreme",
+    description: "330 / 270 / 210",
+  },
+];
+
+const Reformation = ({
   ParentMastery,
   active,
   updateSpell,
-}: {
-  ParentMastery: Mastery;
-  active: boolean;
-  updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
-}) => {
+}: ReformationProps) => {
   // ==================================================
   // State
   // ==================================================
@@ -39,34 +95,25 @@ const ReAwaken = ({
   >("MINOR");
 
   // ==================================================
-  // Potency Options
+  // Spell Calculations
   // ==================================================
 
-  const potencyOptions = [
-    {
-      value: "MINOR" as const,
-      label: "Minor",
-      description: "90 / 70 / 50",
-    },
-    {
-      value: "MAJOR" as const,
-      label: "Major",
-      description: "190 / 150 / 110",
-    },
-    {
-      value: "EXTREME" as const,
-      label: "Extreme",
-      description: "330 / 270 / 210",
-    },
-  ];
+  const masteryType = ParentMastery.getType() as keyof typeof spellTable;
 
-  const { cost } =
-    spellTable[ParentMastery.getType() as keyof typeof spellTable][
-      selectedPotency
-    ];
+  const cost = spellTable[masteryType]?.[selectedPotency]?.cost ?? 0;
 
   // ==================================================
-  // Spell Calculation
+  // Reset Local State
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      setSelectedPotency("MINOR");
+    }
+  }, [active]);
+
+  // ==================================================
+  // Update Parent Spell
   // ==================================================
 
   useEffect(() => {
@@ -82,9 +129,11 @@ const ReAwaken = ({
       case "MINOR":
         potency.minor();
         break;
+
       case "MAJOR":
         potency.major();
         break;
+
       case "EXTREME":
         potency.extreme();
         break;
@@ -98,33 +147,78 @@ const ReAwaken = ({
   // Render
   // ==================================================
 
+  if (!active) return null;
+
   return (
-    <>
-      <PotencySelector
-        options={potencyOptions}
-        selectedPotency={selectedPotency}
-        setSelectedPotency={setSelectedPotency}
-      />
+    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
+
+      <div className="flex items-center gap-3">
+        <ArrowPathRoundedSquareIcon className="h-8 w-8 text-cyan-400" />
+
+        <h1 className="text-2xl font-bold text-cyan-400">Reformation</h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Properties */}
+      {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-          Reformation Statistics
-        </h3>
+        <h2 className="mb-4 border-b border-gray-700 pb-3 text-lg font-semibold text-cyan-400">
+          Spell Properties
+        </h2>
 
-        <div className="space-y-3">
+        {/* ================================================== */}
+        {/* Potency Selection */}
+        {/* ================================================== */}
+
+        <PotencySelector
+          options={potencyOptions}
+          selectedPotency={selectedPotency}
+          setSelectedPotency={setSelectedPotency}
+        />
+      </div>
+
+      {/* ================================================== */}
+      {/* Final Spell Statistics */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h2 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Final Spell Statistics
+        </h2>
+
+        <div className="space-y-3 text-gray-300">
           <div className="flex justify-between">
-            <span className="text-gray-300">Range</span>
-            <span className="font-semibold text-cyan-400">Radial</span>
+            <span>Potency</span>
+            <span className="font-semibold text-orange-400">
+              {selectedPotency}
+            </span>
           </div>
 
           <div className="flex justify-between">
-            <span className="text-gray-300">Cost</span>
-            <span className="font-semibold text-cyan-400">{cost}</span>
+            <span>Range</span>
+            <span className="font-semibold text-orange-400">Radial</span>
+          </div>
+
+          <div className="flex justify-between border-t border-gray-700 pt-3">
+            <span>Manna</span>
+            <span className="font-semibold text-orange-400">{cost}</span>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
-export default ReAwaken;
+export default Reformation;

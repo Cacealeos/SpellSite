@@ -1,6 +1,91 @@
-import React, { useEffect, useState } from "react";
-import { Mastery } from "../../../models/Mastery";
-import { Spell } from "../../../models/Spell";
+import { useEffect, useState } from "react";
+import { EyeIcon } from "@heroicons/react/24/solid";
+
+import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": true,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": true,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Constants
+// ==================================================
+
+const MASTERY_TTT = {
+  NOVICE: 15,
+  INTERMEDIATE: 10,
+  MASTERED: 5,
+};
+
+const AOE_TTT = {
+  SMALL: {
+    NOVICE: 5,
+    INTERMEDIATE: 3,
+    MASTERED: 1,
+  },
+  MODERATE: {
+    NOVICE: 9,
+    INTERMEDIATE: 6,
+    MASTERED: 3,
+  },
+  LARGE: {
+    NOVICE: 15,
+    INTERMEDIATE: 11,
+    MASTERED: 7,
+  },
+};
+
+type Sense = "Sight" | "Smell" | "Touch" | "Taste" | "Sound" | "Manna";
+
+type AOE = "SMALL" | "MODERATE" | "LARGE";
+
+const SENSES: Sense[] = ["Sight", "Smell", "Touch", "Taste", "Sound", "Manna"];
+
+const AOE_OPTIONS: {
+  value: AOE;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "SMALL",
+    label: "Small AOE",
+    description: "+5 / 3 / 1 TTT",
+  },
+  {
+    value: "MODERATE",
+    label: "Moderate AOE",
+    description: "+9 / 6 / 3 TTT",
+  },
+  {
+    value: "LARGE",
+    label: "Large AOE",
+    description: "+15 / 11 / 7 TTT",
+  },
+];
+
+// ==================================================
+// Component
+// ==================================================
 
 const ProjectedIllusion = ({
   ParentMastery,
@@ -11,215 +96,294 @@ const ProjectedIllusion = ({
   active: boolean;
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
-  const [smell, setSmell] = useState(false);
-  const [sight, setSight] = useState(false);
-  const [touch, setTouch] = useState(false);
-  const [sound, setSound] = useState(false);
-  const [taste, setTaste] = useState(false);
-  const [manna, setManna] = useState(false);
+  // ==================================================
+  // State
+  // ==================================================
+
+  const [selectedSenses, setSelectedSenses] = useState<Sense[]>([]);
+
+  const [size, setSize] = useState<AOE>("SMALL");
+
   const [desc, setDesc] = useState("");
 
-  // Small AOE is selected by default.
-  const [size, setSize] = useState(1);
+  const [spellReflex, setSpellReflex] = useState(false);
 
-  let testMastery: Mastery = new Mastery();
+  // ==================================================
+  // Mastery
+  // ==================================================
 
-  /*
-   * Determine the TTT cost for each individual impaired sense
-   * based on the current mastery.
-   */
-  let senseCost = 0;
+  const mastery = ParentMastery.getType() as
+    | "NOVICE"
+    | "INTERMEDIATE"
+    | "MASTERED";
 
-  if (ParentMastery.getType() === testMastery.novice(true)) {
-    senseCost = 15;
-  }
+  const senseCost = MASTERY_TTT[mastery];
 
-  if (ParentMastery.getType() === testMastery.intermediate(true)) {
-    senseCost = 10;
-  }
+  // ==================================================
+  // Derived Values
+  // ==================================================
 
-  if (ParentMastery.getType() === testMastery.mastered(true)) {
-    senseCost = 5;
-  }
+  const impairedSenseCount = selectedSenses.length;
 
-  /*
-   * Determine the AOE TTT cost.
-   *
-   * Small:
-   *   Novice 5 / Intermediate 3 / Mastered 1
-   *
-   * Moderate:
-   *   Novice 9 / Intermediate 6 / Mastered 3
-   *
-   * Large:
-   *   Novice 15 / Intermediate 11 / Mastered 7
-   */
-  let aoeCost = 0;
+  const senseTTT = impairedSenseCount * senseCost;
 
-  if (ParentMastery.getType() === testMastery.novice(true)) {
-    if (size === 1) aoeCost = 5;
-    if (size === 2) aoeCost = 9;
-    if (size === 3) aoeCost = 15;
-  }
+  const aoeCost = AOE_TTT[size][mastery];
 
-  if (ParentMastery.getType() === testMastery.intermediate(true)) {
-    if (size === 1) aoeCost = 3;
-    if (size === 2) aoeCost = 6;
-    if (size === 3) aoeCost = 11;
-  }
+  const totalTTT = senseTTT + aoeCost;
 
-  if (ParentMastery.getType() === testMastery.mastered(true)) {
-    if (size === 1) aoeCost = 1;
-    if (size === 2) aoeCost = 3;
-    if (size === 3) aoeCost = 7;
-  }
+  // ==================================================
+  // Spell Update
+  // ==================================================
 
-  /*
-   * Every selected sense contributes the full sense cost.
-   *
-   * For example, at Novice:
-   *
-   * Sight             = 15
-   * Sight + Sound     = 30
-   * Sight + Sound +
-   * Touch             = 45
-   *
-   * The AOE cost is then added independently.
-   */
-  const impairedSenseCount = [sight, smell, touch, taste, sound, manna].filter(
-    Boolean,
-  ).length;
+  useEffect(() => {
+    updateSpell("ttt", active ? totalTTT : 0);
+  }, [active, totalTTT, updateSpell]);
 
-  const TTT = impairedSenseCount * senseCost + aoeCost;
+  // ==================================================
+  // Reset
+  // ==================================================
 
-  /*
-   * Keep the parent Spell's TTT synchronized with this component.
-   *
-   * When the spell is inactive, reset its TTT to 0.
-   */
   useEffect(() => {
     if (!active) {
-      updateSpell("ttt", 0);
-      return;
+      setSelectedSenses([]);
+      setSize("SMALL");
+      setDesc("");
+      setSpellReflex(false);
     }
+  }, [active]);
 
-    updateSpell("ttt", TTT);
-  }, [active, TTT, updateSpell]);
+  // ==================================================
+  // Handlers
+  // ==================================================
+
+  const toggleSense = (sense: Sense) => {
+    setSelectedSenses((previous) =>
+      previous.includes(sense)
+        ? previous.filter((item) => item !== sense)
+        : [...previous, sense],
+    );
+  };
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
-    <div className="space-y-6">
-      {/* ==================================================
-          Spell Properties
-          ================================================== */}
+    <>
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
 
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h2 className="mb-3 border-b border-gray-700 pb-2 text-xl font-semibold text-cyan-400">
-          Projected Illusion
-        </h2>
+      <div className="flex items-center gap-3">
+        <EyeIcon className="h-8 w-8 text-cyan-400" />
 
-        <div className="space-y-2 text-gray-300">
-          <p>RANGE - DIRECT</p>
+        <h1 className="text-2xl font-bold text-cyan-400">Projected Illusion</h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Properties */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        {/* ================================================== */}
+        {/* Header & Technique Button */}
+        {/* ================================================== */}
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
+          <h3 className="text-lg font-semibold text-orange-400">
+            Spell Properties
+          </h3>
+
+          <button
+            type="button"
+            onClick={() => setSpellReflex(!spellReflex)}
+            aria-pressed={spellReflex}
+            className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+              spellReflex
+                ? "bg-purple-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+            }`}
+          >
+            Spell Reflex
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* Technique Caption */}
+        {/* ================================================== */}
+
+        {spellReflex && (
+          <div className="mb-5 rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+            <p className="text-sm leading-relaxed text-gray-300">
+              <strong className="text-purple-400">Spell Reflex:</strong> Grants
+              an{" "}
+              <strong className="text-purple-300">
+                extra roll upon failure
+              </strong>{" "}
+              to induce illusions.
+            </p>
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Spell Statistics */}
+        {/* ================================================== */}
+
+        <div className="space-y-3 text-gray-300">
+          {/* Range */}
+
+          <div className="flex justify-between">
+            <span>Range</span>
+
+            <span className="font-semibold text-cyan-400">DIRECT</span>
+          </div>
+
+          {/* Mastery */}
+
+          <div className="flex justify-between">
+            <span>Mastery</span>
+
+            <span className="font-semibold text-cyan-400">{mastery}</span>
+          </div>
+
+          {/* Impaired Senses */}
+
+          <div className="flex justify-between">
+            <span>Impaired Senses</span>
+
+            <span className="font-semibold text-cyan-400">
+              {impairedSenseCount}
+            </span>
+          </div>
+
+          {/* TTT per Sense */}
+
+          <div className="flex justify-between">
+            <span>TTT per Sense</span>
+
+            <span className="font-semibold text-cyan-400">{senseCost}</span>
+          </div>
+
+          {/* Sense TTT */}
+
+          <div className="flex justify-between">
+            <span>Sense TTT</span>
+
+            <span className="font-semibold text-cyan-400">{senseTTT}</span>
+          </div>
+
+          {/* AOE */}
+
+          <div className="flex justify-between">
+            <span>AOE</span>
+
+            <span className="font-semibold text-cyan-400">{size}</span>
+          </div>
+
+          {/* AOE TTT */}
+
+          <div className="flex justify-between">
+            <span>AOE TTT</span>
+
+            <span className="font-semibold text-cyan-400">{aoeCost}</span>
+          </div>
+
+          {/* Final TTT */}
+
+          <div className="flex justify-between border-t border-gray-700 pt-3">
+            <span className="font-semibold text-gray-100">Final TTT</span>
+
+            <span className="text-lg font-bold text-orange-400">
+              {totalTTT}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* ==================================================
-          Sense Selection
-          ================================================== */}
+      {/* ================================================== */}
+      {/* Impair Senses */}
+      {/* ================================================== */}
 
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
           Impair Senses
         </h3>
 
         <p className="mb-4 text-sm text-gray-400">
-          Each selected sense adds {senseCost} TTT.
+          Each selected sense adds{" "}
+          <span className="font-semibold text-cyan-400">{senseCost} TTT</span>.
         </p>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {[
-            ["Sight", sight, setSight],
-            ["Smell", smell, setSmell],
-            ["Touch", touch, setTouch],
-            ["Taste", taste, setTaste],
-            ["Sound", sound, setSound],
-            ["Manna", manna, setManna],
-          ].map(([label, selected, setter]) => (
-            <button
-              key={label as string}
-              type="button"
-              onClick={() =>
-                (setter as React.Dispatch<React.SetStateAction<boolean>>)(
-                  !selected,
-                )
-              }
-              className={`rounded-lg border px-4 py-3 text-sm font-semibold transition ${
-                selected
-                  ? "border-cyan-400 bg-cyan-950 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
-                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-gray-400 hover:text-gray-200"
-              }`}
-            >
-              {label as string}
-            </button>
-          ))}
+          {SENSES.map((sense) => {
+            const selected = selectedSenses.includes(sense);
+
+            return (
+              <button
+                key={sense}
+                type="button"
+                onClick={() => toggleSense(sense)}
+                aria-pressed={selected}
+                className={`rounded-lg border px-4 py-3 text-sm font-semibold transition ${
+                  selected
+                    ? "border-cyan-400 bg-cyan-950 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                    : "border-gray-600 bg-gray-900 text-gray-400 hover:border-gray-400 hover:text-gray-200"
+                }`}
+              >
+                {sense}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* ==================================================
-          AOE Selection
-          ================================================== */}
+      {/* ================================================== */}
+      {/* Area of Effect */}
+      {/* ================================================== */}
 
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
           Area of Effect
         </h3>
 
         <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setSize(1)}
-            className={`w-full rounded-lg border p-3 text-left transition ${
-              size === 1
-                ? "border-cyan-400 bg-cyan-950 text-cyan-300"
-                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-gray-400"
-            }`}
-          >
-            <div className="font-semibold">Small AOE</div>
-            <div className="text-sm">+5 / 3 / 1 TTT</div>
-          </button>
+          {AOE_OPTIONS.map((option) => {
+            const selected = size === option.value;
 
-          <button
-            type="button"
-            onClick={() => setSize(2)}
-            className={`w-full rounded-lg border p-3 text-left transition ${
-              size === 2
-                ? "border-cyan-400 bg-cyan-950 text-cyan-300"
-                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-gray-400"
-            }`}
-          >
-            <div className="font-semibold">Moderate AOE</div>
-            <div className="text-sm">+9 / 6 / 3 TTT</div>
-          </button>
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setSize(option.value)}
+                aria-pressed={selected}
+                className={`w-full rounded-lg border p-3 text-left transition ${
+                  selected
+                    ? "border-cyan-400 bg-cyan-950 text-cyan-300"
+                    : "border-gray-600 bg-gray-900 text-gray-400 hover:border-gray-400"
+                }`}
+              >
+                <div className="font-semibold">{option.label}</div>
 
-          <button
-            type="button"
-            onClick={() => setSize(3)}
-            className={`w-full rounded-lg border p-3 text-left transition ${
-              size === 3
-                ? "border-cyan-400 bg-cyan-950 text-cyan-300"
-                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-gray-400"
-            }`}
-          >
-            <div className="font-semibold">Large AOE</div>
-            <div className="text-sm">+15 / 11 / 7 TTT</div>
-          </button>
+                <div className="text-sm">{option.description}</div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* ==================================================
-          Description
-          ================================================== */}
+      {/* ================================================== */}
+      {/* Illusion Description */}
+      {/* ================================================== */}
 
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
           Illusion Description
         </h3>
@@ -231,50 +395,7 @@ const ProjectedIllusion = ({
           placeholder="Describe the projected illusion..."
         />
       </div>
-
-      {/* ==================================================
-          Final Spell Statistics
-          ================================================== */}
-
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
-          Final Spell Statistics
-        </h3>
-
-        <div className="space-y-3 text-gray-300">
-          <div className="flex justify-between">
-            <span>Impaired Senses</span>
-            <span className="font-semibold text-cyan-400">
-              {impairedSenseCount}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Sense TTT</span>
-            <span className="font-semibold text-cyan-400">
-              {impairedSenseCount * senseCost}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>AOE</span>
-            <span className="font-semibold text-cyan-400">
-              {size === 1 ? "Small" : size === 2 ? "Moderate" : "Large"}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>AOE TTT</span>
-            <span className="font-semibold text-cyan-400">{aoeCost}</span>
-          </div>
-
-          <div className="flex justify-between border-t border-gray-700 pt-3">
-            <span>Final TTT</span>
-            <span className="font-semibold text-cyan-400">{TTT}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 

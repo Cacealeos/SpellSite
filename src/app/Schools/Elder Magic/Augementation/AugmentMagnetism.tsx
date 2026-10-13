@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Mastery, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/solid";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 const AugmentMagnetism = ({
   ParentMastery,
@@ -27,6 +29,10 @@ const AugmentMagnetism = ({
 
   const [increments, setIncrement] = useState(0);
 
+  const [autoCast, setAutoCast] = useState(true);
+  const [spellCharge, setSpellCharge] = useState(false);
+  const [extraChargeTurns, setExtraChargeTurns] = useState(0);
+
   // ==================================================
   // Mastery
   // ==================================================
@@ -35,6 +41,29 @@ const AugmentMagnetism = ({
     | "NOVICE"
     | "INTERMEDIATE"
     | "MASTERED";
+
+  // ==================================================
+  // Spell Techniques
+  // ==================================================
+
+  const Techniques = {
+    "Quick Spell": true,
+    "Spell Reflex": false,
+    "Double Cast": true,
+    "Double Pulse": true,
+    "Carry Spell": true,
+    "Spell Shift": true,
+    "Counter Spell": true,
+    "Spell Surge": true,
+    "Junction Cast": true,
+    "Spell Charge": true,
+    "Focus Spell": true,
+    "Hyper Spell": true,
+    "Auto Cast": true,
+    "Rivet Cast": true,
+    "Spell Recovery": false,
+    "Father Spell": false,
+  };
 
   // ==================================================
   // Potency Statistics
@@ -130,6 +159,28 @@ const AugmentMagnetism = ({
   };
 
   // ==================================================
+  // Spell Charge & Scaling Calculations
+  // ==================================================
+
+  const chargeTurns = spellCharge ? extraChargeTurns : 0;
+
+  const positiveScaling = chargeTurns * 10;
+
+  const totalChargeTime = currentStats.charge + chargeTurns;
+
+  // ==================================================
+  // Actual Damage Scaling
+  // ==================================================
+
+  const totalDamage = currentStats.base;
+
+  const positiveScalingDamage = totalDamage * (positiveScaling / 100);
+
+  const negativeScalingDamage = totalDamage * 0.3;
+
+  const scalingDisplay = `${positiveScalingDamage} / ${negativeScalingDamage}`;
+
+  // ==================================================
   // Spell Update
   // ==================================================
 
@@ -166,13 +217,25 @@ const AugmentMagnetism = ({
 
   return (
     <>
-      {/* ==================================================
-          Spell Title
-          ================================================== */}
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
 
-      <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
-        Augment Entropy or Magnetism
-      </h2>
+      <div className="flex items-center gap-3">
+        <AdjustmentsHorizontalIcon className="h-8 w-8 text-cyan-400" />
+
+        <h1 className="text-2xl font-bold text-cyan-400">
+          Augment Entropy or Magnetism
+        </h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
 
       {/* ==================================================
           Potency
@@ -261,7 +324,9 @@ const AugmentMagnetism = ({
           <div className="flex justify-between">
             <span>Scaling</span>
 
-            <span className="font-semibold text-cyan-400">0% / 30%</span>
+            <span className="font-semibold text-cyan-400">
+              {scalingDisplay}
+            </span>
           </div>
 
           <div className="flex justify-between">
@@ -279,9 +344,121 @@ const AugmentMagnetism = ({
           ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
-          Spell Properties
-        </h3>
+        {/* ================================================== */}
+        {/* Spell Properties Header */}
+        {/* ================================================== */}
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
+          <h3 className="text-lg font-semibold text-cyan-400">
+            Spell Properties
+          </h3>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setAutoCast(!autoCast)}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                autoCast
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-green-600 hover:text-white"
+              }`}
+            >
+              Auto Cast
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSpellCharge(!spellCharge);
+                setExtraChargeTurns(0);
+              }}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                spellCharge
+                  ? "bg-yellow-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-yellow-600 hover:text-white"
+              }`}
+            >
+              Spell Charge
+            </button>
+          </div>
+        </div>
+
+        {/* ================================================== */}
+        {/* Auto Cast Caption */}
+        {/* ================================================== */}
+
+        {autoCast && (
+          <p className="mb-4 text-sm text-green-400">
+            Auto Cast: Casting Augmentation spells does not occupy a spell slot.
+          </p>
+        )}
+
+        {/* ================================================== */}
+        {/* Spell Charge */}
+        {/* ================================================== */}
+
+        {spellCharge && (
+          <div className="mb-5">
+            <p className="mb-4 text-sm text-yellow-400">
+              Spell Charge increases positive scaling by 10% of total damage per
+              additional turn, up to 50%. Additional turns begin after all
+              required charges have been completed.
+            </p>
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-gray-300">
+                Additional Charge Turns (0–5)
+              </span>
+
+              <input
+                type="number"
+                min={0}
+                max={5}
+                step={1}
+                value={extraChargeTurns}
+                onChange={(e) =>
+                  setExtraChargeTurns(
+                    Math.min(
+                      5,
+                      Math.max(0, Math.trunc(Number(e.target.value) || 0)),
+                    ),
+                  )
+                }
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 focus:border-yellow-500 focus:outline-none"
+              />
+            </label>
+
+            <div className="mt-4 space-y-2 rounded-md border border-gray-700 bg-gray-900 p-4">
+              <div className="flex justify-between">
+                <span>Required Charges</span>
+                <span className="font-semibold text-cyan-400">
+                  {currentStats.charge}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Additional Turns</span>
+                <span className="font-semibold text-yellow-400">
+                  +{chargeTurns}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Positive Scaling Bonus</span>
+                <span className="font-semibold text-yellow-400">
+                  +{positiveScalingDamage}
+                </span>
+              </div>
+
+              <div className="flex justify-between border-t border-gray-700 pt-3">
+                <span>Total Charge Time</span>
+                <span className="font-bold text-yellow-400">
+                  {totalChargeTime}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3 text-gray-300">
           <div className="flex justify-between">
@@ -327,7 +504,9 @@ const AugmentMagnetism = ({
           <div className="flex justify-between">
             <span>Scaling</span>
 
-            <span className="font-semibold text-cyan-400">0% / 30%</span>
+            <span className="font-semibold text-cyan-400">
+              {scalingDisplay}
+            </span>
           </div>
 
           <div className="flex justify-between">

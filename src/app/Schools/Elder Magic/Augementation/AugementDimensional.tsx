@@ -1,5 +1,53 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { CubeTransparentIcon } from "@heroicons/react/24/solid";
+
 import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": true,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Base Spell Statistics
+// ==================================================
+
+const baseStats = {
+  base: 260,
+  power: 8,
+  aoe: 2,
+  charge: 8,
+  cost: 350,
+  costModifier: 80,
+  damage: 25,
+};
+
+const AOE = ["SMALL", "MODERATE", "LARGE", "MASSIVE"];
+
+const MAX_INCREMENT = 3;
+
+// ==================================================
+// Component
+// ==================================================
 
 const AugmentDimensional = ({
   ParentMastery,
@@ -11,44 +59,10 @@ const AugmentDimensional = ({
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
   // ==================================================
-  // Constants
-  // ==================================================
-
-  const AOE_LEVELS = ["SMALL", "MODERATE", "LARGE", "MASSIVE"];
-
-  const MAX_INCREMENT = 3;
-
-  // ==================================================
   // State
   // ==================================================
 
   const [increments, setIncrements] = useState(0);
-
-  const [spellStats, setSpellStats] = useState({
-    base: 0,
-    power: 0,
-    aoe: 0,
-    charge: 0,
-    cost: 0,
-    damage: 0,
-    costModifier: 0,
-  });
-
-  // ==================================================
-  // Base Spell Statistics
-  // ==================================================
-
-  const baseStats = {
-    base: 260,
-    power: 8,
-    aoe: 2, // LARGE
-    charge: 8,
-    cost: 350,
-    costModifier: 80,
-    damage: 25,
-  };
-
-  const AOE = ["SMALL", "MODERATE", "LARGE", "MASSIVE"];
 
   // ==================================================
   // Increment Calculations
@@ -84,34 +98,35 @@ const AugmentDimensional = ({
     updateSpell("cost", currentStats.cost);
   }, [active, currentStats.cost, updateSpell]);
 
-  useEffect(() => {
-    if (!active) {
-      updateSpell("cost", 0);
-      return;
-    }
-
-    const finalCost = baseStats.cost + baseStats.costModifier * increments;
-
-    updateSpell("cost", finalCost);
-  }, [active, increments, updateSpell]);
-
   // ==================================================
-  // UI
+  // Render
   // ==================================================
 
   return (
     <>
-      {/* ==================================================
-          Spell Title
-          ================================================== */}
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
 
-      <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
-        Augment Dimensional
-      </h2>
+      <div className="flex items-center gap-3">
+        <CubeTransparentIcon className="h-8 w-8 text-cyan-400" />
 
-      {/* ==================================================
-    Increment Card
-    ================================================== */}
+        <h1 className="text-2xl font-bold text-cyan-400">
+          Augment Dimensional
+        </h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Augmentation */}
+      {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
@@ -125,12 +140,15 @@ const AugmentDimensional = ({
             <input
               type="number"
               min={0}
-              max={3}
+              max={MAX_INCREMENT}
               step={1}
               value={increments}
               onChange={(e) =>
                 setIncrements(
-                  Math.min(3, Math.max(0, Number(e.target.value) || 0)),
+                  Math.min(
+                    MAX_INCREMENT,
+                    Math.max(0, Math.trunc(Number(e.target.value) || 0)),
+                  ),
                 )
               }
               className="mt-1 w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
@@ -194,9 +212,9 @@ const AugmentDimensional = ({
         </div>
       </div>
 
-      {/* ==================================================
-    Final Spell Properties
-    ================================================== */}
+      {/* ================================================== */}
+      {/* Final Spell Properties */}
+      {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
@@ -206,6 +224,7 @@ const AugmentDimensional = ({
         <div className="space-y-3 text-gray-300">
           <div className="flex justify-between">
             <span>Base</span>
+
             <span className="font-semibold text-cyan-400">
               {currentStats.base}
             </span>
@@ -213,6 +232,7 @@ const AugmentDimensional = ({
 
           <div className="flex justify-between">
             <span>Power</span>
+
             <span className="font-semibold text-cyan-400">
               {currentStats.power}
             </span>
@@ -220,6 +240,7 @@ const AugmentDimensional = ({
 
           <div className="flex justify-between">
             <span>Area of Effect</span>
+
             <span className="font-semibold text-cyan-400">
               {AOE[currentStats.aoe]}
             </span>
@@ -227,6 +248,7 @@ const AugmentDimensional = ({
 
           <div className="flex justify-between">
             <span>Charge Time</span>
+
             <span className="font-semibold text-cyan-400">
               {currentStats.charge}
             </span>
@@ -234,6 +256,7 @@ const AugmentDimensional = ({
 
           <div className="flex justify-between">
             <span>Damage</span>
+
             <span className="font-semibold text-cyan-400">
               +{currentStats.damage * increments}
             </span>
@@ -241,16 +264,19 @@ const AugmentDimensional = ({
 
           <div className="flex justify-between">
             <span>Damage Type</span>
+
             <span className="font-semibold text-cyan-400">Dimensional</span>
           </div>
 
           <div className="flex justify-between">
             <span>Range</span>
+
             <span className="font-semibold text-cyan-400">Radial</span>
           </div>
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span>Final Cost</span>
+
             <span className="font-semibold text-cyan-400">
               {currentStats.cost}
             </span>

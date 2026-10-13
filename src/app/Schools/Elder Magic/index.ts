@@ -6,6 +6,9 @@ import AugmentDimensional from "./Augementation/AugementDimensional";
 
 //Manifestation
 import ManifestPortal from "./Manifestation/ManifestPortal";
+import ManifestForceField from "./Manifestation/ManifestForceField";
+import ManifestBarricade from "./Manifestation/ManifestBarricade";
+import ManifestChaos from "./Manifestation/ManifestChaos";
 
 export const ElderMagic = {
   Augmentation: {
@@ -14,5 +17,10 @@ export const ElderMagic = {
     AugmentParticle,
     AugmentDimensional,
   },
-  Manifestation: { ManifestPortal },
+  Manifestation: {
+    ManifestPortal,
+    ManifestForceField,
+    ManifestBarricade,
+    ManifestChaos,
+  },
 };

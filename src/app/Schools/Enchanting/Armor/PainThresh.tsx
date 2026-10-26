@@ -1,5 +1,57 @@
 import { useEffect, useState } from "react";
+import { HeartIcon } from "@heroicons/react/24/solid";
+
 import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Types
+// ==================================================
+
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Carry Spell": true,
+  "Spell Shift": true,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": true,
+  "Rivet Cast": true,
+  "Spell Recovery": true,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Mastery Data
+// ==================================================
+
+const masteryRates = {
+  NOVICE: 5,
+  INTERMEDIATE: 7,
+  MASTERED: 10,
+};
+
+// ==================================================
+// Constants
+// ==================================================
+
+const CHARGE_MULTIPLIER = 0.3;
+
+// ==================================================
+// Component
+// ==================================================
 
 const PainThresh = ({
   ParentMastery,
@@ -10,114 +62,735 @@ const PainThresh = ({
   active: boolean;
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) => {
+  // ==================================================
+  // State
+  // ==================================================
+
   const [baseValue, setBaseValue] = useState(0);
   const [baseThreshold, setBaseThreshold] = useState(0);
 
-  /* =========================
-     MASTERY MULTIPLIER
-  ========================= */
-  let rate = 0;
+  const [spellCharge, setSpellCharge] = useState(false);
+  const [spellRecovery, setSpellRecovery] = useState(false);
+  const [spellSurge, setSpellSurge] = useState(false);
 
-  switch (ParentMastery.getType()) {
-    case "NOVICE":
-      rate = 5;
-      break;
-    case "INTERMEDIATE":
-      rate = 7;
-      break;
-    case "MASTERED":
-      rate = 10;
-      break;
-  }
+  const [chargeTurns, setChargeTurns] = useState(0);
+  const [doubleCast, setDoubleCast] = useState(false);
+  const [existingEnchantments, setExistingEnchantments] = useState(0);
 
-  /* =========================
-     DERIVED VALUE
-  ========================= */
-  const painThreshold = baseValue * rate;
+  // ==================================================
+  // Mastery
+  // ==================================================
 
-  const temporaryThreshold =
-    baseThreshold > 0
-      ? Math.min(painThreshold, baseThreshold * 0.5)
-      : painThreshold;
+  const mastery = ParentMastery.getType() as MasteryType;
 
-  /* =========================
-     RESET WHEN INACTIVE
-  ========================= */
+  const rate = masteryRates[mastery] ?? 0;
+
+  // ==================================================
+  // Spell Charge Calculations
+  // ==================================================
+
+  const chargeBonus = spellCharge ? chargeTurns * CHARGE_MULTIPLIER : 0;
+
+  const chargePercentage = Math.round(chargeBonus * 100);
+
+  const strengthMultiplier = 1 + chargeBonus;
+
+  // ==================================================
+  // Pain Threshold Calculations
+  // ==================================================
+
+  const hasBaseThreshold = baseThreshold > 0;
+
+  const maxThreshold = hasBaseThreshold ? baseThreshold * 0.5 : Infinity;
+
+  const painPerTTT = rate * strengthMultiplier;
+
+  // Maximum base investment that fits within
+  // 50% of the supplied base Pain Threshold.
+  const maxInvestment =
+    hasBaseThreshold && painPerTTT > 0
+      ? Math.max(0, Math.floor(maxThreshold / painPerTTT))
+      : Infinity;
+
+  const investedTTT = Math.min(baseValue, maxInvestment);
+
+  const basePainThreshold = investedTTT * rate;
+
+  const temporaryThreshold = Math.min(
+    basePainThreshold * strengthMultiplier,
+    maxThreshold,
+  );
+
+  // Spell Charge increases TTT by 30% per turn.
+  const finalTTT = Math.ceil(investedTTT * strengthMultiplier);
+
+  // ==================================================
+  // Spell Surge Calculations
+  // ==================================================
+
+  const surgeEligible = spellSurge && existingEnchantments >= 2;
+
+  const aoeIncrease = surgeEligible ? 1 : 0;
+
+  // ==================================================
+  // Parent Spell Update
+  // ==================================================
+
+  useEffect(() => {
+    updateSpell("ttt", active ? finalTTT : 0);
+  }, [active, finalTTT, updateSpell]);
+
+  // ==================================================
+  // Reset
+  // ==================================================
+
   useEffect(() => {
     if (!active) {
       setBaseValue(0);
-      updateSpell("ttt", 0);
+      setBaseThreshold(0);
+
+      setSpellCharge(false);
+      setSpellRecovery(false);
+      setSpellSurge(false);
+
+      setChargeTurns(0);
+      setDoubleCast(false);
+      setExistingEnchantments(0);
     }
-  }, [active, updateSpell]);
+  }, [active]);
 
-  /* =========================
-     ADJUST TTT WHEN BASE THRESHOLD CHANGES
-  ========================= */
+  // ==================================================
+  // Clamp Investment When Cap Changes
+  // ==================================================
+
   useEffect(() => {
-    if (baseThreshold <= 0 || rate <= 0) return;
-
-    const maxThreshold = baseThreshold * 0.5;
-    const maxTTT = Math.floor(maxThreshold / rate);
-
-    if (baseValue > maxTTT) {
-      setBaseValue(Math.max(1, maxTTT));
+    if (baseValue > maxInvestment) {
+      setBaseValue(maxInvestment);
     }
-  }, [baseThreshold, rate, baseValue]);
+  }, [baseValue, maxInvestment]);
 
-  /* =========================
-     SYNC TO PARENT SPELL
-  ========================= */
-  useEffect(() => {
-    if (!active) return;
+  // ==================================================
+  // Handlers
+  // ==================================================
 
-    updateSpell("ttt", baseValue);
-  }, [baseValue, rate, active, updateSpell]);
+  const changeTTT = (value: number) => {
+    const normalized = Math.max(0, Math.trunc(value || 0));
+
+    setBaseValue(Math.min(normalized, maxInvestment));
+  };
+
+  const changeBaseThreshold = (value: string) => {
+    if (value.trim() === "") {
+      setBaseThreshold(0);
+      return;
+    }
+
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) return;
+
+    setBaseThreshold(Math.max(0, Math.trunc(numericValue)));
+  };
+
+  const toggleSpellCharge = () => {
+    if (spellCharge) {
+      setSpellCharge(false);
+      setChargeTurns(0);
+      setDoubleCast(false);
+    } else {
+      setSpellCharge(true);
+    }
+  };
+
+  const changeChargeTurns = (value: number) => {
+    setChargeTurns(Math.max(0, Math.trunc(value || 0)));
+  };
+
+  const changeExistingEnchantments = (value: number) => {
+    setExistingEnchantments(Math.max(0, Math.trunc(value || 0)));
+  };
+
+  // ==================================================
+  // Render
+  // ==================================================
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-orange-400">
-        Manna to Pain Threshold ({rate} Pain / TTT)
-      </h1>
+    <>
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
 
-      <input
-        className="ml-4 w-32 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-center text-gray-100"
-        type="number"
-        min={0}
-        step={1}
-        value={baseValue}
-        onChange={(e) => setBaseValue(Number(e.target.value))}
-      />
+      <div className="flex items-center gap-3">
+        <HeartIcon className="h-8 w-8 text-cyan-400" />
 
-      <p className="text-lg">
-        <span className="text-lg font-semibold text-orange-400">
-          Temporary Pain Threshold:
-        </span>{" "}
-        <span className="font-bold text-blue-400">{temporaryThreshold}</span>
-      </p>
-
-      <div className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold text-gray-400">
-          Base Threshold (Optional)
-        </h2>
-
-        <input
-          className="ml-4 w-32 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-center text-gray-100 placeholder:italic placeholder:text-gray-500"
-          type="text"
-          inputMode="numeric"
-          placeholder="None"
-          value={baseThreshold === 0 ? "" : baseThreshold}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            setBaseThreshold(Number.isNaN(value) ? 0 : value);
-          }}
-        />
+        <h1 className="text-2xl font-bold text-cyan-400">Pain Threshold</h1>
       </div>
 
-      <p className="text-sm text-gray-400">
-        Info: Converts Manna into temporary Pain Threshold. Maximum temporary
-        threshold is equal to 50% of base threshold.
-      </p>
-    </div>
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Properties */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        {/* ================================================== */}
+        {/* Header & Technique Buttons */}
+        {/* ================================================== */}
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
+          <h3 className="text-lg font-semibold text-orange-400">
+            Spell Properties
+          </h3>
+
+          <div className="flex flex-wrap gap-2">
+            {/* Spell Charge */}
+
+            <button
+              type="button"
+              onClick={toggleSpellCharge}
+              aria-pressed={spellCharge}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                spellCharge
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+              }`}
+            >
+              Spell Charge
+            </button>
+
+            {/* Spell Recovery */}
+
+            <button
+              type="button"
+              onClick={() => setSpellRecovery((previous) => !previous)}
+              aria-pressed={spellRecovery}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                spellRecovery
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+              }`}
+            >
+              Spell Recovery
+            </button>
+
+            {/* Spell Surge */}
+
+            <button
+              type="button"
+              onClick={() => setSpellSurge((previous) => !previous)}
+              aria-pressed={spellSurge}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                spellSurge
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+              }`}
+            >
+              Spell Surge
+            </button>
+          </div>
+        </div>
+
+        {/* ================================================== */}
+        {/* Technique Descriptions */}
+        {/* ================================================== */}
+
+        {(spellCharge || spellRecovery || spellSurge) && (
+          <div className="mb-5 space-y-3">
+            {/* Spell Charge */}
+
+            {spellCharge && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Spell Charge:</strong>{" "}
+                  Increases temporary Pain Threshold strength by{" "}
+                  <strong className="text-purple-300">
+                    30% per complete turn
+                  </strong>{" "}
+                  of additional charging. TTT cost also increases by 30% per
+                  charge. Other spells cannot be cast while charging unless{" "}
+                  <strong className="text-purple-300">Double Cast</strong> is
+                  used.
+                </p>
+              </div>
+            )}
+
+            {/* Spell Recovery */}
+
+            {spellRecovery && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Spell Recovery:</strong>{" "}
+                  Automatically reapplies the Pain Threshold enchantment when
+                  the target enters the caster's vicinity.
+                </p>
+              </div>
+            )}
+
+            {/* Spell Surge */}
+
+            {spellSurge && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Spell Surge:</strong>{" "}
+                  Increases the enchantment's AOE level by one when the
+                  recipient already has{" "}
+                  <strong className="text-purple-300">
+                    two or more enchantments
+                  </strong>{" "}
+                  from the caster. Reapply using a Main Action or automatically
+                  through{" "}
+                  <strong className="text-purple-300">Spell Recovery</strong>.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Spell Statistics */}
+        {/* ================================================== */}
+
+        <div className="space-y-3 text-gray-300">
+          {/* Mastery */}
+
+          <div className="flex justify-between">
+            <span>Mastery</span>
+
+            <span className="font-semibold text-cyan-400">{mastery}</span>
+          </div>
+
+          {/* Conversion Rate */}
+
+          <div className="flex justify-between">
+            <span>Base Pain per TTT</span>
+
+            <span className="font-semibold text-cyan-400">{rate}</span>
+          </div>
+
+          {/* Base Threshold */}
+
+          <div className="flex justify-between">
+            <span>Base Threshold</span>
+
+            <span className="font-semibold text-cyan-400">
+              {hasBaseThreshold ? baseThreshold : "Not Set"}
+            </span>
+          </div>
+
+          {/* Maximum Threshold */}
+
+          <div className="flex justify-between">
+            <span>Maximum Temporary Threshold</span>
+
+            <span className="font-semibold text-cyan-400">
+              {hasBaseThreshold ? maxThreshold : "No Cap"}
+            </span>
+          </div>
+
+          {/* Base Investment */}
+
+          <div className="flex justify-between">
+            <span>Base TTT Investment</span>
+
+            <span className="font-semibold text-cyan-400">{investedTTT}</span>
+          </div>
+
+          {/* Charge Statistics */}
+
+          {spellCharge && (
+            <>
+              <div className="flex justify-between">
+                <span>Charge Turns</span>
+
+                <span className="font-semibold text-cyan-400">
+                  {chargeTurns}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Charge Increase</span>
+
+                <span className="font-semibold text-purple-400">
+                  +{chargePercentage}%
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Strength Multiplier</span>
+
+                <span className="font-semibold text-purple-400">
+                  {Number(strengthMultiplier.toFixed(2))}×
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Spell Recovery */}
+
+          {spellRecovery && (
+            <div className="flex justify-between">
+              <span>Automatic Reapplication</span>
+
+              <span className="font-semibold text-purple-400">ENABLED</span>
+            </div>
+          )}
+
+          {/* Spell Surge */}
+
+          {spellSurge && (
+            <>
+              <div className="flex justify-between">
+                <span>Existing Enchantments</span>
+
+                <span className="font-semibold text-cyan-400">
+                  {existingEnchantments}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>AOE Level Increase</span>
+
+                <span
+                  className={`font-semibold ${
+                    surgeEligible ? "text-purple-400" : "text-gray-500"
+                  }`}
+                >
+                  +{aoeIncrease}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Final Pain Threshold */}
+
+          <div className="flex justify-between border-t border-gray-700 pt-3">
+            <span className="font-semibold text-gray-100">
+              Temporary Pain Threshold
+            </span>
+
+            <span className="text-lg font-bold text-orange-400">
+              {Number(temporaryThreshold.toFixed(2))}
+            </span>
+          </div>
+
+          {/* Final TTT */}
+
+          <div className="flex justify-between">
+            <span className="font-semibold text-gray-100">Final TTT</span>
+
+            <span className="text-lg font-bold text-orange-400">
+              {finalTTT}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================== */}
+      {/* Pain Threshold Configuration */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Pain Threshold Configuration
+        </h3>
+
+        <p className="mb-4 text-sm leading-relaxed text-gray-400">
+          Each point of TTT grants{" "}
+          <span className="font-semibold text-cyan-400">{rate}</span> temporary
+          Pain Threshold before Spell Charge modifiers.
+        </p>
+
+        {/* TTT Input */}
+
+        <label className="block">
+          <span className="mb-2 block font-semibold text-gray-300">
+            Base TTT Investment
+          </span>
+
+          <input
+            type="number"
+            min={0}
+            max={Number.isFinite(maxInvestment) ? maxInvestment : undefined}
+            step={1}
+            value={investedTTT}
+            onChange={(e) => changeTTT(Number(e.target.value))}
+            className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 focus:border-cyan-500 focus:outline-none"
+          />
+        </label>
+
+        {/* Investment Summary */}
+
+        <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
+          <div className="flex justify-between text-gray-300">
+            <span>Base Pain Threshold</span>
+
+            <span className="font-semibold text-cyan-400">
+              {basePainThreshold}
+            </span>
+          </div>
+
+          <div className="flex justify-between text-gray-300">
+            <span>Final Pain Threshold</span>
+
+            <span className="font-semibold text-cyan-400">
+              {Number(temporaryThreshold.toFixed(2))}
+            </span>
+          </div>
+
+          {hasBaseThreshold && (
+            <div className="flex justify-between text-gray-300">
+              <span>Maximum Investment</span>
+
+              <span className="font-semibold text-cyan-400">
+                {maxInvestment}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ================================================== */}
+      {/* Base Threshold Configuration */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Base Threshold Configuration
+        </h3>
+
+        {/* Base Threshold Input */}
+
+        <label className="block">
+          <span className="mb-2 block font-semibold text-gray-300">
+            Base Pain Threshold{" "}
+            <span className="text-sm font-normal text-gray-500">
+              (Optional)
+            </span>
+          </span>
+
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="None"
+            value={baseThreshold === 0 ? "" : baseThreshold}
+            onChange={(e) => changeBaseThreshold(e.target.value)}
+            className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 placeholder:italic placeholder:text-gray-500 focus:border-cyan-500 focus:outline-none"
+          />
+        </label>
+
+        {/* Threshold Explanation */}
+
+        <p className="mt-3 text-sm leading-relaxed text-gray-400">
+          The temporary Pain Threshold cannot exceed{" "}
+          <span className="font-semibold text-cyan-400">50%</span> of the
+          target's base Pain Threshold. Leave this field empty to calculate
+          without a cap.
+        </p>
+
+        {/* Cap Summary */}
+
+        {hasBaseThreshold && (
+          <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <div className="flex justify-between text-gray-300">
+              <span>Base Threshold</span>
+
+              <span className="font-semibold text-cyan-400">
+                {baseThreshold}
+              </span>
+            </div>
+
+            <div className="mt-3 flex justify-between text-gray-300">
+              <span>50% Threshold Cap</span>
+
+              <span className="font-semibold text-cyan-400">
+                {maxThreshold}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Charge Configuration */}
+      {/* ================================================== */}
+
+      {spellCharge && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Spell Charge Configuration
+          </h3>
+
+          {/* Charge Turns */}
+
+          <label className="block">
+            <span className="mb-2 block font-semibold text-gray-300">
+              Complete Turns of Charge
+            </span>
+
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={chargeTurns}
+              onChange={(e) => changeChargeTurns(Number(e.target.value))}
+              className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 focus:border-cyan-500 focus:outline-none"
+            />
+          </label>
+
+          {/* Double Cast */}
+
+          <label className="mt-4 flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-gray-700 bg-gray-900 p-3">
+            <div>
+              <span className="block font-semibold text-gray-300">
+                Double Cast
+              </span>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Allows other spells to be cast while charging Pain Threshold.
+              </p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={doubleCast}
+              onChange={(e) => setDoubleCast(e.target.checked)}
+              className="h-4 w-4 accent-purple-500"
+            />
+          </label>
+
+          {/* Charge Summary */}
+
+          <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <div className="flex justify-between text-gray-300">
+              <span>Strength Increase</span>
+
+              <span className="font-semibold text-purple-400">
+                +{chargePercentage}%
+              </span>
+            </div>
+
+            <div className="flex justify-between text-gray-300">
+              <span>TTT Increase</span>
+
+              <span className="font-semibold text-purple-400">
+                +{chargePercentage}%
+              </span>
+            </div>
+
+            <div className="flex justify-between text-gray-300">
+              <span>Final TTT</span>
+
+              <span className="font-semibold text-cyan-400">{finalTTT}</span>
+            </div>
+          </div>
+
+          {/* Casting Restriction */}
+
+          {!doubleCast && chargeTurns > 0 && (
+            <p className="mt-4 rounded-lg border border-amber-800 bg-amber-950/30 p-3 text-sm text-amber-300">
+              Other spells cannot be cast while charging unless Double Cast is
+              used.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ================================================== */}
+      {/* Spell Surge Configuration */}
+      {/* ================================================== */}
+
+      {spellSurge && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Spell Surge Configuration
+          </h3>
+
+          {/* Existing Enchantments */}
+
+          <label className="block">
+            <span className="mb-2 block font-semibold text-gray-300">
+              Existing Enchantments from Caster
+            </span>
+
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={existingEnchantments}
+              onChange={(e) =>
+                changeExistingEnchantments(Number(e.target.value))
+              }
+              className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 focus:border-cyan-500 focus:outline-none"
+            />
+          </label>
+
+          {/* Surge Eligibility */}
+
+          <div
+            className={`mt-4 rounded-lg border p-4 ${
+              surgeEligible
+                ? "border-purple-600 bg-purple-950/30"
+                : "border-gray-700 bg-gray-900"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold text-gray-300">
+                Spell Surge Eligibility
+              </span>
+
+              <span
+                className={`font-semibold ${
+                  surgeEligible ? "text-purple-400" : "text-gray-500"
+                }`}
+              >
+                {surgeEligible ? "ELIGIBLE" : "NOT ELIGIBLE"}
+              </span>
+            </div>
+
+            <p className="mt-2 text-sm text-gray-400">
+              {surgeEligible
+                ? "The target qualifies for a +1 AOE level increase when Pain Threshold is reapplied."
+                : "The target requires at least two existing enchantments from the caster."}
+            </p>
+          </div>
+
+          {/* Reapplication Method */}
+
+          <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <h4 className="mb-2 font-semibold text-gray-300">
+              Reapplication Method
+            </h4>
+
+            <p className="text-sm leading-relaxed text-gray-400">
+              {spellRecovery
+                ? "Pain Threshold can be reapplied automatically when the target enters the caster's vicinity, or manually using a Main Action."
+                : "Reapply Pain Threshold using a Main Action. Enable Spell Recovery to allow automatic reapplication when the target enters the caster's vicinity."}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================== */}
+      {/* Spell Description */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Spell Description
+        </h3>
+
+        <p className="text-sm leading-relaxed text-gray-300">
+          Converts Manna into temporary Pain Threshold. The maximum temporary
+          threshold is equal to 50% of the target's base Pain Threshold.
+        </p>
+      </div>
+    </>
   );
 };
 

@@ -4,7 +4,7 @@
 import AbsorbEnergy from "./Armor/AbsorbEnergy";
 import Adherence from "./Armor/Adherence";
 import Coherence from "./Armor/Coherence";
-import Apply from "./Armor/ApplyEffectARM";
+import ApplyEffectA from "./Armor/ApplyEffectARM";
 import DisruptionThresh from "./Armor/DisruptionThresh";
 import Evasion from "./Armor/Evasion";
 import PainThresh from "./Armor/PainThresh";
@@ -12,7 +12,7 @@ import TempDur from "./Armor/TempDur";
 
 // Weapon branch
 import Accuracy from "./Weapon/Accuracy";
-import ApplyEffect from "./Weapon/ApplyEffectWEAP";
+import ApplyEffectW from "./Weapon/ApplyEffectWEAP";
 import Disruption from "./Weapon/Disruption";
 import Pain from "./Weapon/Pain";
 import SoulEnch from "./Weapon/SoulEnch";
@@ -22,6 +22,7 @@ import Weapon_Damage from "./Weapon/Weapon_Damage";
 // Object branch
 import InstillEnergy from "./Object/InstillEnergy";
 import InstillMotion from "./Object/InstillMotion";
+import ApplyEffectO from "./Object/ApplyEffectObj";
 
 // Export Enchanting school with nested branches
 export const Enchanting = {
@@ -33,11 +34,11 @@ export const Enchanting = {
     Evasion,
     PainThresh,
     TempDur,
-    Apply,
+    ApplyEffectW,
   },
   Weapon: {
     Accuracy,
-    ApplyEffect,
+    ApplyEffectA,
     Disruption,
     Pain,
     SoulEnch,
@@ -47,5 +48,6 @@ export const Enchanting = {
   Object: {
     InstillEnergy,
     InstillMotion,
+    ApplyEffectO,
   },
 };

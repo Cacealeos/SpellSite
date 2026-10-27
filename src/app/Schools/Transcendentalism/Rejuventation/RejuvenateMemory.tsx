@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
+import { BookOpenIcon } from "@heroicons/react/24/solid";
+
 import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+// ==================================================
+// Types
+// ==================================================
 
 type RejuvenateMemoryProps = {
   ParentMastery: Mastery;
@@ -7,111 +14,351 @@ type RejuvenateMemoryProps = {
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 };
 
-const RejuvenateMemory = ({
+type MemoryVariant = "Clarity" | "Solidarity" | "Posterity" | "";
+
+// ==================================================
+// Spell Constants
+// ==================================================
+
+const SPELL_COST = 100;
+const SPELL_TTT = 0;
+
+const variants: Exclude<MemoryVariant, "">[] = [
+  "Clarity",
+  "Solidarity",
+  "Posterity",
+];
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": false,
+  "Spell Reflex": false,
+  "Double Cast": false,
+  "Double Pulse": false,
+  "Carry Spell": false,
+  "Spell Shift": false,
+  "Counter Spell": false,
+  "Spell Surge": false,
+  "Junction Cast": false,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": false,
+  "Auto Cast": false,
+  "Rivet Cast": false,
+  "Spell Recovery": false,
+  "Father Spell": false,
+};
+
+// ==================================================
+// Component
+// ==================================================
+
+export default function RejuvenateMemory({
   ParentMastery,
   active,
   updateSpell,
-}: RejuvenateMemoryProps) => {
-  const [memory, setMemory] = useState("");
+}: RejuvenateMemoryProps) {
+  // ==================================================
+  // State
+  // ==================================================
 
-  const cost = 100;
+  const [memory, setMemory] = useState<MemoryVariant>("");
+
+  // ==================================================
+  // Mastery
+  // ==================================================
+
+  const mastery = ParentMastery.getType();
+
+  // ==================================================
+  // Cost Calculations
+  // ==================================================
+
+  const finalCost = SPELL_COST;
+
+  // ==================================================
+  // Parent Spell Update
+  // ==================================================
+
+  useEffect(() => {
+    updateSpell("cost", active ? finalCost : 0);
+    updateSpell("ttt", SPELL_TTT);
+  }, [active, finalCost, updateSpell]);
+
+  // ==================================================
+  // Reset When Inactive
+  // ==================================================
 
   useEffect(() => {
     if (!active) {
       setMemory("");
-      return;
     }
+  }, [active]);
 
-    updateSpell("cost", cost);
-    updateSpell("ttt", 0);
-  }, [active, updateSpell]);
+  // ==================================================
+  // Render
+  // ==================================================
 
-  const variants = ["Clarity", "Solidarity", "Posterity"];
+  if (!active) return null;
 
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
-      {/* Title */}
-      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
+    <>
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
+
+      <div className="flex items-center gap-3">
+        <BookOpenIcon className="h-8 w-8 text-cyan-400" />
+
         <h1 className="text-2xl font-bold text-cyan-400">Rejuvenate Memory</h1>
       </div>
 
-      {/* Variant Selection */}
-      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
-        <h2 className="mb-4 text-lg font-bold text-cyan-300">Variant</h2>
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
+      <div className="mt-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Properties */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-3 text-lg font-semibold text-orange-400">
+          Spell Properties
+        </h3>
+
+        <div className="space-y-3 text-gray-300">
+          {/* Effect Type */}
+
+          <div className="flex justify-between gap-3">
+            <span>Effect Type</span>
+
+            <span className="font-semibold text-cyan-400">MEMORY</span>
+          </div>
+
+          {/* Variant */}
+
+          <div className="flex justify-between gap-3">
+            <span>Variant</span>
+
+            <span className="font-semibold text-cyan-400">
+              {memory || "None"}
+            </span>
+          </div>
+
+          {/* Mastery */}
+
+          <div className="flex justify-between gap-3">
+            <span>Mastery</span>
+
+            <span className="font-semibold text-cyan-400">{mastery}</span>
+          </div>
+
+          {/* Potency */}
+
+          <div className="flex justify-between gap-3">
+            <span>Potency</span>
+
+            <span className="font-semibold text-cyan-400">None</span>
+          </div>
+
+          {/* TTT */}
+
+          <div className="flex justify-between gap-3">
+            <span>TTT</span>
+
+            <span className="font-semibold text-cyan-400">{SPELL_TTT}</span>
+          </div>
+
+          {/* Total Cost */}
+
+          <div className="flex justify-between gap-3 border-t border-gray-700 pt-3">
+            <span className="font-semibold text-gray-100">Total Cost</span>
+
+            <span className="text-lg font-bold text-orange-400">
+              {finalCost}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================== */}
+      {/* Memory Variant Configuration */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Memory Variant Configuration
+        </h3>
+
+        <p className="mb-4 text-sm text-gray-400">Select one memory variant.</p>
 
         <div className="space-y-3">
-          {variants.map((variant) => (
-            <label
-              key={variant}
-              className={`
-                flex cursor-pointer items-center justify-between
-                rounded border p-3 transition
-                ${
-                  memory === variant
-                    ? "border-cyan-500 bg-gray-900"
+          {variants.map((variant) => {
+            const selected = memory === variant;
+
+            return (
+              <label
+                key={variant}
+                className={`flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-4 transition-colors ${
+                  selected
+                    ? "border-cyan-500 bg-cyan-950/30"
                     : "border-gray-700 bg-gray-900 hover:border-gray-500"
-                }
-              `}
-            >
-              <span className="font-semibold text-gray-200">{variant}</span>
+                }`}
+              >
+                <span
+                  className={`font-semibold ${
+                    selected ? "text-cyan-400" : "text-gray-200"
+                  }`}
+                >
+                  {variant}
+                </span>
 
-              <input
-                type="radio"
-                name="memory-variant"
-                value={variant}
-                checked={memory === variant}
-                onChange={() => setMemory(variant)}
-                className="h-5 w-5 accent-cyan-500"
-              />
-            </label>
-          ))}
+                <input
+                  type="radio"
+                  name="rejuvenate-memory-variant"
+                  value={variant}
+                  checked={selected}
+                  onChange={() => setMemory(variant)}
+                  className="h-5 w-5 accent-orange-500"
+                />
+              </label>
+            );
+          })}
         </div>
 
-        <p className="mt-4 text-sm text-gray-400">Select one memory variant.</p>
-      </div>
+        {/* Selected Variant */}
 
-      {/* Spell Statistics */}
-      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4">
-        <h2 className="mb-3 text-lg font-bold text-orange-400">
-          Spell Statistics
-        </h2>
+        <div className="mt-4 flex justify-between gap-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+          <span>Selected Variant</span>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded border border-gray-700 bg-gray-900 p-3">
-            <p className="text-sm text-gray-400">Cost</p>
-            <p className="text-xl font-bold text-white">{cost}</p>
-          </div>
-
-          <div className="rounded border border-gray-700 bg-gray-900 p-3">
-            <p className="text-sm text-gray-400">Variant</p>
-            <p className="text-xl font-bold text-white">{memory || "None"}</p>
-          </div>
-
-          <div className="rounded border border-gray-700 bg-gray-900 p-3">
-            <p className="text-sm text-gray-400">Potency</p>
-            <p className="text-xl font-bold text-white">None</p>
-          </div>
-
-          <div className="rounded border border-gray-700 bg-gray-900 p-3">
-            <p className="text-sm text-gray-400">TTT</p>
-            <p className="text-xl font-bold text-white">0</p>
-          </div>
+          <span className="font-semibold text-cyan-400">
+            {memory || "None"}
+          </span>
         </div>
       </div>
 
-      {/* Secondary */}
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
-        <h2 className="mb-3 text-lg font-bold text-orange-400">Secondary</h2>
+      {/* ================================================== */}
+      {/* Cost Breakdown */}
+      {/* ================================================== */}
 
-        <div className="rounded border border-gray-700 bg-gray-900 p-3">
-          <p className="text-sm font-semibold text-gray-300">MEMORY</p>
-          <p className="text-sm text-gray-400">
-            {memory || "No variant selected"}
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Cost Breakdown
+        </h3>
+
+        <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
+          {/* Base Cost */}
+
+          <div className="flex justify-between gap-3 text-gray-300">
+            <span>Base Cost</span>
+
+            <span className="font-semibold text-cyan-400">{SPELL_COST}</span>
+          </div>
+
+          {/* Mastery Modifier */}
+
+          <div className="flex justify-between gap-3 text-gray-300">
+            <span>Mastery Modifier</span>
+
+            <span className="font-semibold text-cyan-400">None</span>
+          </div>
+
+          {/* Variant Modifier */}
+
+          <div className="flex justify-between gap-3 text-gray-300">
+            <span>Variant Modifier</span>
+
+            <span className="font-semibold text-cyan-400">None</span>
+          </div>
+
+          {/* Final Cost */}
+
+          <div className="flex justify-between gap-3 border-t border-gray-700 pt-3 text-gray-300">
+            <span className="font-semibold text-gray-100">Total Cost</span>
+
+            <span className="text-lg font-bold text-orange-400">
+              {finalCost}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================== */}
+      {/* Data Flags */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Data Flags
+        </h3>
+
+        <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+          {/* Effect Type */}
+
+          <div className="flex justify-between gap-3">
+            <span>Effect Type</span>
+
+            <span className="font-semibold text-cyan-400">MEMORY</span>
+          </div>
+
+          {/* Variant */}
+
+          <div className="flex justify-between gap-3">
+            <span>Variant</span>
+
+            <span className="font-semibold text-cyan-400">
+              {memory ? memory.toUpperCase() : "NONE"}
+            </span>
+          </div>
+
+          {/* Potency */}
+
+          <div className="flex justify-between gap-3">
+            <span>Potency</span>
+
+            <span className="font-semibold text-cyan-400">NONE</span>
+          </div>
+
+          {/* TTT */}
+
+          <div className="flex justify-between gap-3">
+            <span>TTT</span>
+
+            <span className="font-semibold text-cyan-400">{SPELL_TTT}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Description */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+          Spell Description
+        </h3>
+
+        <div className="space-y-3 text-sm leading-relaxed text-gray-300">
+          <p>
+            Rejuvenate Memory allows the caster to select one of three memory
+            variants: Clarity, Solidarity, or Posterity.
           </p>
+
+          <p>
+            The spell has a fixed Manna cost of 100, regardless of Mastery or
+            selected variant.
+          </p>
+
+          <p>Rejuvenate Memory does not use Potency or TTT.</p>
         </div>
       </div>
-    </div>
+    </>
   );
-};
-
-export default RejuvenateMemory;
+}

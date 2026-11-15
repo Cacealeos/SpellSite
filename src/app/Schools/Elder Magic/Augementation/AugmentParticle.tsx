@@ -14,18 +14,18 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
   "Focus Spell": true,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
-  "Spell Recovery": false,
-  "Father Spell": false,
+  "Spell Recovery": true,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -33,6 +33,10 @@ const Techniques = {
 // ==================================================
 
 const AOE = ["SMALL", "MODERATE", "LARGE", "MASSIVE"];
+
+const DAMAGE_TYPES = ["EXPLOSIVE", "ELECTRIC"] as const;
+
+type DamageType = (typeof DAMAGE_TYPES)[number];
 
 // ==================================================
 // Potency Statistics
@@ -94,9 +98,18 @@ const AugmentParticle = ({
 
   const [increments, setIncrement] = useState(0);
 
-  const [autoCast, setAutoCast] = useState(true);
+  const [damageType, setDamageType] = useState<DamageType>("EXPLOSIVE");
+
   const [spellCharge, setSpellCharge] = useState(false);
   const [extraChargeTurns, setExtraChargeTurns] = useState(0);
+
+  const [spellRecovery, setSpellRecovery] = useState(false);
+  const [hyperSpell, setHyperSpell] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
+
+  const [channelingBodyEnergy, setChannelingBodyEnergy] = useState(false);
+
+  const [casterPower, setCasterPower] = useState(0);
 
   // ==================================================
   // Mastery
@@ -115,13 +128,34 @@ const AugmentParticle = ({
   const masteryStats = selectedStats[mastery];
 
   // ==================================================
+  // Power Limit
+  // ==================================================
+
+  // Augmentation and Hyper Spell share the same
+  // maximum increase of +1 Power above the
+  // initial Potency-based Power.
+
+  const maxPower = selectedStats.power + 1;
+
+  const augmentationPower = selectedStats.power + (increments > 0 ? 1 : 0);
+
+  const finalPower = Math.min(
+    maxPower,
+    augmentationPower + (hyperSpell ? 1 : 0),
+  );
+
+  const hyperPowerBonus = finalPower - augmentationPower;
+
+  // ==================================================
   // Derived Increment Statistics
   // ==================================================
 
-  const currentStats = {
-    base: selectedStats.base + selectedStats.damage * increments,
+  const augmentedBase = selectedStats.base + selectedStats.damage * increments;
 
-    power: selectedStats.power + (increments > 0 ? 1 : 0),
+  const currentStats = {
+    base: augmentedBase,
+
+    power: finalPower,
 
     aoe:
       increments > 1
@@ -134,6 +168,50 @@ const AugmentParticle = ({
 
     cost: masteryStats.cost + masteryStats.costModifier * increments,
   };
+
+  // ==================================================
+  // Aura Surge Calculation
+  // ==================================================
+
+  // Aura Surge applies only when:
+  // 1. Aura Surge is enabled.
+  // 2. Body Energy is being channeled.
+  // 3. Explosive Damage is selected.
+  // 4. Caster Power exceeds the spell's final Power.
+
+  const auraSurgeEligible =
+    channelingBodyEnergy &&
+    damageType === "EXPLOSIVE" &&
+    casterPower > currentStats.power;
+
+  const auraSurgeActive = auraSurge && auraSurgeEligible;
+
+  const auraSurgeBonus = auraSurgeActive
+    ? Math.ceil(currentStats.base * 0.2)
+    : 0;
+
+  const finalBase = currentStats.base + auraSurgeBonus;
+
+  // ==================================================
+  // Hyper Spell Calculation
+  // ==================================================
+
+  // Hyper Spell reduces Manna cost by 30%.
+
+  const normalCost = currentStats.cost;
+
+  const finalCost = hyperSpell ? Math.ceil(normalCost * 0.7) : normalCost;
+
+  const hyperSpellSavings = normalCost - finalCost;
+
+  // ==================================================
+  // Spell Recovery Calculation
+  // ==================================================
+
+  // Recovery costs 50% of the effective casting cost.
+  // Charge progress is not reset for sustained effects.
+
+  const recoveryCost = Math.ceil(finalCost * 0.5);
 
   // ==================================================
   // Spell Charge & Scaling Calculations
@@ -149,13 +227,29 @@ const AugmentParticle = ({
   // Actual Damage Scaling
   // ==================================================
 
-  const totalDamage = currentStats.base;
+  // Scaling uses the final Base, including Aura Surge.
+
+  const totalDamage = finalBase;
 
   const positiveScalingDamage = totalDamage * (positiveScaling / 100);
 
   const negativeScalingDamage = totalDamage * 0.25;
 
   const scalingDisplay = `${positiveScalingDamage} / ${negativeScalingDamage}`;
+
+  // ==================================================
+  // Reset Techniques
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      setSpellRecovery(false);
+      setHyperSpell(false);
+      setAuraSurge(false);
+      setChannelingBodyEnergy(false);
+      setCasterPower(0);
+    }
+  }, [active]);
 
   // ==================================================
   // Spell Update
@@ -167,8 +261,8 @@ const AugmentParticle = ({
       return;
     }
 
-    updateSpell("cost", currentStats.cost);
-  }, [active, currentStats.cost, updateSpell]);
+    updateSpell("cost", finalCost);
+  }, [active, finalCost, updateSpell]);
 
   // ==================================================
   // Potency Options
@@ -282,7 +376,8 @@ const AugmentParticle = ({
 
             <span className="font-semibold text-cyan-400">
               {selectedStats.power}
-              {increments > 0 && ` → ${currentStats.power}`}
+              {currentStats.power !== selectedStats.power &&
+                ` → ${currentStats.power}`}
             </span>
           </div>
 
@@ -331,39 +426,66 @@ const AugmentParticle = ({
       </div>
 
       {/* ================================================== */}
+      {/* Damage Type */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        <h3 className="mb-4 text-lg font-semibold text-orange-400">
+          Damage Type
+        </h3>
+
+        <div className="grid grid-cols-2 gap-3">
+          {DAMAGE_TYPES.map((type) => (
+            <label
+              key={type}
+              className={`flex cursor-pointer items-center justify-center gap-3 rounded-lg border px-4 py-3 transition-colors ${
+                damageType === type
+                  ? "border-cyan-400 bg-cyan-950/40 text-cyan-300"
+                  : "border-gray-600 bg-gray-900 text-gray-300 hover:border-cyan-600"
+              }`}
+            >
+              <input
+                type="radio"
+                name="augment-particle-damage-type"
+                value={type}
+                checked={damageType === type}
+                onChange={() => setDamageType(type)}
+                className="h-4 w-4 accent-cyan-400"
+              />
+
+              <span className="text-sm font-semibold">
+                {type === "EXPLOSIVE" ? "Explosive" : "Electric"}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* ================================================== */}
       {/* Spell Properties */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
-          <h3 className="text-lg font-semibold text-cyan-400">
+        {/* ================================================== */}
+        {/* Spell Properties Header / Technique Buttons */}
+        {/* ================================================== */}
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold text-orange-400">
             Spell Properties
           </h3>
 
-          {/* ================================================== */}
-          {/* Technique Buttons */}
-          {/* ================================================== */}
-
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setAutoCast(!autoCast)}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                autoCast
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-green-600 hover:text-white"
-              }`}
-            >
-              Auto Cast
-            </button>
+            {/* Spell Charge */}
 
             <button
               type="button"
+              aria-pressed={spellCharge}
               onClick={() => {
-                setSpellCharge(!spellCharge);
+                setSpellCharge((prev) => !prev);
                 setExtraChargeTurns(0);
               }}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+              className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
                 spellCharge
                   ? "bg-yellow-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-yellow-600 hover:text-white"
@@ -371,18 +493,53 @@ const AugmentParticle = ({
             >
               Spell Charge
             </button>
+
+            {/* Spell Recovery */}
+
+            <button
+              type="button"
+              aria-pressed={spellRecovery}
+              onClick={() => setSpellRecovery((prev) => !prev)}
+              className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+                spellRecovery
+                  ? "bg-purple-700 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-purple-700 hover:text-white"
+              }`}
+            >
+              Spell Recovery
+            </button>
+
+            {/* Hyper Spell */}
+
+            <button
+              type="button"
+              aria-pressed={hyperSpell}
+              onClick={() => setHyperSpell((prev) => !prev)}
+              className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+                hyperSpell
+                  ? "bg-fuchsia-700 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-fuchsia-700 hover:text-white"
+              }`}
+            >
+              Hyper Spell
+            </button>
+
+            {/* Aura Surge */}
+
+            <button
+              type="button"
+              aria-pressed={auraSurge}
+              onClick={() => setAuraSurge((prev) => !prev)}
+              className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+                auraSurge
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-orange-600 hover:text-white"
+              }`}
+            >
+              Aura Surge
+            </button>
           </div>
         </div>
-
-        {/* ================================================== */}
-        {/* Auto Cast Caption */}
-        {/* ================================================== */}
-
-        {autoCast && (
-          <p className="mb-4 text-sm text-green-400">
-            Auto Cast: Casting Augmentation spells does not occupy a spell slot.
-          </p>
-        )}
 
         {/* ================================================== */}
         {/* Spell Charge */}
@@ -458,21 +615,177 @@ const AugmentParticle = ({
         )}
 
         {/* ================================================== */}
+        {/* Spell Recovery */}
+        {/* ================================================== */}
+
+        {spellRecovery && (
+          <div className="mb-5 rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
+            <p>
+              <span className="font-semibold">Spell Recovery:</span> Lost spells
+              may be re-cast for 50% of their Manna cost. Sustained effects
+              retain their accumulated charges instead of resetting.
+            </p>
+
+            <p className="mt-2 text-xs text-purple-300">
+              Recovery Cost:{" "}
+              <span className="font-semibold text-purple-200">
+                {recoveryCost} Manna
+              </span>
+            </p>
+
+            <p className="mt-1 text-xs text-purple-300">
+              Required Charges:{" "}
+              <span className="font-semibold text-purple-200">
+                {currentStats.charge}
+              </span>{" "}
+              — no reset on recovery
+            </p>
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Hyper Spell */}
+        {/* ================================================== */}
+
+        {hyperSpell && (
+          <div className="mb-5 rounded-lg border border-fuchsia-700 bg-fuchsia-950/30 p-4 text-sm text-fuchsia-200">
+            <p>
+              <span className="font-semibold">Hyper Spell:</span> Reduces the
+              Manna cost of non-Dimensional spells by 30% and increases Power by
+              1 when possible, without exceeding the maximum.
+            </p>
+
+            <div className="mt-3 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span>Normal Cost</span>
+                <span className="font-semibold">{normalCost} Manna</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Manna Saved</span>
+                <span className="font-semibold">{hyperSpellSavings} Manna</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Hyper Spell Cost</span>
+                <span className="font-semibold">{finalCost} Manna</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Power Increase</span>
+                <span className="font-semibold">+{hyperPowerBonus}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Maximum Power</span>
+                <span className="font-semibold">{maxPower}</span>
+              </div>
+            </div>
+
+            {hyperPowerBonus === 0 && (
+              <p className="mt-3 text-xs text-fuchsia-300">
+                Power is already at its maximum. The Manna discount still
+                applies.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Aura Surge */}
+        {/* ================================================== */}
+
+        {auraSurge && (
+          <div className="mb-5 rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
+            <p>
+              <span className="font-semibold">Aura Surge:</span> While
+              channeling Body Energy, Augment Particle spells dealing EXPLOSIVE
+              DAMAGE gain 20% Base if the caster's Power exceeds the spell's
+              Power.
+            </p>
+
+            {/* Body Energy Toggle */}
+
+            <label className="mt-4 flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                checked={channelingBodyEnergy}
+                onChange={(e) => setChannelingBodyEnergy(e.target.checked)}
+                className="h-4 w-4 accent-orange-500"
+              />
+
+              <span className="text-sm font-semibold">
+                Channeling Body Energy
+              </span>
+            </label>
+
+            {/* Caster Power */}
+
+            <label className="mt-4 block">
+              <span className="mb-2 block text-sm">Caster Power</span>
+
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={casterPower}
+                onChange={(e) =>
+                  setCasterPower(
+                    Math.max(0, Math.trunc(Number(e.target.value) || 0)),
+                  )
+                }
+                className="w-full rounded-md border border-orange-800 bg-gray-900 px-3 py-2 text-gray-100"
+              />
+            </label>
+
+            {/* Aura Surge Statistics */}
+
+            <div className="mt-4 space-y-2 rounded-lg border border-orange-800 bg-gray-900 p-4 text-sm">
+              <div className="flex justify-between">
+                <span>Spell Power</span>
+                <span className="font-semibold">{currentStats.power}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Base Before Aura Surge</span>
+                <span className="font-semibold">{currentStats.base}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Aura Surge Bonus</span>
+                <span className="font-semibold">+{auraSurgeBonus}</span>
+              </div>
+
+              <div className="flex justify-between border-t border-orange-800 pt-3">
+                <span>Final Base</span>
+                <span className="font-bold text-orange-300">{finalBase}</span>
+              </div>
+            </div>
+
+            <p
+              className={`mt-3 text-xs ${
+                auraSurgeActive ? "text-orange-300" : "text-gray-400"
+              }`}
+            >
+              {auraSurgeActive
+                ? "Aura Surge conditions satisfied. The 20% Base bonus is active."
+                : "Aura Surge bonus inactive. Requires Explosive Damage, Body Energy channeling, and Caster Power greater than Spell Power."}
+            </p>
+          </div>
+        )}
+
+        {/* ================================================== */}
         {/* Final Spell Statistics */}
         {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
           <div className="flex justify-between">
             <span>Base</span>
-
-            <span className="font-semibold text-cyan-400">
-              {currentStats.base}
-            </span>
+            <span className="font-semibold text-cyan-400">{finalBase}</span>
           </div>
 
           <div className="flex justify-between">
             <span>Power</span>
-
             <span className="font-semibold text-cyan-400">
               {currentStats.power}
             </span>
@@ -480,7 +793,6 @@ const AugmentParticle = ({
 
           <div className="flex justify-between">
             <span>Area of Effect</span>
-
             <span className="font-semibold text-cyan-400">
               {AOE[currentStats.aoe]}
             </span>
@@ -488,7 +800,6 @@ const AugmentParticle = ({
 
           <div className="flex justify-between">
             <span>Charge Time</span>
-
             <span className="font-semibold text-cyan-400">
               {totalChargeTime}
             </span>
@@ -496,7 +807,6 @@ const AugmentParticle = ({
 
           <div className="flex justify-between">
             <span>Damage</span>
-
             <span className="font-semibold text-cyan-400">
               +{currentStats.damage * increments}
             </span>
@@ -504,7 +814,6 @@ const AugmentParticle = ({
 
           <div className="flex justify-between">
             <span>Scaling</span>
-
             <span className="font-semibold text-cyan-400">
               {scalingDisplay}
             </span>
@@ -512,32 +821,19 @@ const AugmentParticle = ({
 
           <div className="flex justify-between">
             <span>Damage Type</span>
-
             <span className="font-semibold text-cyan-400">
-              EXPLOSIVE OR ELECTRIC DAMAGE
+              {damageType} DAMAGE
             </span>
           </div>
 
           <div className="flex justify-between">
             <span>Range</span>
-
             <span className="font-semibold text-cyan-400">RADIAL / CLOUD</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Spell Slot</span>
-
-            <span className="font-semibold text-cyan-400">
-              {autoCast ? "Not Occupied" : "Occupied"}
-            </span>
           </div>
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span>Final Cost</span>
-
-            <span className="font-semibold text-orange-400">
-              {currentStats.cost}
-            </span>
+            <span className="font-semibold text-orange-400">{finalCost}</span>
           </div>
         </div>
       </div>

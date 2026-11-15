@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ClockIcon } from "@heroicons/react/24/solid";
+
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
 import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
@@ -14,6 +15,10 @@ type RemembranceProps = {
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 };
 
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+type PotencyType = "MINOR" | "MAJOR" | "EXTREME";
+
 // ==================================================
 // Spell Techniques
 // ==================================================
@@ -23,8 +28,8 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -33,29 +38,67 @@ const Techniques = {
   "Hyper Spell": true,
   "Auto Cast": false,
   "Rivet Cast": true,
-  "Spell Recovery": false,
-  "Father Spell": false,
+  "Spell Recovery": true,
+  "Aura Surge": false,
 };
 
 // ==================================================
 // Spell Table
 // ==================================================
 
-const spellTable = {
+const spellTable: Record<
+  MasteryType,
+  Record<
+    PotencyType,
+    {
+      cost: number;
+      turns: number;
+    }
+  >
+> = {
   NOVICE: {
-    MINOR: { cost: 100, turns: 1 },
-    MAJOR: { cost: 250, turns: 2 },
-    EXTREME: { cost: 500, turns: 3 },
+    MINOR: {
+      cost: 100,
+      turns: 1,
+    },
+    MAJOR: {
+      cost: 250,
+      turns: 2,
+    },
+    EXTREME: {
+      cost: 500,
+      turns: 3,
+    },
   },
+
   INTERMEDIATE: {
-    MINOR: { cost: 75, turns: 1 },
-    MAJOR: { cost: 150, turns: 2 },
-    EXTREME: { cost: 350, turns: 3 },
+    MINOR: {
+      cost: 75,
+      turns: 1,
+    },
+    MAJOR: {
+      cost: 150,
+      turns: 2,
+    },
+    EXTREME: {
+      cost: 350,
+      turns: 3,
+    },
   },
+
   MASTERED: {
-    MINOR: { cost: 40, turns: 1 },
-    MAJOR: { cost: 100, turns: 2 },
-    EXTREME: { cost: 200, turns: 3 },
+    MINOR: {
+      cost: 40,
+      turns: 1,
+    },
+    MAJOR: {
+      cost: 100,
+      turns: 2,
+    },
+    EXTREME: {
+      cost: 200,
+      turns: 3,
+    },
   },
 };
 
@@ -65,45 +108,67 @@ const spellTable = {
 
 const potencyOptions = [
   {
-    value: "MINOR" as const,
+    value: "MINOR",
     label: "Minor",
     description: "1 Turn • 100 / 75 / 40",
   },
   {
-    value: "MAJOR" as const,
+    value: "MAJOR",
     label: "Major",
     description: "2 Turns • 250 / 150 / 100",
   },
   {
-    value: "EXTREME" as const,
+    value: "EXTREME",
     label: "Extreme",
     description: "3 Turns • 500 / 350 / 200",
   },
 ];
 
-const Remembrance = ({
+// ==================================================
+// Spell Recovery
+// ==================================================
+
+const RECOVERY_MULTIPLIER = 0.75;
+
+// ==================================================
+// Component
+// ==================================================
+
+export default function Remembrance({
   ParentMastery,
   active,
   updateSpell,
-}: RemembranceProps) => {
+}: RemembranceProps) {
   // ==================================================
   // State
   // ==================================================
 
-  const [selectedPotency, setSelectedPotency] = useState<
-    "MINOR" | "MAJOR" | "EXTREME"
-  >("MINOR");
+  const [selectedPotency, setSelectedPotency] = useState<string>("MINOR");
+
+  const [spellRecovery, setSpellRecovery] = useState(false);
 
   // ==================================================
   // Spell Calculations
   // ==================================================
 
-  const masteryType = ParentMastery.getType() as keyof typeof spellTable;
+  const masteryType = ParentMastery.getType() as MasteryType;
 
-  const selectedStats = spellTable[masteryType]?.[selectedPotency];
+  const potency = selectedPotency as PotencyType;
 
-  const cost = selectedStats?.cost ?? 0;
+  const selectedStats = spellTable[masteryType]?.[potency];
+
+  const baseCost = selectedStats?.cost ?? 0;
+
   const turns = selectedStats?.turns ?? 1;
+
+  // ==================================================
+  // Spell Recovery Calculations
+  // ==================================================
+
+  // Recovery only applies to interrupted spells.
+  // Normal casting cost remains unchanged.
+
+  const recoveryCost = Math.ceil(baseCost * RECOVERY_MULTIPLIER);
 
   // ==================================================
   // Reset Local State
@@ -112,6 +177,7 @@ const Remembrance = ({
   useEffect(() => {
     if (!active) {
       setSelectedPotency("MINOR");
+      setSpellRecovery(false);
     }
   }, [active]);
 
@@ -122,29 +188,42 @@ const Remembrance = ({
   useEffect(() => {
     if (!active) {
       updateSpell("cost", 0);
+      updateSpell("ttt", 0);
       updateSpell("potency", new Potency());
       return;
     }
 
-    const potency = new Potency();
+    const spellPotency = new Potency();
 
-    switch (selectedPotency) {
+    switch (potency) {
       case "MINOR":
-        potency.minor();
+        spellPotency.minor();
         break;
 
       case "MAJOR":
-        potency.major();
+        spellPotency.major();
         break;
 
       case "EXTREME":
-        potency.extreme();
+        spellPotency.extreme();
         break;
     }
 
-    updateSpell("cost", cost);
-    updateSpell("potency", potency);
-  }, [active, cost, selectedPotency, updateSpell]);
+    updateSpell("cost", baseCost);
+    updateSpell("ttt", 0);
+    updateSpell("potency", spellPotency);
+  }, [active, baseCost, potency, updateSpell]);
+
+  // ==================================================
+  // Technique Button Styling
+  // ==================================================
+
+  const techniqueButtonClass = (enabled: boolean) =>
+    `rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${
+      enabled
+        ? "border-purple-400 bg-purple-700 text-white shadow-md shadow-purple-900/30"
+        : "border-gray-600 bg-gray-900 text-gray-300 hover:border-purple-500 hover:text-purple-300"
+    }`;
 
   // ==================================================
   // Render
@@ -153,7 +232,7 @@ const Remembrance = ({
   if (!active) return null;
 
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-lg">
+    <>
       {/* ================================================== */}
       {/* Spell Title */}
       {/* ================================================== */}
@@ -177,9 +256,47 @@ const Remembrance = ({
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h2 className="mb-4 border-b border-gray-700 pb-3 text-lg font-semibold text-cyan-400">
-          Spell Properties
-        </h2>
+        {/* Header and Technique Button */}
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-orange-400">
+            Spell Properties
+          </h2>
+
+          <button
+            type="button"
+            aria-pressed={spellRecovery}
+            onClick={() => setSpellRecovery((prev) => !prev)}
+            className={techniqueButtonClass(spellRecovery)}
+          >
+            Spell Recovery
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* Spell Recovery Description */}
+        {/* ================================================== */}
+
+        {spellRecovery && (
+          <div className="mb-5 rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
+            <p>
+              <span className="font-semibold">Spell Recovery:</span> Interrupted
+              Immemorial spells may be re-cast for 75% of their normal Manna
+              cost.
+            </p>
+
+            <p className="mt-2 text-xs text-purple-300">
+              Recovery Cost:{" "}
+              <span className="font-semibold text-purple-200">
+                {recoveryCost} Manna
+              </span>
+            </p>
+
+            <p className="mt-2 text-xs text-gray-400">
+              This discount applies only when re-casting an interrupted spell.
+            </p>
+          </div>
+        )}
 
         {/* ================================================== */}
         {/* Potency Selection */}
@@ -190,45 +307,29 @@ const Remembrance = ({
           selectedPotency={selectedPotency}
           setSelectedPotency={setSelectedPotency}
         />
-      </div>
 
-      {/* ================================================== */}
-      {/* Final Spell Statistics */}
-      {/* ================================================== */}
+        {/* ================================================== */}
+        {/* Range */}
+        {/* ================================================== */}
 
-      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h2 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-          Final Spell Statistics
-        </h2>
+        <div className="mt-5 flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900 p-4">
+          <span className="font-semibold text-orange-400">Range</span>
 
-        <div className="space-y-3 text-gray-300">
-          <div className="flex justify-between">
-            <span>Potency</span>
-            <span className="font-semibold text-orange-400">
-              {selectedPotency}
-            </span>
-          </div>
+          <span className="font-semibold text-cyan-400">RADIAL</span>
+        </div>
 
-          <div className="flex justify-between">
-            <span>Range</span>
-            <span className="font-semibold text-orange-400">Radial</span>
-          </div>
+        {/* ================================================== */}
+        {/* Duration */}
+        {/* ================================================== */}
 
-          <div className="flex justify-between">
-            <span>Duration</span>
-            <span className="font-semibold text-orange-400">
-              {turns} {turns === 1 ? "Turn" : "Turns"}
-            </span>
-          </div>
+        <div className="mt-3 flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900 p-4">
+          <span className="font-semibold text-orange-400">Duration</span>
 
-          <div className="flex justify-between border-t border-gray-700 pt-3">
-            <span>Manna</span>
-            <span className="font-semibold text-orange-400">{cost}</span>
-          </div>
+          <span className="font-semibold text-cyan-400">
+            {turns} {turns === 1 ? "Turn" : "Turns"}
+          </span>
         </div>
       </div>
-    </div>
+    </>
   );
-};
-
-export default Remembrance;
+}

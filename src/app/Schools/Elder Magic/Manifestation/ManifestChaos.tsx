@@ -17,18 +17,18 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
   "Focus Spell": true,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
-  "Spell Recovery": false,
-  "Father Spell": false,
+  "Spell Recovery": true,
+  "Aura Surge": false,
 };
 
 // ==================================================
@@ -76,6 +76,8 @@ const ManifestChaos = ({
 
   const [saturation, setSaturation] = useState(0);
 
+  const [spellRecovery, setSpellRecovery] = useState(false);
+
   // ==================================================
   // Mastery
   // ==================================================
@@ -108,6 +110,12 @@ const ManifestChaos = ({
   const saturationCost = saturation * manaPerSaturation;
 
   const finalCost = Math.ceil(baseCost + saturationCost);
+
+  // ==================================================
+  // Spell Recovery
+  // ==================================================
+
+  const recoveryCost = Math.ceil(finalCost * 0.5);
 
   // ==================================================
   // Spell Update
@@ -263,9 +271,67 @@ const ManifestChaos = ({
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
-          Spell Properties
-        </h3>
+        {/* ================================================== */}
+        {/* Header / Spell Recovery Button */}
+        {/* ================================================== */}
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
+          <h3 className="text-lg font-semibold text-orange-400">
+            Spell Properties
+          </h3>
+
+          <button
+            type="button"
+            aria-pressed={spellRecovery}
+            onClick={() => setSpellRecovery((prev) => !prev)}
+            className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+              spellRecovery
+                ? "bg-purple-700 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-purple-700 hover:text-white"
+            }`}
+          >
+            Spell Recovery
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* Spell Recovery Details */}
+        {/* ================================================== */}
+
+        {spellRecovery && (
+          <div className="mb-5 rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
+            <p>
+              <span className="font-semibold">Spell Recovery:</span> Allows the
+              re-casting of lost spells at 50% Manna cost.
+            </p>
+
+            <div className="mt-4 space-y-2 rounded-md border border-purple-800 bg-gray-900 p-4">
+              <div className="flex justify-between">
+                <span>Normal Manna Cost</span>
+
+                <span className="font-semibold text-gray-200">{finalCost}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Recovery Discount</span>
+
+                <span className="font-semibold text-purple-300">50%</span>
+              </div>
+
+              <div className="flex justify-between border-t border-purple-800 pt-3">
+                <span className="font-semibold">Recovery Cost</span>
+
+                <span className="font-bold text-purple-300">
+                  {recoveryCost} Manna
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Final Spell Statistics */}
+        {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
           {/* ================================================== */}
@@ -343,6 +409,20 @@ const ManifestChaos = ({
               +{saturationCost}
             </span>
           </div>
+
+          {/* ================================================== */}
+          {/* Recovery Cost */}
+          {/* ================================================== */}
+
+          {spellRecovery && (
+            <div className="flex justify-between">
+              <span>Spell Recovery Cost</span>
+
+              <span className="font-semibold text-purple-400">
+                {recoveryCost} Manna
+              </span>
+            </div>
+          )}
 
           {/* ================================================== */}
           {/* Final Cost */}

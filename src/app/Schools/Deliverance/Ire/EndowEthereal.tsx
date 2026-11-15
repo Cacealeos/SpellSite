@@ -24,9 +24,9 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
-  "Counter Spell": true,
+  "Counter Spell": false,
+  "Full Cast": false,
+  "Soul Cast": false,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
@@ -34,8 +34,8 @@ const Techniques = {
   "Hyper Spell": true,
   "Auto Cast": false,
   "Rivet Cast": true,
-  "Spell Recovery": false,
-  "Father Spell": false,
+  "Spell Recovery": true,
+  "Aura Surge": false,
 };
 
 // ==================================================
@@ -113,6 +113,7 @@ const EndowEthereal = ({
 
   const [spellCharge, setSpellCharge] = useState(false);
   const [chargeTurns, setChargeTurns] = useState(1);
+  const [spellRecovery, setSpellRecovery] = useState(false);
 
   // ==================================================
   // Mastery Calculations
@@ -170,6 +171,9 @@ const EndowEthereal = ({
   // ==================================================
 
   const finalCost = Math.max(0, Math.floor(base * (1 - reduction / 100)));
+
+  // Spell Recovery affects interrupted re-casts only.
+  const recoveryCost = Math.ceil(finalCost * 0.75);
 
   // ==================================================
   // Allocation Validation
@@ -358,6 +362,7 @@ const EndowEthereal = ({
     if (!active) {
       setSpellCharge(false);
       setChargeTurns(1);
+      setSpellRecovery(false);
     }
   }, [active]);
 
@@ -414,18 +419,53 @@ const EndowEthereal = ({
             Spell Properties
           </h2>
 
-          <button
-            type="button"
-            onClick={() => setSpellCharge((prev) => !prev)}
-            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
-              spellCharge
-                ? "border-yellow-400 bg-yellow-500/10 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.5)]"
-                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-yellow-500 hover:text-yellow-300"
-            }`}
-          >
-            Spell Charge
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSpellCharge((prev) => !prev)}
+              className={`rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${
+                spellCharge
+                  ? "border-yellow-400 bg-yellow-500/10 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.5)]"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-yellow-500 hover:text-yellow-300"
+              }`}
+            >
+              Spell Charge
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={spellRecovery}
+              onClick={() => setSpellRecovery((prev) => !prev)}
+              className={`rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${
+                spellRecovery
+                  ? "border-purple-400 bg-purple-700 text-white shadow-md shadow-purple-900/30"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-purple-500 hover:text-purple-300"
+              }`}
+            >
+              Spell Recovery
+            </button>
+          </div>
         </div>
+
+        {/* ================================================== */}
+        {/* Spell Recovery Description */}
+        {/* ================================================== */}
+
+        {spellRecovery && (
+          <div className="mb-5 rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
+            <p>
+              <span className="font-semibold">Spell Recovery:</span> Interrupted
+              Immemorial spells may be re-cast for 75% of their normal Manna
+              cost.
+            </p>
+            <p className="mt-2 text-xs text-purple-300">
+              Recovery Cost:{" "}
+              <span className="font-semibold text-purple-200">
+                {recoveryCost} Manna
+              </span>
+            </p>
+          </div>
+        )}
 
         {/* ================================================== */}
         {/* Spell Charge Description */}

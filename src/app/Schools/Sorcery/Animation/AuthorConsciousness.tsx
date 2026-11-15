@@ -42,7 +42,7 @@ const Techniques = {
 // ==================================================
 
 const PASSIVE_TTT = 10;
-const TURNS_PER_CHARGE = 1;
+const TURNS_PER_CHARGE = 0.5;
 
 // ==================================================
 // Longevity Reference

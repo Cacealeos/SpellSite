@@ -40,22 +40,22 @@ const potencyOptions = [
 // ==================================================
 
 const Techniques = {
-  "Quick Spell": true,
+  "Quick Spell": false,
   "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Double Pulse": false,
+  "Full Cast": true,
+  "Soul Cast": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
-  "Hyper Spell": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": false,
   "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 const TransmuteMass = ({

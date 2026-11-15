@@ -20,22 +20,22 @@ type TransmuteCacealeosProps = {
 // ==================================================
 
 const Techniques = {
-  "Quick Spell": true,
+  "Quick Spell": false,
   "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
-  "Counter Spell": true,
-  "Spell Surge": true,
+  "Double Pulse": false,
+  "Full Cast": false,
+  "Soul Cast": false,
+  "Counter Spell": false,
+  "Spell Surge": false,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
   "Hyper Spell": true,
   "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================

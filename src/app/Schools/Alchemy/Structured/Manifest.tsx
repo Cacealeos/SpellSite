@@ -21,22 +21,22 @@ type ManifestProps = {
 // ==================================================
 
 const Techniques = {
-  "Quick Spell": true,
+  "Quick Spell": false,
   "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
-  "Counter Spell": true,
-  "Spell Surge": true,
+  "Double Pulse": false,
+  "Full Cast": true,
+  "Soul Cast": true,
+  "Counter Spell": false,
+  "Spell Surge": false,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
-  "Hyper Spell": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": false,
   "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 const Manifest = ({ ParentMastery, active, updateSpell }: ManifestProps) => {

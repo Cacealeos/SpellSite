@@ -16,6 +16,12 @@ const EnforceEthereal = ({
     "MINOR" | "MAJOR" | "EXTREME"
   >("MINOR");
 
+  // ==================================================
+  // Spell Recovery State
+  // ==================================================
+
+  const [spellRecovery, setSpellRecovery] = useState(false);
+
   const potencyOptions = [
     {
       value: "MINOR" as const,
@@ -43,9 +49,9 @@ const EnforceEthereal = ({
     "Spell Reflex": false,
     "Double Cast": true,
     "Double Pulse": true,
-    "Carry Spell": true,
-    "Spell Shift": true,
-    "Counter Spell": true,
+    "Counter Spell": false,
+    "Full Cast": false,
+    "Soul Cast": false,
     "Spell Surge": true,
     "Junction Cast": true,
     "Spell Charge": true,
@@ -53,9 +59,53 @@ const EnforceEthereal = ({
     "Hyper Spell": true,
     "Auto Cast": false,
     "Rivet Cast": true,
-    "Spell Recovery": false,
-    "Father Spell": false,
+    "Spell Recovery": true,
+    "Aura Surge": false,
   };
+
+  // ==================================================
+  // Spell Cost
+  // ==================================================
+
+  const mastery = ParentMastery.getType();
+
+  let cost = 0;
+
+  switch (selectedPotency) {
+    case "MINOR":
+      if (mastery === "NOVICE") cost = 150;
+      if (mastery === "INTERMEDIATE") cost = 100;
+      if (mastery === "MASTERED") cost = 50;
+      break;
+
+    case "MAJOR":
+      if (mastery === "NOVICE") cost = 900;
+      if (mastery === "INTERMEDIATE") cost = 600;
+      if (mastery === "MASTERED") cost = 300;
+      break;
+
+    case "EXTREME":
+      if (mastery === "NOVICE") cost = 5400;
+      if (mastery === "INTERMEDIATE") cost = 3600;
+      if (mastery === "MASTERED") cost = 1800;
+      break;
+  }
+
+  // ==================================================
+  // Spell Recovery Calculation
+  // ==================================================
+
+  const recoveryCost = Math.ceil(cost * 0.75);
+
+  // ==================================================
+  // Reset Spell Recovery
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      setSpellRecovery(false);
+    }
+  }, [active]);
 
   // ==================================================
   // Spell Calculation
@@ -111,8 +161,59 @@ const EnforceEthereal = ({
       <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
         Enforce Ethereal
       </h2>
+
       <div className="mt-6">
         <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Properties */}
+      {/* ================================================== */}
+
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-3 shadow-md">
+        {/* ================================================== */}
+        {/* Spell Properties Header / Technique Toggle */}
+        {/* ================================================== */}
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-orange-400">
+            Spell Properties
+          </h2>
+
+          <button
+            type="button"
+            aria-pressed={spellRecovery}
+            onClick={() => setSpellRecovery((prev) => !prev)}
+            className={`rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${
+              spellRecovery
+                ? "border-purple-400 bg-purple-700 text-white shadow-md shadow-purple-900/30"
+                : "border-gray-600 bg-gray-900 text-gray-300 hover:border-purple-500 hover:text-purple-300"
+            }`}
+          >
+            Spell Recovery
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* Spell Recovery Description */}
+        {/* ================================================== */}
+
+        {spellRecovery && (
+          <div className="rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
+            <p>
+              <span className="font-semibold">Spell Recovery:</span> Interrupted
+              Immemorial spells may be re-cast for 75% of their normal Manna
+              cost.
+            </p>
+
+            <p className="mt-2 text-xs text-purple-300">
+              Recovery Cost:{" "}
+              <span className="font-semibold text-purple-200">
+                {recoveryCost} Manna
+              </span>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ==================================================

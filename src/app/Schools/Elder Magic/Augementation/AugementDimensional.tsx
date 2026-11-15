@@ -13,18 +13,18 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
   "Focus Spell": true,
-  "Hyper Spell": true,
-  "Auto Cast": true,
+  "Hyper Spell": false,
+  "Auto Cast": false,
   "Rivet Cast": true,
-  "Spell Recovery": false,
-  "Father Spell": false,
+  "Spell Recovery": true,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -64,6 +64,8 @@ const AugmentDimensional = ({
 
   const [increments, setIncrements] = useState(0);
 
+  const [spellRecovery, setSpellRecovery] = useState(false);
+
   // ==================================================
   // Increment Calculations
   // ==================================================
@@ -71,6 +73,7 @@ const AugmentDimensional = ({
   const currentStats = {
     base: baseStats.base + baseStats.damage * increments,
 
+    // Maximum Power increase is +1.
     power: baseStats.power + (increments > 0 ? 1 : 0),
 
     aoe:
@@ -86,8 +89,32 @@ const AugmentDimensional = ({
   };
 
   // ==================================================
+  // Spell Recovery Calculation
+  // ==================================================
+
+  // Recasting a lost spell costs 50% of its
+  // normal Manna cost.
+  //
+  // Sustained effects retain their charge progress.
+
+  const recoveryCost = Math.ceil(currentStats.cost * 0.5);
+
+  // ==================================================
+  // Reset Techniques
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      setSpellRecovery(false);
+    }
+  }, [active]);
+
+  // ==================================================
   // Spell Cost
   // ==================================================
+
+  // Spell Recovery does not change the normal
+  // casting cost exported to the parent.
 
   useEffect(() => {
     if (!active) {
@@ -213,13 +240,86 @@ const AugmentDimensional = ({
       </div>
 
       {/* ================================================== */}
-      {/* Final Spell Properties */}
+      {/* Spell Properties */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
-          Final Spell Statistics
-        </h3>
+        {/* ================================================== */}
+        {/* Spell Properties Header / Technique Button */}
+        {/* ================================================== */}
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold text-orange-400">
+            Spell Properties
+          </h3>
+
+          <button
+            type="button"
+            aria-pressed={spellRecovery}
+            onClick={() => setSpellRecovery((prev) => !prev)}
+            className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+              spellRecovery
+                ? "bg-purple-700 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-purple-700 hover:text-white"
+            }`}
+          >
+            Spell Recovery
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* Spell Recovery */}
+        {/* ================================================== */}
+
+        {spellRecovery && (
+          <div className="mb-5 rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
+            <p>
+              <span className="font-semibold">Spell Recovery:</span> Lost spells
+              may be re-cast for 50% of their Manna cost. Sustained effects
+              retain their accumulated charges instead of resetting.
+            </p>
+
+            <div className="mt-4 space-y-2 rounded-md border border-purple-800 bg-gray-900 p-4">
+              <div className="flex justify-between">
+                <span>Normal Cost</span>
+
+                <span className="font-semibold text-gray-200">
+                  {currentStats.cost} Manna
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Recovery Discount</span>
+
+                <span className="font-semibold text-purple-300">50%</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Required Charges</span>
+
+                <span className="font-semibold text-purple-300">
+                  {currentStats.charge}
+                </span>
+              </div>
+
+              <div className="flex justify-between border-t border-purple-800 pt-3">
+                <span className="font-semibold">Recovery Cost</span>
+
+                <span className="font-bold text-purple-300">
+                  {recoveryCost} Manna
+                </span>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-purple-300">
+              Charge progress is preserved when recovering a sustained effect.
+            </p>
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Final Spell Statistics */}
+        {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
           <div className="flex justify-between">
@@ -265,19 +365,21 @@ const AugmentDimensional = ({
           <div className="flex justify-between">
             <span>Damage Type</span>
 
-            <span className="font-semibold text-cyan-400">Dimensional</span>
+            <span className="font-semibold text-cyan-400">
+              DIMENSIONAL DAMAGE
+            </span>
           </div>
 
           <div className="flex justify-between">
             <span>Range</span>
 
-            <span className="font-semibold text-cyan-400">Radial</span>
+            <span className="font-semibold text-cyan-400">RADIAL</span>
           </div>
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span>Final Cost</span>
 
-            <span className="font-semibold text-cyan-400">
+            <span className="font-semibold text-orange-400">
               {currentStats.cost}
             </span>
           </div>

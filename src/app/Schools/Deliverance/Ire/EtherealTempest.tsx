@@ -1,231 +1,337 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { BoltIcon } from "@heroicons/react/24/solid";
+
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
 import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
-const EtherealTempest = ({
-  ParentMastery,
-  active,
-  updateSpell,
-}: {
+// ==================================================
+// Types
+// ==================================================
+
+type EtherealTempestProps = {
   ParentMastery: Mastery;
   active: boolean;
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
-}) => {
-  const [selectedPotency, setSelectedPotency] = useState<
-    "MINOR" | "MAJOR" | "EXTREME"
-  >("MINOR");
+};
+
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+type PotencyType = "MINOR" | "MAJOR" | "EXTREME";
+
+// ==================================================
+// Spell Techniques
+// ==================================================
+
+const Techniques = {
+  "Quick Spell": true,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Counter Spell": false,
+  "Full Cast": false,
+  "Soul Cast": false,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": true,
+  "Focus Spell": true,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": true,
+  "Aura Surge": false,
+};
+
+// ==================================================
+// Cost Table
+// ==================================================
+
+const costTable: Record<MasteryType, Record<PotencyType, number>> = {
+  NOVICE: {
+    MINOR: 200,
+    MAJOR: 320,
+    EXTREME: 440,
+  },
+  INTERMEDIATE: {
+    MINOR: 150,
+    MAJOR: 240,
+    EXTREME: 330,
+  },
+  MASTERED: {
+    MINOR: 100,
+    MAJOR: 160,
+    EXTREME: 220,
+  },
+};
+
+// ==================================================
+// Potency Options
+// ==================================================
+
+const potencyOptions = [
+  {
+    value: "MINOR",
+    label: "Minor",
+    description: "200 / 150 / 100",
+  },
+  {
+    value: "MAJOR",
+    label: "Major",
+    description: "320 / 240 / 160",
+  },
+  {
+    value: "EXTREME",
+    label: "Extreme",
+    description: "440 / 330 / 220",
+  },
+];
+
+// ==================================================
+// Constants
+// ==================================================
+
+const LARGE_AOE_MULTIPLIER = 1.5;
+const RECOVERY_MULTIPLIER = 0.75;
+
+const POWER = 7;
+const SCALING = "0 / 20%";
+
+// ==================================================
+// Component
+// ==================================================
+
+export default function EtherealTempest({
+  ParentMastery,
+  active,
+  updateSpell,
+}: EtherealTempestProps) {
+  // ==================================================
+  // State
+  // ==================================================
+
+  const [selectedPotency, setSelectedPotency] = useState<string>("MINOR");
 
   const [largeAOE, setLargeAOE] = useState(false);
 
-  const potencyOptions = [
-    {
-      value: "MINOR" as const,
-      label: "Minor",
-      description: "200 / 150 / 100",
-    },
-    {
-      value: "MAJOR" as const,
-      label: "Major",
-      description: "320 / 240 / 160",
-    },
-    {
-      value: "EXTREME" as const,
-      label: "Extreme",
-      description: "440 / 330 / 220",
-    },
-  ];
+  const [spellRecovery, setSpellRecovery] = useState(false);
 
   // ==================================================
-  // Spell Techniques
+  // Spell Calculations
   // ==================================================
 
-  const Techniques = {
-    "Quick Spell": true,
-    "Spell Reflex": false,
-    "Double Cast": true,
-    "Double Pulse": true,
-    "Carry Spell": true,
-    "Spell Shift": true,
-    "Counter Spell": true,
-    "Spell Surge": true,
-    "Junction Cast": true,
-    "Spell Charge": true,
-    "Focus Spell": true,
-    "Hyper Spell": true,
-    "Auto Cast": false,
-    "Rivet Cast": true,
-    "Spell Recovery": false,
-    "Father Spell": false,
-  };
+  const masteryType = ParentMastery.getType() as MasteryType;
+
+  const potency = selectedPotency as PotencyType;
+
+  const baseCost = costTable[masteryType]?.[potency] ?? 0;
+
+  const finalCost = Math.ceil(baseCost * (largeAOE ? LARGE_AOE_MULTIPLIER : 1));
+
+  const range = largeAOE ? "LARGE AOE" : "MODERATE AOE";
 
   // ==================================================
-  // Spell Calculation
+  // Spell Recovery Calculations
+  // ==================================================
+
+  // Recovery applies to the full casting cost,
+  // including the selected AOE modifier.
+  // Normal casting cost remains unchanged.
+
+  const recoveryCost = Math.ceil(finalCost * RECOVERY_MULTIPLIER);
+
+  // ==================================================
+  // Reset Local State
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      setSelectedPotency("MINOR");
+      setLargeAOE(false);
+      setSpellRecovery(false);
+    }
+  }, [active]);
+
+  // ==================================================
+  // Update Parent Spell
   // ==================================================
 
   useEffect(() => {
     if (!active) {
       updateSpell("cost", 0);
+      updateSpell("ttt", 0);
+      updateSpell("potency", new Potency());
       return;
     }
 
-    const mastery = ParentMastery.getType();
     const spellPotency = new Potency();
 
-    let baseCost = 0;
-
-    switch (selectedPotency) {
+    switch (potency) {
       case "MINOR":
         spellPotency.minor();
-
-        if (mastery === "NOVICE") baseCost = 200;
-        if (mastery === "INTERMEDIATE") baseCost = 150;
-        if (mastery === "MASTERED") baseCost = 100;
         break;
 
       case "MAJOR":
         spellPotency.major();
-
-        if (mastery === "NOVICE") baseCost = 320;
-        if (mastery === "INTERMEDIATE") baseCost = 240;
-        if (mastery === "MASTERED") baseCost = 160;
         break;
 
       case "EXTREME":
         spellPotency.extreme();
-
-        if (mastery === "NOVICE") baseCost = 440;
-        if (mastery === "INTERMEDIATE") baseCost = 330;
-        if (mastery === "MASTERED") baseCost = 220;
         break;
     }
 
-    const finalCost = baseCost * (largeAOE ? 1.5 : 1);
-
     updateSpell("cost", finalCost);
+    updateSpell("ttt", 0);
     updateSpell("potency", spellPotency);
-  }, [active, ParentMastery, selectedPotency, largeAOE, updateSpell]);
+  }, [active, finalCost, potency, updateSpell]);
 
   // ==================================================
-  // UI
+  // Technique Button Styling
   // ==================================================
+
+  const techniqueButtonClass = (enabled: boolean) =>
+    `rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${
+      enabled
+        ? "border-purple-400 bg-purple-700 text-white shadow-md shadow-purple-900/30"
+        : "border-gray-600 bg-gray-900 text-gray-300 hover:border-purple-500 hover:text-purple-300"
+    }`;
+
+  // ==================================================
+  // Render
+  // ==================================================
+
+  if (!active) return null;
 
   return (
     <>
-      <h2 className="mb-6 text-center text-3xl font-bold text-cyan-400">
-        Ethereal Tempest
-      </h2>
+      {/* ================================================== */}
+      {/* Spell Title */}
+      {/* ================================================== */}
+
+      <div className="flex items-center gap-3">
+        <BoltIcon className="h-8 w-8 text-cyan-400" />
+
+        <h1 className="text-2xl font-bold text-cyan-400">Ethereal Tempest</h1>
+      </div>
+
+      {/* ================================================== */}
+      {/* Spell Techniques Table */}
+      {/* ================================================== */}
+
       <div className="mt-6">
         <SpellTechniquesTable techniques={Techniques} />
       </div>
 
-      {/* ==================================================
-          Spell Properties
-          ================================================== */}
+      {/* ================================================== */}
+      {/* Spell Properties */}
+      {/* ================================================== */}
 
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-          Spell Properties
-        </h3>
+      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+        {/* Header and Technique Button */}
 
-        <div className="space-y-2 text-gray-300">
-          <p>KINETIC - DAMAGE</p>
-          <p>RANGE - RADIAL</p>
-          <p>Power: 7</p>
-          <p>Scaling: 0 / 20%</p>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-orange-400">
+            Spell Properties
+          </h2>
+
+          <button
+            type="button"
+            aria-pressed={spellRecovery}
+            onClick={() => setSpellRecovery((prev) => !prev)}
+            className={techniqueButtonClass(spellRecovery)}
+          >
+            Spell Recovery
+          </button>
         </div>
-      </div>
 
-      {/* ==================================================
-          Potency
-          ================================================== */}
+        {/* ================================================== */}
+        {/* Spell Recovery Description */}
+        {/* ================================================== */}
 
-      <div className="mt-6">
+        {spellRecovery && (
+          <div className="mb-5 rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
+            <p>
+              <span className="font-semibold">Spell Recovery:</span> Interrupted
+              Immemorial spells may be re-cast for 75% of their normal Manna
+              cost.
+            </p>
+
+            <p className="mt-2 text-xs text-purple-300">
+              Recovery Cost:{" "}
+              <span className="font-semibold text-purple-200">
+                {recoveryCost} Manna
+              </span>
+            </p>
+
+            <p className="mt-2 text-xs text-gray-400">
+              The recovery cost includes the selected AOE modifier and applies
+              only when re-casting an interrupted spell.
+            </p>
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Potency Selection */}
+        {/* ================================================== */}
+
         <PotencySelector
           options={potencyOptions}
           selectedPotency={selectedPotency}
           setSelectedPotency={setSelectedPotency}
         />
-      </div>
 
-      {/* ==================================================
-          Range
-          ================================================== */}
+        {/* ================================================== */}
+        {/* Range Configuration */}
+        {/* ================================================== */}
 
-      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-          Range
-        </h3>
+        <div className="mt-5 space-y-3">
+          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <div>
+              <p className="font-semibold text-orange-400">Large AOE</p>
 
-        <label className="flex cursor-pointer items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-4 py-3">
-          <div>
-            <p className="font-medium text-gray-100">Large AOE</p>
+              <p className="mt-1 text-sm text-gray-400">
+                Increase range from Moderate AOE to Large AOE. Cost × 1.5.
+              </p>
+            </div>
 
-            <p className="text-sm text-gray-400">
-              Increase range from Moderate AOE to Large AOE. Cost × 1.5
-            </p>
+            <input
+              type="checkbox"
+              checked={largeAOE}
+              onChange={(e) => setLargeAOE(e.target.checked)}
+              className="h-5 w-5 accent-orange-500"
+            />
+          </label>
+
+          <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <span className="font-semibold text-orange-400">Range</span>
+
+            <span className="font-semibold text-cyan-400">{range}</span>
+          </div>
+        </div>
+
+        {/* ================================================== */}
+        {/* Damage Properties */}
+        {/* ================================================== */}
+
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <p className="text-sm font-semibold text-orange-400">Damage</p>
+
+            <p className="mt-2 font-semibold text-cyan-400">KINETIC</p>
           </div>
 
-          <input
-            type="checkbox"
-            checked={largeAOE}
-            onChange={(e) => setLargeAOE(e.target.checked)}
-            className="h-5 w-5 accent-orange-500"
-          />
-        </label>
-      </div>
+          <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <p className="text-sm font-semibold text-orange-400">Power</p>
 
-      {/* ==================================================
-          Final Statistics
-          ================================================== */}
-
-      <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
-          Final Spell Statistics
-        </h3>
-
-        <div className="space-y-3 text-gray-300">
-          <div className="flex justify-between">
-            <span>Potency</span>
-
-            <span className="font-semibold text-cyan-400">
-              {selectedPotency}
-            </span>
+            <p className="mt-2 font-semibold text-cyan-400">{POWER}</p>
           </div>
 
-          <div className="flex justify-between">
-            <span>Range</span>
+          <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+            <p className="text-sm font-semibold text-orange-400">Scaling</p>
 
-            <span className="font-semibold text-cyan-400">
-              {largeAOE ? "Large AOE" : "Moderate AOE"}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Power</span>
-
-            <span className="font-semibold text-cyan-400">7</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Scaling</span>
-
-            <span className="font-semibold text-cyan-400">0 / 20%</span>
-          </div>
-
-          <div className="flex justify-between border-t border-gray-700 pt-3">
-            <span>Cost</span>
-
-            <span className="font-semibold text-cyan-400">
-              {/* Cost is maintained by Spell through updateSpell */}
-              {/* The UI can display the selected potency/range here if
-                  cost is also exposed from the parent. */}
-            </span>
+            <p className="mt-2 font-semibold text-cyan-400">{SCALING}</p>
           </div>
         </div>
       </div>
     </>
   );
-};
-
-export default EtherealTempest;
+}

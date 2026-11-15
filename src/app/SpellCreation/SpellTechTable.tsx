@@ -7,8 +7,8 @@ export type SpellTechnique =
   | "Spell Reflex"
   | "Double Cast"
   | "Double Pulse"
-  | "Carry Spell"
-  | "Spell Shift"
+  | "Full Cast"
+  | "Soul Cast"
   | "Counter Spell"
   | "Spell Surge"
   | "Junction Cast"
@@ -18,7 +18,7 @@ export type SpellTechnique =
   | "Auto Cast"
   | "Rivet Cast"
   | "Spell Recovery"
-  | "Father Spell";
+  | "Aura Surge";
 
 export interface SpellTechniquesTableProps {
   techniques: Record<SpellTechnique, boolean>;
@@ -29,18 +29,18 @@ const techniqueOrder: readonly SpellTechnique[] = [
   "Spell Reflex",
   "Double Cast",
   "Double Pulse",
-  "Carry Spell",
-  "Spell Shift",
+  "Full Cast",
+  "Focus Spell",
   "Counter Spell",
   "Spell Surge",
   "Junction Cast",
   "Spell Charge",
-  "Focus Spell",
-  "Hyper Spell",
+  "Soul Cast",
+  "Aura Surge",
   "Auto Cast",
   "Rivet Cast",
   "Spell Recovery",
-  "Father Spell",
+  "Hyper Spell",
 ] as const;
 
 export default function SpellTechniquesTable({

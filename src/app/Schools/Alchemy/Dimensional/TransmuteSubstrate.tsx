@@ -20,22 +20,22 @@ type TransmuteSubstrateProps = {
 // ==================================================
 
 const Techniques = {
-  "Quick Spell": true,
+  "Quick Spell": false,
   "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Double Pulse": false,
+  "Full Cast": false,
+  "Soul Cast": false,
   "Counter Spell": true,
-  "Spell Surge": true,
+  "Spell Surge": false,
   "Junction Cast": true,
   "Spell Charge": true,
-  "Focus Spell": true,
-  "Hyper Spell": true,
+  "Focus Spell": false,
+  "Hyper Spell": false,
   "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================

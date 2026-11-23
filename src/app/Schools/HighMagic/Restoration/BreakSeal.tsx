@@ -52,11 +52,11 @@ const potencyOptions = [
 
 const Techniques = {
   "Quick Spell": true,
-  "Spell Reflex": false,
+  "Spell Reflex": true,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Double Pulse": false,
+  "Soul Cast": false,
+  "Full Cast": false,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -66,7 +66,7 @@ const Techniques = {
   "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================

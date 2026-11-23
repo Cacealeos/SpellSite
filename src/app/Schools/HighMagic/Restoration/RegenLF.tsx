@@ -1,31 +1,37 @@
+"use client";
+
 import { useEffect, useState } from "react";
 
 import { Mastery, Spell } from "@/app/models";
 import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 // ==================================================
-// Static Data
+// TYPES
 // ==================================================
 
-const masteryData = {
-  NOVICE: {
-    rate: 5,
-  },
-  INTERMEDIATE: {
-    rate: 3,
-  },
-  MASTERED: {
-    rate: 1,
-  },
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+// ==================================================
+// STATIC DATA
+// ==================================================
+
+const masteryData: Record<MasteryType, { rate: number }> = {
+  NOVICE: { rate: 5 },
+  INTERMEDIATE: { rate: 3 },
+  MASTERED: { rate: 1 },
 };
+
+// ==================================================
+// SPELL TECHNIQUES
+// ==================================================
 
 const Techniques = {
   "Quick Spell": true,
   "Spell Reflex": true,
   "Double Cast": true,
   "Double Pulse": false,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": false,
+  "Full Cast": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -35,11 +41,11 @@ const Techniques = {
   "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================
-// Component
+// COMPONENT
 // ==================================================
 
 export default function RegenLF({
@@ -52,43 +58,51 @@ export default function RegenLF({
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
 }) {
   // ==================================================
-  // State
+  // STATE
   // ==================================================
 
   const [lifeForce, setLifeForce] = useState(0);
+
   const [spellReflex, setSpellReflex] = useState(false);
   const [hyperSpell, setHyperSpell] = useState(false);
+  const [fullCast, setFullCast] = useState(false);
 
   // ==================================================
-  // Derived Values
+  // DERIVED VALUES
   // ==================================================
 
-  const mastery = ParentMastery.getType() as
-    | "NOVICE"
-    | "INTERMEDIATE"
-    | "MASTERED";
+  const mastery = ParentMastery.getType() as MasteryType;
 
   const { rate } = masteryData[mastery];
 
   const effectiveRate = hyperSpell ? rate * 1.3 : rate;
+
   const baseCost = Math.ceil(lifeForce * effectiveRate);
+
   const cost = hyperSpell ? Math.ceil(baseCost * 0.25) : baseCost;
 
   // ==================================================
-  // Spell Updates
+  // SPELL UPDATES
+  // ==================================================
+
+  useEffect(() => {
+    updateSpell("cost", active ? cost : 0);
+  }, [active, cost, updateSpell]);
+
+  // ==================================================
+  // RESET
   // ==================================================
 
   useEffect(() => {
     if (!active) {
-      updateSpell("cost", 0);
-      return;
+      setSpellReflex(false);
+      setHyperSpell(false);
+      setFullCast(false);
     }
-
-    updateSpell("cost", cost);
-  }, [active, cost, updateSpell]);
+  }, [active]);
 
   // ==================================================
-  // Render
+  // RENDER
   // ==================================================
 
   if (!active) return null;
@@ -96,26 +110,34 @@ export default function RegenLF({
   return (
     <>
       {/* ================================================== */}
-      {/* Spell Techniques */}
+      {/* SPELL TECHNIQUES */}
       {/* ================================================== */}
 
       <SpellTechniquesTable techniques={Techniques} />
 
       {/* ================================================== */}
-      {/* Statistics */}
+      {/* REGENERATION STATISTICS */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <div className="mb-3 flex items-center justify-between border-b border-gray-700 pb-2">
+        {/* ================================================== */}
+        {/* HEADER & TECHNIQUE BUTTONS */}
+        {/* ================================================== */}
+
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-700 pb-3">
           <h3 className="text-lg font-semibold text-orange-400">
             Regeneration Statistics
           </h3>
 
-          <div className="flex gap-2">
-            {/* Spell Reflex */}
+          <div className="flex flex-wrap justify-end gap-2">
+            {/* ================================================== */}
+            {/* SPELL REFLEX */}
+            {/* ================================================== */}
+
             <button
               type="button"
               onClick={() => setSpellReflex((prev) => !prev)}
+              aria-pressed={spellReflex}
               className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
                 spellReflex
                   ? "border-cyan-400 bg-cyan-500/10 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.5)]"
@@ -125,10 +147,14 @@ export default function RegenLF({
               Spell Reflex
             </button>
 
-            {/* Hyper Spell */}
+            {/* ================================================== */}
+            {/* HYPER SPELL */}
+            {/* ================================================== */}
+
             <button
               type="button"
               onClick={() => setHyperSpell((prev) => !prev)}
+              aria-pressed={hyperSpell}
               className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
                 hyperSpell
                   ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
@@ -137,46 +163,103 @@ export default function RegenLF({
             >
               Hyper Spell
             </button>
+
+            {/* ================================================== */}
+            {/* FULL CAST */}
+            {/* ================================================== */}
+
+            <button
+              type="button"
+              onClick={() => setFullCast((prev) => !prev)}
+              aria-pressed={fullCast}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                fullCast
+                  ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-purple-500 hover:text-purple-300"
+              }`}
+            >
+              Full Cast
+            </button>
           </div>
         </div>
 
+        {/* ================================================== */}
+        {/* TECHNIQUE DESCRIPTIONS */}
+        {/* ================================================== */}
+
+        {(spellReflex || hyperSpell || fullCast) && (
+          <div className="mb-5 space-y-3">
+            {spellReflex && (
+              <div className="rounded-lg border border-cyan-800 bg-cyan-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-cyan-300">Spell Reflex:</strong>{" "}
+                  Allows use of Restoration Spells with durations without a main
+                  action.
+                </p>
+              </div>
+            )}
+
+            {hyperSpell && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-300">Hyper Spell:</strong>{" "}
+                  Reduces Cost by{" "}
+                  <span className="font-semibold text-purple-300">75%</span> and
+                  increases Regeneration Rate by{" "}
+                  <span className="font-semibold text-purple-300">30%</span>.
+                </p>
+              </div>
+            )}
+
+            {fullCast && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-300">Full Cast:</strong> Once
+                  per turn, a recipient of two or more Restoration spells is
+                  granted one additional{" "}
+                  <span className="font-semibold text-cyan-400">
+                    INTERACT ACTION
+                  </span>{" "}
+                  or{" "}
+                  <span className="font-semibold text-cyan-400">
+                    DEFENSIVE ACTION
+                  </span>
+                  .
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* DERIVED STATISTICS */}
+        {/* ================================================== */}
+
         <div className="space-y-3">
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-3">
             <span className="text-gray-300">Life-Force Regeneration</span>
+
             <span className="font-semibold text-cyan-400">+{lifeForce}</span>
           </div>
 
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-3">
             <span className="text-gray-300">Regeneration Rate</span>
+
             <span className="font-semibold text-cyan-400">
               {rate} Cost / Life-Force
             </span>
           </div>
 
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-3">
             <span className="text-gray-300">Cost</span>
+
             <span className="font-semibold text-cyan-400">{cost}</span>
           </div>
         </div>
-
-        {/* Spell Reflex Effect */}
-        {spellReflex && (
-          <p className="mt-4 border-t border-gray-700 pt-3 text-sm text-cyan-300">
-            Allows use of Restoration Spells with durations to be used WITHOUT a
-            main action.
-          </p>
-        )}
-
-        {/* Hyper Spell Effect */}
-        {hyperSpell && (
-          <p className="mt-3 text-sm text-purple-300">
-            Reduces Cost by 75% and increases Regeneration Rate by 30%.
-          </p>
-        )}
       </div>
 
       {/* ================================================== */}
-      {/* Life-Force Regeneration */}
+      {/* LIFE-FORCE REGENERATION */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
@@ -184,12 +267,22 @@ export default function RegenLF({
           Life-Force Regeneration
         </h3>
 
+        <label
+          htmlFor="regen-lf-amount"
+          className="block text-sm font-medium text-gray-300"
+        >
+          Life-Force
+        </label>
+
         <input
+          id="regen-lf-amount"
           type="number"
           min="0"
           step="1"
           value={lifeForce}
-          onChange={(e) => setLifeForce(Number(e.target.value) || 0)}
+          onChange={(e) =>
+            setLifeForce(Math.max(0, Math.floor(Number(e.target.value) || 0)))
+          }
           className="mt-2 w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-cyan-400 outline-none focus:border-orange-500"
         />
 

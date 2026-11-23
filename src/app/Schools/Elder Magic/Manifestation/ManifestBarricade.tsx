@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { ShieldCheckIcon } from "@heroicons/react/24/solid";
 
@@ -6,7 +8,7 @@ import PotencySelector from "@/app/PotencyDisplay";
 import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 // ==================================================
-// Spell Techniques
+// SPELL TECHNIQUES
 // ==================================================
 
 const Techniques = {
@@ -15,7 +17,7 @@ const Techniques = {
   "Double Cast": true,
   "Double Pulse": true,
   "Soul Cast": true,
-  "Full Cast ": true,
+  "Full Cast": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -29,7 +31,7 @@ const Techniques = {
 };
 
 // ==================================================
-// Constants
+// CONSTANTS
 // ==================================================
 
 const POTENCY_STATS = {
@@ -39,12 +41,14 @@ const POTENCY_STATS = {
     INTERMEDIATE: 50,
     MASTERED: 25,
   },
+
   MAJOR: {
     aoe: "MODERATE",
     NOVICE: 150,
     INTERMEDIATE: 125,
     MASTERED: 100,
   },
+
   EXTREME: {
     aoe: "LARGE",
     NOVICE: 300,
@@ -55,13 +59,16 @@ const POTENCY_STATS = {
 
 type PotencyType = keyof typeof POTENCY_STATS;
 
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
 const MAX_STACKS = 3;
+const SOUL_CAST_COST = 50;
 
 // ==================================================
-// Component
+// COMPONENT
 // ==================================================
 
-const ManifestBarricade = ({
+export default function ManifestBarricade({
   ParentMastery,
   active,
   updateSpell,
@@ -69,24 +76,27 @@ const ManifestBarricade = ({
   ParentMastery: Mastery;
   active: boolean;
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
-}) => {
+}) {
   // ==================================================
-  // State
+  // STATE
   // ==================================================
 
   const [selectedPotency, setSelectedPotency] = useState<PotencyType>("MINOR");
 
   // ==================================================
-  // Mastery
+  // TECHNIQUE STATE
   // ==================================================
 
-  const mastery = ParentMastery.getType() as
-    | "NOVICE"
-    | "INTERMEDIATE"
-    | "MASTERED";
+  const [soulCast, setSoulCast] = useState(false);
 
   // ==================================================
-  // Potency Statistics
+  // MASTERY
+  // ==================================================
+
+  const mastery = ParentMastery.getType() as MasteryType;
+
+  // ==================================================
+  // POTENCY STATISTICS
   // ==================================================
 
   const selectedStats = POTENCY_STATS[selectedPotency];
@@ -96,7 +106,16 @@ const ManifestBarricade = ({
   const aoe = selectedStats.aoe;
 
   // ==================================================
-  // Spell Update
+  // SOUL CAST
+  // ==================================================
+
+  const soulCost = soulCast ? SOUL_CAST_COST : 0;
+
+  // Soul Cast costs Soul, not Manna.
+  // The spell's normal Manna cost remains unchanged.
+
+  // ==================================================
+  // SPELL UPDATE
   // ==================================================
 
   useEffect(() => {
@@ -109,7 +128,17 @@ const ManifestBarricade = ({
   }, [active, cost, updateSpell]);
 
   // ==================================================
-  // Potency Options
+  // RESET TECHNIQUES
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      setSoulCast(false);
+    }
+  }, [active]);
+
+  // ==================================================
+  // POTENCY OPTIONS
   // ==================================================
 
   const potencyOptions = [
@@ -122,6 +151,7 @@ const ManifestBarricade = ({
         `${POTENCY_STATS.MINOR.INTERMEDIATE} / ` +
         `${POTENCY_STATS.MINOR.MASTERED}`,
     },
+
     {
       value: "MAJOR" as const,
       label: "Major",
@@ -131,6 +161,7 @@ const ManifestBarricade = ({
         `${POTENCY_STATS.MAJOR.INTERMEDIATE} / ` +
         `${POTENCY_STATS.MAJOR.MASTERED}`,
     },
+
     {
       value: "EXTREME" as const,
       label: "Extreme",
@@ -143,13 +174,13 @@ const ManifestBarricade = ({
   ];
 
   // ==================================================
-  // Render
+  // RENDER
   // ==================================================
 
   return (
     <>
       {/* ================================================== */}
-      {/* Spell Title */}
+      {/* SPELL TITLE */}
       {/* ================================================== */}
 
       <div className="flex items-center gap-3">
@@ -161,15 +192,64 @@ const ManifestBarricade = ({
       </div>
 
       {/* ================================================== */}
-      {/* Spell Techniques Table */}
+      {/* SPELL TECHNIQUES TABLE */}
       {/* ================================================== */}
 
       <div className="mt-6">
         <SpellTechniquesTable techniques={Techniques} />
+
+        {/* ================================================== */}
+        {/* TECHNIQUE BUTTONS */}
+        {/* ================================================== */}
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            aria-pressed={soulCast}
+            onClick={() => setSoulCast((prev) => !prev)}
+            className={`rounded-md border px-3 py-1.5 text-sm font-semibold transition ${
+              soulCast
+                ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
+                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-purple-500 hover:text-purple-300"
+            }`}
+          >
+            Soul Cast
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* SOUL CAST EFFECT */}
+        {/* ================================================== */}
+
+        {soulCast && (
+          <div className="mt-3 rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+            <h3 className="mb-3 font-semibold text-purple-300">Soul Cast</h3>
+
+            <p className="text-sm leading-relaxed text-gray-300">
+              At the cost of{" "}
+              <span className="font-semibold text-purple-300">50 Soul</span>,
+              the caster leaves behind a{" "}
+              <span className="font-semibold text-purple-300">
+                temporary sentient consciousness
+              </span>{" "}
+              inside of a construct.
+            </p>
+
+            <div className="mt-4 flex justify-between rounded-md border border-purple-800 bg-gray-900 px-4 py-3">
+              <span className="text-sm text-gray-300">
+                Additional Soul Cost
+              </span>
+
+              <span className="font-semibold text-purple-300">
+                +{soulCost} Soul
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ================================================== */}
-      {/* Potency */}
+      {/* POTENCY */}
       {/* ================================================== */}
 
       <div className="mt-6">
@@ -181,7 +261,7 @@ const ManifestBarricade = ({
       </div>
 
       {/* ================================================== */}
-      {/* Barrier Effects */}
+      {/* BARRIER EFFECTS */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
@@ -191,7 +271,7 @@ const ManifestBarricade = ({
 
         <div className="space-y-4 text-gray-300">
           {/* ================================================== */}
-          {/* Damage Resistance */}
+          {/* DAMAGE RESISTANCE */}
           {/* ================================================== */}
 
           <div className="rounded-lg border border-cyan-900 bg-cyan-950/30 p-4">
@@ -210,7 +290,7 @@ const ManifestBarricade = ({
           </div>
 
           {/* ================================================== */}
-          {/* Activation */}
+          {/* ACTIVATION */}
           {/* ================================================== */}
 
           <div className="rounded-lg border border-gray-700 bg-gray-900/60 p-4">
@@ -226,7 +306,7 @@ const ManifestBarricade = ({
           </div>
 
           {/* ================================================== */}
-          {/* Disruption Immunity */}
+          {/* DISRUPTION IMMUNITY */}
           {/* ================================================== */}
 
           <div className="rounded-lg border border-gray-700 bg-gray-900/60 p-4">
@@ -241,7 +321,7 @@ const ManifestBarricade = ({
           </div>
 
           {/* ================================================== */}
-          {/* Stacking */}
+          {/* STACKING */}
           {/* ================================================== */}
 
           <div className="rounded-lg border border-gray-700 bg-gray-900/60 p-4">
@@ -254,7 +334,7 @@ const ManifestBarricade = ({
           </div>
 
           {/* ================================================== */}
-          {/* Saturation */}
+          {/* SATURATION */}
           {/* ================================================== */}
 
           <div className="rounded-lg border border-orange-900 bg-orange-950/30 p-4">
@@ -274,18 +354,16 @@ const ManifestBarricade = ({
       </div>
 
       {/* ================================================== */}
-      {/* Spell Properties */}
+      {/* SPELL PROPERTIES */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-cyan-400">
+        <h3 className="mb-3 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
           Spell Properties
         </h3>
 
         <div className="space-y-3 text-gray-300">
-          {/* ================================================== */}
-          {/* Potency */}
-          {/* ================================================== */}
+          {/* POTENCY */}
 
           <div className="flex justify-between">
             <span>Potency</span>
@@ -295,9 +373,7 @@ const ManifestBarricade = ({
             </span>
           </div>
 
-          {/* ================================================== */}
           {/* AOE */}
-          {/* ================================================== */}
 
           <div className="flex justify-between">
             <span>Area of Effect</span>
@@ -305,9 +381,7 @@ const ManifestBarricade = ({
             <span className="font-semibold text-cyan-400">{aoe}</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Resistance */}
-          {/* ================================================== */}
+          {/* RESISTANCE */}
 
           <div className="flex justify-between gap-4">
             <span>Resistance</span>
@@ -317,9 +391,7 @@ const ManifestBarricade = ({
             </span>
           </div>
 
-          {/* ================================================== */}
-          {/* Activation */}
-          {/* ================================================== */}
+          {/* ACTIVATION */}
 
           <div className="flex justify-between gap-4">
             <span>Activation</span>
@@ -329,9 +401,7 @@ const ManifestBarricade = ({
             </span>
           </div>
 
-          {/* ================================================== */}
-          {/* Uses */}
-          {/* ================================================== */}
+          {/* USES */}
 
           <div className="flex justify-between">
             <span>Uses</span>
@@ -339,9 +409,7 @@ const ManifestBarricade = ({
             <span className="font-semibold text-cyan-400">SINGLE USE</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Disruption */}
-          {/* ================================================== */}
+          {/* DISRUPTION */}
 
           <div className="flex justify-between">
             <span>Disruption</span>
@@ -349,9 +417,7 @@ const ManifestBarricade = ({
             <span className="font-semibold text-green-400">IMMUNE</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Maximum Stacks */}
-          {/* ================================================== */}
+          {/* MAXIMUM STACKS */}
 
           <div className="flex justify-between">
             <span>Maximum Stacks</span>
@@ -359,9 +425,7 @@ const ManifestBarricade = ({
             <span className="font-semibold text-cyan-400">{MAX_STACKS}</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Saturation */}
-          {/* ================================================== */}
+          {/* SATURATION */}
 
           <div className="flex justify-between">
             <span>Saturation Cost</span>
@@ -369,19 +433,29 @@ const ManifestBarricade = ({
             <span className="font-semibold text-orange-400">HEAVY</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Final Cost */}
-          {/* ================================================== */}
+          {/* SOUL CAST */}
+
+          {soulCast && (
+            <div className="flex justify-between gap-4 border-t border-gray-700 pt-3">
+              <span className="text-gray-300">Soul Cast</span>
+
+              <span className="text-right font-semibold text-purple-300">
+                +{soulCost} Soul
+              </span>
+            </div>
+          )}
+
+          {/* FINAL COST */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span className="font-semibold text-gray-100">Final Cost</span>
 
-            <span className="text-lg font-bold text-orange-400">{cost}</span>
+            <span className="text-lg font-bold text-orange-400">
+              {cost} Manna
+            </span>
           </div>
         </div>
       </div>
     </>
   );
-};
-
-export default ManifestBarricade;
+}

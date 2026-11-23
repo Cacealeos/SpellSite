@@ -19,7 +19,8 @@ type TechniqueType =
   | "Hyper Spell"
   | "Spell Recovery"
   | "Spell Surge"
-  | "Double Cast";
+  | "Soul Cast"
+  | "Full Cast";
 
 // ==================================================
 // Spell Techniques
@@ -30,8 +31,8 @@ const Techniques = {
   "Spell Reflex": true,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -41,7 +42,7 @@ const Techniques = {
   "Auto Cast": true,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================
@@ -67,6 +68,8 @@ const masteryRates: Record<MasteryType, { cost: number; ttt: number }> = {
 // Technique Descriptions
 // ==================================================
 
+const SOUL_CAST_COST = 50;
+
 const techniqueDescriptions: Record<TechniqueType, string> = {
   "Counter Spell": "Apply Effects may be applied as a Defensive Action.",
 
@@ -83,6 +86,12 @@ const techniqueDescriptions: Record<TechniqueType, string> = {
 
   "Spell Surge":
     "Increases the enchantment's AOE level by one when the initial recipient already has two or more active enchantments from the caster. Reapplication requires a Main Action or can occur automatically through Spell Recovery.",
+
+  "Soul Cast":
+    "At the cost of 50 Soul, a temporary consciousness of the caster can be left inside the target.",
+
+  "Full Cast":
+    "Once per turn, targets receive an additional Defensive Action when an enchantment is first cast on them. Using this additional action removes the enchantment.",
 };
 
 // ==================================================
@@ -166,6 +175,12 @@ const ApplyEffectO = ({
 
   const spellSurge = hasTechnique("Spell Surge");
 
+  const soulCast = hasTechnique("Soul Cast");
+
+  const fullCast = hasTechnique("Full Cast");
+
+  const soulCost = soulCast ? SOUL_CAST_COST : 0;
+
   const surgeEligible = spellSurge && existingEnchantments >= 2;
 
   const baseAOE = hyperSpell ? "Small" : "None";
@@ -178,7 +193,6 @@ const ApplyEffectO = ({
 
   useEffect(() => {
     updateSpell("cost", active ? cost : 0);
-
     updateSpell("ttt", active ? ttt : 0);
   }, [active, cost, ttt, updateSpell]);
 
@@ -219,7 +233,7 @@ const ApplyEffectO = ({
         type="button"
         onClick={() => toggleTechnique(technique)}
         aria-pressed={enabled}
-        className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+        className={`shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition-colors ${
           enabled
             ? "bg-purple-600 text-white"
             : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
@@ -263,18 +277,20 @@ const ApplyEffectO = ({
         {/* Header & Technique Buttons */}
         {/* ================================================== */}
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
-          <h3 className="text-lg font-semibold text-orange-400">
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-700 pb-3">
+          <h3 className="shrink-0 text-lg font-semibold text-orange-400">
             Spell Properties
           </h3>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
             <TechniqueButton technique="Counter Spell" />
             <TechniqueButton technique="Spell Reflex" />
             <TechniqueButton technique="Auto Cast" />
             <TechniqueButton technique="Hyper Spell" />
             <TechniqueButton technique="Spell Recovery" />
             <TechniqueButton technique="Spell Surge" />
+            <TechniqueButton technique="Soul Cast" />
+            <TechniqueButton technique="Full Cast" />
           </div>
         </div>
 
@@ -341,7 +357,7 @@ const ApplyEffectO = ({
             </span>
           </div>
 
-          {/* Action */}
+          {/* Casting Action */}
 
           <div className="flex justify-between gap-4">
             <span>Casting Action</span>
@@ -404,6 +420,56 @@ const ApplyEffectO = ({
                   }`}
                 >
                   +{aoeIncrease}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Soul Cast */}
+
+          {soulCast && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Soul Cost</span>
+
+                <span className="font-semibold text-purple-400">
+                  {soulCost}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Temporary Consciousness</span>
+
+                <span className="font-semibold text-purple-400">CASTER</span>
+              </div>
+            </>
+          )}
+
+          {/* Full Cast */}
+
+          {fullCast && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Additional Defensive Action</span>
+
+                <span className="font-semibold text-purple-400">
+                  +1 (FIRST CAST)
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Frequency</span>
+
+                <span className="font-semibold text-cyan-400">
+                  ONCE PER TURN
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>After Using Action</span>
+
+                <span className="font-semibold text-red-400">
+                  ENCHANTMENT REMOVED
                 </span>
               </div>
             </>
@@ -523,6 +589,89 @@ const ApplyEffectO = ({
       </div>
 
       {/* ================================================== */}
+      {/* Soul Cast Configuration */}
+      {/* ================================================== */}
+
+      {soulCast && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Soul Cast Configuration
+          </h3>
+
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            At the cost of 50 Soul, a temporary consciousness of the caster can
+            be left inside the target.
+          </p>
+
+          <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <div className="flex justify-between gap-3">
+              <span>Soul Cost</span>
+
+              <span className="font-semibold text-purple-400">{soulCost}</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Consciousness</span>
+
+              <span className="font-semibold text-cyan-400">TEMPORARY</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Origin</span>
+
+              <span className="font-semibold text-cyan-400">CASTER</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================== */}
+      {/* Full Cast Configuration */}
+      {/* ================================================== */}
+
+      {fullCast && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Full Cast Configuration
+          </h3>
+
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            Once per turn, targets receive an additional Defensive Action when
+            an enchantment is first cast on them. Using the additional action
+            removes the enchantment.
+          </p>
+
+          <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <div className="flex justify-between gap-3">
+              <span>Additional Defensive Actions</span>
+
+              <span className="font-semibold text-purple-400">+1</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Activation</span>
+
+              <span className="font-semibold text-cyan-400">FIRST CAST</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Frequency</span>
+
+              <span className="font-semibold text-cyan-400">ONCE PER TURN</span>
+            </div>
+
+            <div className="flex justify-between gap-3 border-t border-gray-700 pt-3">
+              <span>After Using Action</span>
+
+              <span className="font-semibold text-red-400">
+                ENCHANTMENT REMOVED
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================== */}
       {/* Spell Surge Configuration */}
       {/* ================================================== */}
 
@@ -531,6 +680,8 @@ const ApplyEffectO = ({
           <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
             Spell Surge Configuration
           </h3>
+
+          {/* Existing Enchantments */}
 
           <label className="block">
             <span className="mb-2 block font-semibold text-gray-300">

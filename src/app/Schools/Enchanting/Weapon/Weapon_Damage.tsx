@@ -10,6 +10,41 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
 
+type CatalystType = "MENTAL" | "BODY" | "SPIRIT" | "MEMORY" | "NECRO";
+
+type DamageType =
+  | "PRESSURE"
+  | "VORPAL"
+  | "EXPLOSIVE"
+  | "THERMAL"
+  | "KINETIC"
+  | "CONCUSSIVE"
+  | "GRAVITY";
+
+// ==================================================
+// Aura Surge Catalyst Data
+// ==================================================
+
+const catalystDamageTypes: Record<CatalystType, DamageType[]> = {
+  MENTAL: ["PRESSURE", "VORPAL"],
+  BODY: ["EXPLOSIVE", "THERMAL"],
+  SPIRIT: ["KINETIC", "CONCUSSIVE"],
+  MEMORY: ["KINETIC", "GRAVITY"],
+  NECRO: ["KINETIC", "PRESSURE"],
+};
+
+const catalysts = Object.keys(catalystDamageTypes) as CatalystType[];
+
+const damageTypes: DamageType[] = [
+  "PRESSURE",
+  "VORPAL",
+  "EXPLOSIVE",
+  "THERMAL",
+  "KINETIC",
+  "CONCUSSIVE",
+  "GRAVITY",
+];
+
 // ==================================================
 // Spell Techniques
 // ==================================================
@@ -19,8 +54,8 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -30,7 +65,7 @@ const Techniques = {
   "Auto Cast": true,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -48,6 +83,7 @@ const masteryRates: Record<MasteryType, number> = {
 // ==================================================
 
 const CHARGE_MULTIPLIER = 0.3;
+const AURA_SURGE_SCALING = 0.3;
 
 // ==================================================
 // Component
@@ -67,17 +103,24 @@ const WeaponDamage = ({
   // ==================================================
 
   const [baseDamage, setBaseDamage] = useState(0);
-
   const [enchantmentDamage, setEnchantmentDamage] = useState(0);
 
   const [spellCharge, setSpellCharge] = useState(false);
   const [spellRecovery, setSpellRecovery] = useState(false);
   const [spellSurge, setSpellSurge] = useState(false);
+  const [fullCast, setFullCast] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   const [chargeTurns, setChargeTurns] = useState(0);
   const [doubleCast, setDoubleCast] = useState(false);
 
   const [existingEnchantments, setExistingEnchantments] = useState(0);
+
+  const [catalyst, setCatalyst] = useState<CatalystType>("MENTAL");
+
+  const [damageType, setDamageType] = useState<DamageType>("PRESSURE");
+
+  const [unleashDamage, setUnleashDamage] = useState(0);
 
   // ==================================================
   // Mastery
@@ -103,12 +146,12 @@ const WeaponDamage = ({
 
   // Base weapon damage is optional.
   // If provided, the enchantment cannot cause
-  // total weapon damage to exceed BASE x 2.
+  // total weapon damage to exceed BASE × 2.
 
   const maxEnchantmentDamage = baseDamage > 0 ? baseDamage : Infinity;
 
-  // The investment is limited by the final
-  // charged damage, not just its base value.
+  // Investment is limited by the final
+  // charged enchantment damage.
 
   const maxInvestment = Number.isFinite(maxEnchantmentDamage)
     ? Math.ceil(maxEnchantmentDamage / strengthMultiplier)
@@ -138,9 +181,34 @@ const WeaponDamage = ({
   // Spell Surge Calculations
   // ==================================================
 
-  const surgeEligible = spellSurge && existingEnchantments >= 2;
+  const surgeEligible = active && spellSurge && existingEnchantments >= 2;
 
   const aoeIncrease = surgeEligible ? 1 : 0;
+
+  // ==================================================
+  // Aura Surge Calculations
+  // ==================================================
+
+  const auraEligible =
+    active && auraSurge && catalystDamageTypes[catalyst].includes(damageType);
+
+  const auraMultiplier = auraEligible ? 1 + AURA_SURGE_SCALING : 1;
+
+  // Aura Surge scales weapon damage and UNLEASH damage.
+  // The existing enchantment damage and BASE × 2 cap
+  // remain unchanged.
+
+  const auraWeaponBase = totalWeaponDamage ?? finalEnchantmentDamage;
+
+  const weaponBonus = auraWeaponBase * (auraMultiplier - 1);
+
+  const unleashBonus = unleashDamage * (auraMultiplier - 1);
+
+  const finalAuraWeaponDamage = auraWeaponBase * auraMultiplier;
+
+  const finalUnleashDamage = unleashDamage * auraMultiplier;
+
+  const displayDamage = (value: number) => Number(value.toFixed(2));
 
   // ==================================================
   // Parent Spell Update
@@ -148,7 +216,6 @@ const WeaponDamage = ({
 
   useEffect(() => {
     updateSpell("cost", 0);
-
     updateSpell("ttt", active ? finalTTT : 0);
   }, [active, finalTTT, updateSpell]);
 
@@ -164,10 +231,16 @@ const WeaponDamage = ({
       setSpellCharge(false);
       setSpellRecovery(false);
       setSpellSurge(false);
+      setFullCast(false);
+      setAuraSurge(false);
 
       setChargeTurns(0);
       setDoubleCast(false);
       setExistingEnchantments(0);
+
+      setCatalyst("MENTAL");
+      setDamageType("PRESSURE");
+      setUnleashDamage(0);
     }
   }, [active]);
 
@@ -213,6 +286,21 @@ const WeaponDamage = ({
     setExistingEnchantments(Math.max(0, Math.trunc(value || 0)));
   };
 
+  const changeUnleashDamage = (value: number) => {
+    setUnleashDamage(Number.isFinite(value) ? Math.max(0, value) : 0);
+  };
+
+  // ==================================================
+  // Technique Button Styling
+  // ==================================================
+
+  const techniqueButtonClass = (selected: boolean) =>
+    `shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition-colors ${
+      selected
+        ? "bg-purple-600 text-white"
+        : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+    }`;
+
   // ==================================================
   // Render
   // ==================================================
@@ -251,18 +339,14 @@ const WeaponDamage = ({
             Spell Properties
           </h3>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {/* Spell Charge */}
 
             <button
               type="button"
               onClick={toggleSpellCharge}
               aria-pressed={spellCharge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellCharge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellCharge)}
             >
               Spell Charge
             </button>
@@ -273,11 +357,7 @@ const WeaponDamage = ({
               type="button"
               onClick={() => setSpellRecovery((previous) => !previous)}
               aria-pressed={spellRecovery}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellRecovery
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellRecovery)}
             >
               Spell Recovery
             </button>
@@ -288,13 +368,31 @@ const WeaponDamage = ({
               type="button"
               onClick={() => setSpellSurge((previous) => !previous)}
               aria-pressed={spellSurge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellSurge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellSurge)}
             >
               Spell Surge
+            </button>
+
+            {/* Full Cast */}
+
+            <button
+              type="button"
+              onClick={() => setFullCast((previous) => !previous)}
+              aria-pressed={fullCast}
+              className={techniqueButtonClass(fullCast)}
+            >
+              Full Cast
+            </button>
+
+            {/* Aura Surge */}
+
+            <button
+              type="button"
+              onClick={() => setAuraSurge((previous) => !previous)}
+              aria-pressed={auraSurge}
+              className={techniqueButtonClass(auraSurge)}
+            >
+              Aura Surge
             </button>
           </div>
         </div>
@@ -303,7 +401,11 @@ const WeaponDamage = ({
         {/* Technique Descriptions */}
         {/* ================================================== */}
 
-        {(spellCharge || spellRecovery || spellSurge) && (
+        {(spellCharge ||
+          spellRecovery ||
+          spellSurge ||
+          fullCast ||
+          auraSurge) && (
           <div className="mb-5 space-y-3">
             {/* Spell Charge */}
 
@@ -349,6 +451,38 @@ const WeaponDamage = ({
                   from the caster. Reapply using a Main Action or automatically
                   through{" "}
                   <strong className="text-purple-300">Spell Recovery</strong>.
+                </p>
+              </div>
+            )}
+
+            {/* Full Cast */}
+
+            {fullCast && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Full Cast:</strong> Once
+                  per turn, targets receive an additional{" "}
+                  <strong className="text-purple-300">INTERACT ACTION</strong>{" "}
+                  when a weapon enchantment is first cast on them. Using this
+                  additional action{" "}
+                  <strong className="text-red-400">REMOVES</strong> the
+                  enchantment.
+                </p>
+              </div>
+            )}
+
+            {/* Aura Surge */}
+
+            {auraSurge && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Aura Surge:</strong> While
+                  the weapon enchantment is active, adds{" "}
+                  <strong className="text-purple-300">
+                    +30% positive scaling
+                  </strong>{" "}
+                  to weapon and UNLEASH damage when channeling a matching
+                  catalyst and dealing its corresponding damage type.
                 </p>
               </div>
             )}
@@ -462,6 +596,84 @@ const WeaponDamage = ({
             </>
           )}
 
+          {/* Full Cast Statistics */}
+
+          {fullCast && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Additional Interact Action</span>
+
+                <span className="font-semibold text-purple-400">
+                  +1 (FIRST CAST)
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Frequency</span>
+
+                <span className="font-semibold text-cyan-400">
+                  ONCE PER TURN
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>After Using Action</span>
+
+                <span className="font-semibold text-red-400">
+                  ENCHANTMENT REMOVED
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Aura Surge Statistics */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Catalyst</span>
+
+                <span className="font-semibold text-cyan-400">{catalyst}</span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Damage Type</span>
+
+                <span className="font-semibold text-cyan-400">
+                  {damageType}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Aura Surge Scaling</span>
+
+                <span
+                  className={`font-semibold ${
+                    auraEligible ? "text-purple-400" : "text-gray-500"
+                  }`}
+                >
+                  {auraEligible ? "+30% ACTIVE" : "INACTIVE / NO MATCH"}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Weapon Damage Bonus</span>
+
+                <span className="font-semibold text-purple-400">
+                  +{displayDamage(weaponBonus)}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>UNLEASH Damage Bonus</span>
+
+                <span className="font-semibold text-purple-400">
+                  +{displayDamage(unleashBonus)}
+                </span>
+              </div>
+            </>
+          )}
+
           {/* Final Enchantment Damage */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
@@ -470,7 +682,7 @@ const WeaponDamage = ({
             </span>
 
             <span className="text-lg font-bold text-orange-400">
-              {Number(finalEnchantmentDamage.toFixed(2))}
+              {displayDamage(finalEnchantmentDamage)}
             </span>
           </div>
 
@@ -483,7 +695,7 @@ const WeaponDamage = ({
               </span>
 
               <span className="text-lg font-bold text-orange-400">
-                {Number(totalWeaponDamage.toFixed(2))}
+                {displayDamage(totalWeaponDamage)}
               </span>
             </div>
           )}
@@ -548,7 +760,7 @@ const WeaponDamage = ({
             <span>Final Enchantment Damage</span>
 
             <span className="font-semibold text-cyan-400">
-              {Number(finalEnchantmentDamage.toFixed(2))}
+              {displayDamage(finalEnchantmentDamage)}
             </span>
           </div>
 
@@ -614,7 +826,7 @@ const WeaponDamage = ({
               <span>Current Total Damage</span>
 
               <span className="font-semibold text-cyan-400">
-                {Number((totalWeaponDamage ?? 0).toFixed(2))}
+                {displayDamage(totalWeaponDamage ?? 0)}
               </span>
             </div>
           </div>
@@ -709,6 +921,187 @@ const WeaponDamage = ({
               used.
             </p>
           )}
+        </div>
+      )}
+
+      {/* ================================================== */}
+      {/* Full Cast Configuration */}
+      {/* ================================================== */}
+
+      {fullCast && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Full Cast Configuration
+          </h3>
+
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            Once per turn, targets receive an additional Interact Action when a
+            weapon enchantment is first cast on them. Using the additional
+            action removes the enchantment.
+          </p>
+
+          <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <div className="flex justify-between gap-3">
+              <span>Additional Interact Actions</span>
+
+              <span className="font-semibold text-purple-400">+1</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Activation</span>
+
+              <span className="font-semibold text-cyan-400">FIRST CAST</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Frequency</span>
+
+              <span className="font-semibold text-cyan-400">ONCE PER TURN</span>
+            </div>
+
+            <div className="flex justify-between gap-3 border-t border-gray-700 pt-3">
+              <span>After Using Action</span>
+
+              <span className="font-semibold text-red-400">
+                ENCHANTMENT REMOVED
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================== */}
+      {/* Aura Surge Configuration */}
+      {/* ================================================== */}
+
+      {auraSurge && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Aura Surge Configuration
+          </h3>
+
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            Channel a catalyst to add 30% positive scaling to weapon and UNLEASH
+            damage of the corresponding type while the weapon enchantment is
+            active.
+          </p>
+
+          {/* Catalyst & Damage Selection */}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Catalyst */}
+
+            <label className="block text-gray-300">
+              <span className="mb-2 block font-semibold">Catalyst</span>
+
+              <select
+                value={catalyst}
+                onChange={(e) => setCatalyst(e.target.value as CatalystType)}
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+              >
+                {catalysts.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {/* Damage Type */}
+
+            <label className="block text-gray-300">
+              <span className="mb-2 block font-semibold">Damage Type</span>
+
+              <select
+                value={damageType}
+                onChange={(e) => setDamageType(e.target.value as DamageType)}
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+              >
+                {damageTypes.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {/* UNLEASH Damage */}
+
+            <label className="block text-gray-300 sm:col-span-2">
+              <span className="mb-2 block font-semibold">
+                Base UNLEASH Damage
+              </span>
+
+              <input
+                type="number"
+                min={0}
+                step="any"
+                value={unleashDamage}
+                onChange={(e) => changeUnleashDamage(Number(e.target.value))}
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+              />
+            </label>
+          </div>
+
+          {/* Aura Surge Summary */}
+
+          <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <p className="text-sm text-gray-400">
+              Matching damage types: {catalystDamageTypes[catalyst].join(", ")}
+            </p>
+
+            <div className="flex justify-between gap-3">
+              <span>Scaling Status</span>
+
+              <span
+                className={`font-semibold ${
+                  auraEligible ? "text-purple-400" : "text-gray-500"
+                }`}
+              >
+                {auraEligible ? "+30% ACTIVE" : "INACTIVE / NO MATCH"}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Weapon Damage Before Aura</span>
+
+              <span className="font-semibold text-cyan-400">
+                {displayDamage(auraWeaponBase)}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Weapon Damage Bonus</span>
+
+              <span className="font-semibold text-purple-400">
+                +{displayDamage(weaponBonus)}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Final Weapon Damage</span>
+
+              <span className="font-semibold text-cyan-400">
+                {displayDamage(finalAuraWeaponDamage)}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>UNLEASH Damage Bonus</span>
+
+              <span className="font-semibold text-purple-400">
+                +{displayDamage(unleashBonus)}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Final UNLEASH Damage</span>
+
+              <span className="font-semibold text-cyan-400">
+                {displayDamage(finalUnleashDamage)}
+              </span>
+            </div>
+          </div>
         </div>
       )}
 

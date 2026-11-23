@@ -10,6 +10,10 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
 
+type CatalystType = "MENTAL" | "BODY" | "SPIRIT" | "MEMORY" | "NECRO";
+
+type DefensiveAction = "DEFEND" | "COVER";
+
 // ==================================================
 // Spell Techniques
 // ==================================================
@@ -19,25 +23,25 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
   "Focus Spell": true,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
 // Mastery Data
 // ==================================================
 
-const masteryRates = {
+const masteryRates: Record<MasteryType, number> = {
   NOVICE: 10,
   INTERMEDIATE: 15,
   MASTERED: 20,
@@ -49,6 +53,15 @@ const masteryRates = {
 
 const MAX_EVASION = 200;
 const CHARGE_MULTIPLIER = 0.3;
+const AURA_DAMAGE_REDUCTION = 0.2;
+
+const CATALYST_DAMAGE: Record<CatalystType, string[]> = {
+  MENTAL: ["PRESSURE", "VORPAL"],
+  BODY: ["EXPLOSIVE", "THERMAL"],
+  SPIRIT: ["KINETIC", "CONCUSSIVE"],
+  MEMORY: ["KINETIC", "GRAVITY"],
+  NECRO: ["KINETIC", "PRESSURE"],
+};
 
 // ==================================================
 // Component
@@ -72,10 +85,19 @@ const Evasion = ({
   const [spellCharge, setSpellCharge] = useState(false);
   const [spellRecovery, setSpellRecovery] = useState(false);
   const [spellSurge, setSpellSurge] = useState(false);
+  const [fullCast, setFullCast] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   const [chargeTurns, setChargeTurns] = useState(0);
   const [doubleCast, setDoubleCast] = useState(false);
+
   const [existingEnchantments, setExistingEnchantments] = useState(0);
+
+  const [selectedCatalyst, setSelectedCatalyst] =
+    useState<CatalystType>("MENTAL");
+
+  const [defensiveAction, setDefensiveAction] =
+    useState<DefensiveAction>("DEFEND");
 
   // ==================================================
   // Mastery
@@ -103,6 +125,7 @@ const Evasion = ({
 
   // Maximum base investment that can contribute
   // to the 200 Evasion cap.
+
   const maxInvestment =
     evasionPerTTT > 0 ? Math.ceil(MAX_EVASION / evasionPerTTT) : 0;
 
@@ -113,6 +136,7 @@ const Evasion = ({
   const evasion = Math.min(baseEvasion * strengthMultiplier, MAX_EVASION);
 
   // Spell Charge increases TTT by 30% per turn.
+
   const finalTTT = Math.ceil(investedTTT * strengthMultiplier);
 
   // ==================================================
@@ -122,6 +146,20 @@ const Evasion = ({
   const surgeEligible = spellSurge && existingEnchantments >= 2;
 
   const aoeIncrease = surgeEligible ? 1 : 0;
+
+  // ==================================================
+  // Full Cast Calculations
+  // ==================================================
+
+  const additionalDefensiveActions = fullCast ? 1 : 0;
+
+  // ==================================================
+  // Aura Surge Calculations
+  // ==================================================
+
+  const protectedDamageTypes = CATALYST_DAMAGE[selectedCatalyst];
+
+  const damageReduction = auraSurge ? AURA_DAMAGE_REDUCTION * 100 : 0;
 
   // ==================================================
   // Parent Spell Update
@@ -142,10 +180,15 @@ const Evasion = ({
       setSpellCharge(false);
       setSpellRecovery(false);
       setSpellSurge(false);
+      setFullCast(false);
+      setAuraSurge(false);
 
       setChargeTurns(0);
       setDoubleCast(false);
       setExistingEnchantments(0);
+
+      setSelectedCatalyst("MENTAL");
+      setDefensiveAction("DEFEND");
     }
   }, [active]);
 
@@ -186,6 +229,24 @@ const Evasion = ({
   const changeExistingEnchantments = (value: number) => {
     setExistingEnchantments(Math.max(0, Math.trunc(value || 0)));
   };
+
+  // ==================================================
+  // Shared UI Helpers
+  // ==================================================
+
+  const techniqueButtonClass = (enabled: boolean) =>
+    `rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+      enabled
+        ? "bg-purple-600 text-white"
+        : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+    }`;
+
+  const selectionButtonClass = (selected: boolean) =>
+    `rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+      selected
+        ? "border-purple-400 bg-purple-950 text-purple-300"
+        : "border-gray-600 bg-gray-800 text-gray-300 hover:border-purple-600"
+    }`;
 
   // ==================================================
   // Render
@@ -232,11 +293,7 @@ const Evasion = ({
               type="button"
               onClick={toggleSpellCharge}
               aria-pressed={spellCharge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellCharge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellCharge)}
             >
               Spell Charge
             </button>
@@ -247,11 +304,7 @@ const Evasion = ({
               type="button"
               onClick={() => setSpellRecovery((previous) => !previous)}
               aria-pressed={spellRecovery}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellRecovery
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellRecovery)}
             >
               Spell Recovery
             </button>
@@ -262,13 +315,31 @@ const Evasion = ({
               type="button"
               onClick={() => setSpellSurge((previous) => !previous)}
               aria-pressed={spellSurge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellSurge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellSurge)}
             >
               Spell Surge
+            </button>
+
+            {/* Full Cast */}
+
+            <button
+              type="button"
+              onClick={() => setFullCast((previous) => !previous)}
+              aria-pressed={fullCast}
+              className={techniqueButtonClass(fullCast)}
+            >
+              Full Cast
+            </button>
+
+            {/* Aura Surge */}
+
+            <button
+              type="button"
+              onClick={() => setAuraSurge((previous) => !previous)}
+              aria-pressed={auraSurge}
+              className={techniqueButtonClass(auraSurge)}
+            >
+              Aura Surge
             </button>
           </div>
         </div>
@@ -277,9 +348,15 @@ const Evasion = ({
         {/* Technique Descriptions */}
         {/* ================================================== */}
 
-        {(spellCharge || spellRecovery || spellSurge) && (
+        {(spellCharge ||
+          spellRecovery ||
+          spellSurge ||
+          fullCast ||
+          auraSurge) && (
           <div className="mb-5 space-y-3">
+            {/* ================================================== */}
             {/* Spell Charge */}
+            {/* ================================================== */}
 
             {spellCharge && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
@@ -297,25 +374,29 @@ const Evasion = ({
               </div>
             )}
 
+            {/* ================================================== */}
             {/* Spell Recovery */}
+            {/* ================================================== */}
 
             {spellRecovery && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
                 <p className="text-sm leading-relaxed text-gray-300">
                   <strong className="text-purple-400">Spell Recovery:</strong>{" "}
                   Automatically reapplies the Evasion enchantment when the
-                  target enters the caster's vicinity.
+                  target enters the caster&apos;s vicinity.
                 </p>
               </div>
             )}
 
+            {/* ================================================== */}
             {/* Spell Surge */}
+            {/* ================================================== */}
 
             {spellSurge && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
                 <p className="text-sm leading-relaxed text-gray-300">
                   <strong className="text-purple-400">Spell Surge:</strong>{" "}
-                  Increases the enchantment's AOE level by one when the
+                  Increases the enchantment&apos;s AOE level by one when the
                   recipient already has{" "}
                   <strong className="text-purple-300">
                     two or more enchantments
@@ -324,6 +405,184 @@ const Evasion = ({
                   through{" "}
                   <strong className="text-purple-300">Spell Recovery</strong>.
                 </p>
+              </div>
+            )}
+
+            {/* ================================================== */}
+            {/* Full Cast */}
+            {/* ================================================== */}
+
+            {fullCast && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+                <h4 className="mb-2 font-semibold text-purple-400">
+                  Full Cast
+                </h4>
+
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-300">Once per turn</strong>,
+                  targets receive an additional{" "}
+                  <strong className="text-purple-300">DEFENSIVE ACTION</strong>{" "}
+                  when an armor enchantment is{" "}
+                  <strong className="text-purple-300">first</strong> cast on
+                  them. Using this additional action{" "}
+                  <strong className="text-red-400">REMOVES</strong> the
+                  enchantment.
+                </p>
+
+                <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300">
+                  <div className="flex justify-between">
+                    <span>Additional Defensive Actions</span>
+
+                    <span className="font-semibold text-purple-400">
+                      +{additionalDefensiveActions}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Activation</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      FIRST CAST
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Frequency</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      ONCE PER TURN
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between border-t border-gray-700 pt-3">
+                    <span>After Using Action</span>
+
+                    <span className="font-semibold text-red-400">
+                      ENCHANTMENT REMOVED
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================== */}
+            {/* Aura Surge */}
+            {/* ================================================== */}
+
+            {auraSurge && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+                <h4 className="mb-2 font-semibold text-purple-400">
+                  Aura Surge
+                </h4>
+
+                <p className="mb-4 text-sm leading-relaxed text-gray-300">
+                  While an armor enchantment is active, reduces damage by{" "}
+                  <strong className="text-purple-300">20%</strong> to the damage
+                  types associated with the selected catalyst when using the{" "}
+                  <strong className="text-purple-300">DEFEND</strong> or{" "}
+                  <strong className="text-purple-300">COVER</strong> action.
+                </p>
+
+                {/* ================================================== */}
+                {/* Catalyst Selection */}
+                {/* ================================================== */}
+
+                <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+                  <h5 className="mb-3 font-semibold text-orange-400">
+                    Catalyst
+                  </h5>
+
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    {(Object.keys(CATALYST_DAMAGE) as CatalystType[]).map(
+                      (catalyst) => (
+                        <button
+                          key={catalyst}
+                          type="button"
+                          onClick={() => setSelectedCatalyst(catalyst)}
+                          className={selectionButtonClass(
+                            selectedCatalyst === catalyst,
+                          )}
+                        >
+                          {catalyst}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* ================================================== */}
+                {/* Defensive Action */}
+                {/* ================================================== */}
+
+                <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+                  <h5 className="mb-3 font-semibold text-orange-400">
+                    Defensive Action
+                  </h5>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {(["DEFEND", "COVER"] as DefensiveAction[]).map(
+                      (action) => (
+                        <button
+                          key={action}
+                          type="button"
+                          onClick={() => setDefensiveAction(action)}
+                          className={selectionButtonClass(
+                            defensiveAction === action,
+                          )}
+                        >
+                          {action}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* ================================================== */}
+                {/* Damage Reduction Summary */}
+                {/* ================================================== */}
+
+                <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+                  <div className="flex justify-between">
+                    <span>Selected Catalyst</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      {selectedCatalyst}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Action</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      {defensiveAction}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Damage Reduction</span>
+
+                    <span className="font-semibold text-purple-400">
+                      {damageReduction}%
+                    </span>
+                  </div>
+
+                  <div className="border-t border-gray-700 pt-3">
+                    <span className="mb-3 block font-semibold text-gray-300">
+                      Protected Damage Types
+                    </span>
+
+                    <div className="flex flex-wrap gap-2">
+                      {protectedDamageTypes.map((type) => (
+                        <span
+                          key={type}
+                          className="rounded-md border border-purple-700 bg-purple-950 px-3 py-1 text-sm font-semibold text-purple-300"
+                        >
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -427,6 +686,48 @@ const Evasion = ({
                   }`}
                 >
                   +{aoeIncrease}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Full Cast */}
+
+          {fullCast && (
+            <div className="flex justify-between gap-4">
+              <span>Additional Defensive Action</span>
+
+              <span className="text-right font-semibold text-purple-400">
+                +1 (FIRST CAST)
+              </span>
+            </div>
+          )}
+
+          {/* Aura Surge */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between">
+                <span>Aura Surge Catalyst</span>
+
+                <span className="font-semibold text-cyan-400">
+                  {selectedCatalyst}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Damage Reduction</span>
+
+                <span className="font-semibold text-purple-400">
+                  {damageReduction}%
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span>Protected Damage Types</span>
+
+                <span className="text-right font-semibold text-purple-400">
+                  {protectedDamageTypes.join(", ")}
                 </span>
               </div>
             </>
@@ -683,7 +984,7 @@ const Evasion = ({
         </h3>
 
         <p className="text-sm leading-relaxed text-gray-300">
-          Converts Manna into temporary Evasion at the current mastery rate. The
+          Converts Manna into temporary Evasion at the current Mastery rate. The
           maximum Evasion bonus granted is 200.
         </p>
       </div>

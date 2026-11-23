@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { CircleStackIcon } from "@heroicons/react/24/solid";
 
@@ -6,7 +8,15 @@ import PotencySelector from "@/app/PotencyDisplay";
 import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 // ==================================================
-// Spell Techniques
+// TYPES
+// ==================================================
+
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+type PotencyType = "MINOR" | "MAJOR" | "EXTREME";
+type DamageType = "EXPLOSIVE" | "ELECTRIC";
+
+// ==================================================
+// SPELL TECHNIQUES
 // ==================================================
 
 const Techniques = {
@@ -29,17 +39,15 @@ const Techniques = {
 };
 
 // ==================================================
-// Constants
+// CONSTANTS
 // ==================================================
 
-const AOE = ["SMALL", "MODERATE", "LARGE", "MASSIVE"];
+const AOE = ["SMALL", "MODERATE", "LARGE", "MASSIVE"] as const;
 
 const DAMAGE_TYPES = ["EXPLOSIVE", "ELECTRIC"] as const;
 
-type DamageType = (typeof DAMAGE_TYPES)[number];
-
 // ==================================================
-// Potency Statistics
+// POTENCY STATISTICS
 // ==================================================
 
 const potencyStats = {
@@ -49,37 +57,66 @@ const potencyStats = {
     aoe: 0,
     charge: 3,
     damage: 15,
-    NOVICE: { cost: 96, costModifier: 30 },
-    INTERMEDIATE: { cost: 80, costModifier: 25 },
-    MASTERED: { cost: 64, costModifier: 20 },
+    NOVICE: {
+      cost: 96,
+      costModifier: 30,
+    },
+    INTERMEDIATE: {
+      cost: 80,
+      costModifier: 25,
+    },
+    MASTERED: {
+      cost: 64,
+      costModifier: 20,
+    },
   },
+
   MAJOR: {
     base: 125,
     power: 4,
     aoe: 1,
     charge: 5,
     damage: 20,
-    NOVICE: { cost: 225, costModifier: 48 },
-    INTERMEDIATE: { cost: 185, costModifier: 40 },
-    MASTERED: { cost: 145, costModifier: 32 },
+    NOVICE: {
+      cost: 225,
+      costModifier: 48,
+    },
+    INTERMEDIATE: {
+      cost: 185,
+      costModifier: 40,
+    },
+    MASTERED: {
+      cost: 145,
+      costModifier: 32,
+    },
   },
+
   EXTREME: {
     base: 215,
     power: 6,
     aoe: 2,
     charge: 7,
     damage: 25,
-    NOVICE: { cost: 425, costModifier: 60 },
-    INTERMEDIATE: { cost: 355, costModifier: 50 },
-    MASTERED: { cost: 285, costModifier: 40 },
+    NOVICE: {
+      cost: 425,
+      costModifier: 60,
+    },
+    INTERMEDIATE: {
+      cost: 355,
+      costModifier: 50,
+    },
+    MASTERED: {
+      cost: 285,
+      costModifier: 40,
+    },
   },
 };
 
 // ==================================================
-// Component
+// COMPONENT
 // ==================================================
 
-const AugmentParticle = ({
+export default function AugmentParticle({
   ParentMastery,
   active,
   updateSpell,
@@ -87,48 +124,44 @@ const AugmentParticle = ({
   ParentMastery: Mastery;
   active: boolean;
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
-}) => {
+}) {
   // ==================================================
-  // State
+  // STATE
   // ==================================================
 
-  const [selectedPotency, setSelectedPotency] = useState<
-    "MINOR" | "MAJOR" | "EXTREME"
-  >("MINOR");
+  const [selectedPotency, setSelectedPotency] = useState<PotencyType>("MINOR");
 
   const [increments, setIncrement] = useState(0);
 
   const [damageType, setDamageType] = useState<DamageType>("EXPLOSIVE");
 
+  // ==================================================
+  // TECHNIQUE STATE
+  // ==================================================
+
   const [spellCharge, setSpellCharge] = useState(false);
   const [extraChargeTurns, setExtraChargeTurns] = useState(0);
 
   const [spellRecovery, setSpellRecovery] = useState(false);
+
   const [hyperSpell, setHyperSpell] = useState(false);
   const [auraSurge, setAuraSurge] = useState(false);
 
-  const [channelingBodyEnergy, setChannelingBodyEnergy] = useState(false);
-
-  const [casterPower, setCasterPower] = useState(0);
-
   // ==================================================
-  // Mastery
+  // MASTERY
   // ==================================================
 
-  const mastery = ParentMastery.getType() as
-    | "NOVICE"
-    | "INTERMEDIATE"
-    | "MASTERED";
+  const mastery = ParentMastery.getType() as MasteryType;
 
   // ==================================================
-  // Selected Statistics
+  // SELECTED STATISTICS
   // ==================================================
 
   const selectedStats = potencyStats[selectedPotency];
   const masteryStats = selectedStats[mastery];
 
   // ==================================================
-  // Power Limit
+  // POWER LIMIT
   // ==================================================
 
   // Augmentation and Hyper Spell share the same
@@ -147,7 +180,7 @@ const AugmentParticle = ({
   const hyperPowerBonus = finalPower - augmentationPower;
 
   // ==================================================
-  // Derived Increment Statistics
+  // DERIVED INCREMENT STATISTICS
   // ==================================================
 
   const augmentedBase = selectedStats.base + selectedStats.damage * increments;
@@ -170,21 +203,21 @@ const AugmentParticle = ({
   };
 
   // ==================================================
-  // Aura Surge Calculation
+  // AURA SURGE
   // ==================================================
 
-  // Aura Surge applies only when:
-  // 1. Aura Surge is enabled.
-  // 2. Body Energy is being channeled.
-  // 3. Explosive Damage is selected.
-  // 4. Caster Power exceeds the spell's final Power.
+  // Unique Augment Particle Aura Surge:
+  //
+  // While channeling BODY ENERGY, Augment Particle
+  // spells dealing EXPLOSIVE DAMAGE gain +20% Base.
+  //
+  // The caster's Power must exceed the spell's Power.
+  // That requirement is evaluated during casting,
+  // not during spell creation.
+  //
+  // ELECTRIC DAMAGE receives no Aura Surge bonus.
 
-  const auraSurgeEligible =
-    channelingBodyEnergy &&
-    damageType === "EXPLOSIVE" &&
-    casterPower > currentStats.power;
-
-  const auraSurgeActive = auraSurge && auraSurgeEligible;
+  const auraSurgeActive = auraSurge && damageType === "EXPLOSIVE";
 
   const auraSurgeBonus = auraSurgeActive
     ? Math.ceil(currentStats.base * 0.2)
@@ -193,7 +226,7 @@ const AugmentParticle = ({
   const finalBase = currentStats.base + auraSurgeBonus;
 
   // ==================================================
-  // Hyper Spell Calculation
+  // HYPER SPELL
   // ==================================================
 
   // Hyper Spell reduces Manna cost by 30%.
@@ -205,7 +238,7 @@ const AugmentParticle = ({
   const hyperSpellSavings = normalCost - finalCost;
 
   // ==================================================
-  // Spell Recovery Calculation
+  // SPELL RECOVERY
   // ==================================================
 
   // Recovery costs 50% of the effective casting cost.
@@ -214,7 +247,7 @@ const AugmentParticle = ({
   const recoveryCost = Math.ceil(finalCost * 0.5);
 
   // ==================================================
-  // Spell Charge & Scaling Calculations
+  // SPELL CHARGE
   // ==================================================
 
   const chargeTurns = spellCharge ? extraChargeTurns : 0;
@@ -224,10 +257,10 @@ const AugmentParticle = ({
   const totalChargeTime = currentStats.charge + chargeTurns;
 
   // ==================================================
-  // Actual Damage Scaling
+  // DAMAGE SCALING
   // ==================================================
 
-  // Scaling uses the final Base, including Aura Surge.
+  // Scaling uses final Base, including Aura Surge.
 
   const totalDamage = finalBase;
 
@@ -238,21 +271,21 @@ const AugmentParticle = ({
   const scalingDisplay = `${positiveScalingDamage} / ${negativeScalingDamage}`;
 
   // ==================================================
-  // Reset Techniques
+  // RESET TECHNIQUES
   // ==================================================
 
   useEffect(() => {
     if (!active) {
+      setSpellCharge(false);
+      setExtraChargeTurns(0);
       setSpellRecovery(false);
       setHyperSpell(false);
       setAuraSurge(false);
-      setChannelingBodyEnergy(false);
-      setCasterPower(0);
     }
   }, [active]);
 
   // ==================================================
-  // Spell Update
+  // SPELL UPDATE
   // ==================================================
 
   useEffect(() => {
@@ -265,7 +298,7 @@ const AugmentParticle = ({
   }, [active, finalCost, updateSpell]);
 
   // ==================================================
-  // Potency Options
+  // POTENCY OPTIONS
   // ==================================================
 
   const potencyOptions = [
@@ -296,13 +329,13 @@ const AugmentParticle = ({
   ];
 
   // ==================================================
-  // Render
+  // RENDER
   // ==================================================
 
   return (
     <>
       {/* ================================================== */}
-      {/* Spell Title */}
+      {/* SPELL TITLE */}
       {/* ================================================== */}
 
       <div className="flex items-center gap-3">
@@ -312,7 +345,7 @@ const AugmentParticle = ({
       </div>
 
       {/* ================================================== */}
-      {/* Spell Techniques Table */}
+      {/* SPELL TECHNIQUES TABLE */}
       {/* ================================================== */}
 
       <div className="mt-6">
@@ -320,7 +353,7 @@ const AugmentParticle = ({
       </div>
 
       {/* ================================================== */}
-      {/* Potency */}
+      {/* POTENCY */}
       {/* ================================================== */}
 
       <div className="mt-6">
@@ -332,7 +365,7 @@ const AugmentParticle = ({
       </div>
 
       {/* ================================================== */}
-      {/* Augmentation */}
+      {/* AUGMENTATION */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
@@ -362,42 +395,56 @@ const AugmentParticle = ({
         </label>
 
         <div className="mt-5 space-y-3 text-gray-300">
+          {/* BASE */}
+
           <div className="flex justify-between">
             <span>Base</span>
 
             <span className="font-semibold text-cyan-400">
               {selectedStats.base}
+
               {increments > 0 && ` → ${currentStats.base}`}
             </span>
           </div>
+
+          {/* POWER */}
 
           <div className="flex justify-between">
             <span>Power</span>
 
             <span className="font-semibold text-cyan-400">
               {selectedStats.power}
+
               {currentStats.power !== selectedStats.power &&
                 ` → ${currentStats.power}`}
             </span>
           </div>
+
+          {/* AOE */}
 
           <div className="flex justify-between">
             <span>Area of Effect</span>
 
             <span className="font-semibold text-cyan-400">
               {AOE[selectedStats.aoe]}
+
               {increments > 1 && ` → ${AOE[currentStats.aoe]}`}
             </span>
           </div>
+
+          {/* CHARGE TIME */}
 
           <div className="flex justify-between">
             <span>Charge Time</span>
 
             <span className="font-semibold text-cyan-400">
               {selectedStats.charge}
+
               {increments > 1 && ` → ${currentStats.charge}`}
             </span>
           </div>
+
+          {/* DAMAGE */}
 
           <div className="flex justify-between">
             <span>Damage</span>
@@ -407,6 +454,8 @@ const AugmentParticle = ({
             </span>
           </div>
 
+          {/* SCALING */}
+
           <div className="flex justify-between">
             <span>Scaling</span>
 
@@ -414,6 +463,8 @@ const AugmentParticle = ({
               {scalingDisplay}
             </span>
           </div>
+
+          {/* ADDITIONAL COST */}
 
           <div className="flex justify-between">
             <span>Additional Cost</span>
@@ -426,7 +477,7 @@ const AugmentParticle = ({
       </div>
 
       {/* ================================================== */}
-      {/* Damage Type */}
+      {/* DAMAGE TYPE */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
@@ -462,12 +513,12 @@ const AugmentParticle = ({
       </div>
 
       {/* ================================================== */}
-      {/* Spell Properties */}
+      {/* SPELL PROPERTIES */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         {/* ================================================== */}
-        {/* Spell Properties Header / Technique Buttons */}
+        {/* HEADER / TECHNIQUE BUTTONS */}
         {/* ================================================== */}
 
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -476,7 +527,7 @@ const AugmentParticle = ({
           </h3>
 
           <div className="flex flex-wrap gap-2">
-            {/* Spell Charge */}
+            {/* SPELL CHARGE */}
 
             <button
               type="button"
@@ -494,7 +545,7 @@ const AugmentParticle = ({
               Spell Charge
             </button>
 
-            {/* Spell Recovery */}
+            {/* SPELL RECOVERY */}
 
             <button
               type="button"
@@ -509,7 +560,7 @@ const AugmentParticle = ({
               Spell Recovery
             </button>
 
-            {/* Hyper Spell */}
+            {/* HYPER SPELL */}
 
             <button
               type="button"
@@ -524,7 +575,7 @@ const AugmentParticle = ({
               Hyper Spell
             </button>
 
-            {/* Aura Surge */}
+            {/* AURA SURGE */}
 
             <button
               type="button"
@@ -542,7 +593,7 @@ const AugmentParticle = ({
         </div>
 
         {/* ================================================== */}
-        {/* Spell Charge */}
+        {/* SPELL CHARGE */}
         {/* ================================================== */}
 
         {spellCharge && (
@@ -615,7 +666,7 @@ const AugmentParticle = ({
         )}
 
         {/* ================================================== */}
-        {/* Spell Recovery */}
+        {/* SPELL RECOVERY */}
         {/* ================================================== */}
 
         {spellRecovery && (
@@ -644,7 +695,7 @@ const AugmentParticle = ({
         )}
 
         {/* ================================================== */}
-        {/* Hyper Spell */}
+        {/* HYPER SPELL */}
         {/* ================================================== */}
 
         {hyperSpell && (
@@ -692,90 +743,57 @@ const AugmentParticle = ({
         )}
 
         {/* ================================================== */}
-        {/* Aura Surge */}
+        {/* AURA SURGE */}
         {/* ================================================== */}
 
         {auraSurge && (
           <div className="mb-5 rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
-            <p>
-              <span className="font-semibold">Aura Surge:</span> While
-              channeling Body Energy, Augment Particle spells dealing EXPLOSIVE
-              DAMAGE gain 20% Base if the caster's Power exceeds the spell's
-              Power.
+            <h4 className="mb-3 font-semibold text-orange-300">
+              Aura Surge — Body Energy
+            </h4>
+
+            <p className="leading-relaxed">
+              While channeling{" "}
+              <span className="font-semibold">BODY ENERGY</span>, Augment
+              Particle spells dealing{" "}
+              <span className="font-semibold">EXPLOSIVE DAMAGE</span> gain{" "}
+              <span className="font-semibold">+20% Base</span>.
             </p>
 
-            {/* Body Energy Toggle */}
-
-            <label className="mt-4 flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={channelingBodyEnergy}
-                onChange={(e) => setChannelingBodyEnergy(e.target.checked)}
-                className="h-4 w-4 accent-orange-500"
-              />
-
-              <span className="text-sm font-semibold">
-                Channeling Body Energy
-              </span>
-            </label>
-
-            {/* Caster Power */}
-
-            <label className="mt-4 block">
-              <span className="mb-2 block text-sm">Caster Power</span>
-
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={casterPower}
-                onChange={(e) =>
-                  setCasterPower(
-                    Math.max(0, Math.trunc(Number(e.target.value) || 0)),
-                  )
-                }
-                className="w-full rounded-md border border-orange-800 bg-gray-900 px-3 py-2 text-gray-100"
-              />
-            </label>
-
-            {/* Aura Surge Statistics */}
-
-            <div className="mt-4 space-y-2 rounded-lg border border-orange-800 bg-gray-900 p-4 text-sm">
-              <div className="flex justify-between">
-                <span>Spell Power</span>
-                <span className="font-semibold">{currentStats.power}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Base Before Aura Surge</span>
-                <span className="font-semibold">{currentStats.base}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Aura Surge Bonus</span>
-                <span className="font-semibold">+{auraSurgeBonus}</span>
-              </div>
-
-              <div className="flex justify-between border-t border-orange-800 pt-3">
-                <span>Final Base</span>
-                <span className="font-bold text-orange-300">{finalBase}</span>
-              </div>
-            </div>
-
-            <p
-              className={`mt-3 text-xs ${
-                auraSurgeActive ? "text-orange-300" : "text-gray-400"
-              }`}
-            >
-              {auraSurgeActive
-                ? "Aura Surge conditions satisfied. The 20% Base bonus is active."
-                : "Aura Surge bonus inactive. Requires Explosive Damage, Body Energy channeling, and Caster Power greater than Spell Power."}
+            <p className="mt-3 text-xs italic text-orange-200/80">
+              Casting requirement: The caster's Power must be greater than the
+              spell's Power. This requirement is evaluated during casting.
             </p>
+
+            {auraSurgeActive ? (
+              <div className="mt-4 space-y-2 rounded-lg border border-orange-800 bg-gray-900 p-4">
+                <div className="flex justify-between">
+                  <span>Base Before Aura Surge</span>
+                  <span className="font-semibold">{currentStats.base}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Aura Surge Bonus</span>
+                  <span className="font-semibold text-orange-300">
+                    +{auraSurgeBonus}
+                  </span>
+                </div>
+
+                <div className="flex justify-between border-t border-orange-800 pt-3">
+                  <span>Final Base</span>
+                  <span className="font-bold text-orange-300">{finalBase}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-gray-400">
+                Aura Surge provides no Base bonus to Electric Damage spells.
+              </p>
+            )}
           </div>
         )}
 
         {/* ================================================== */}
-        {/* Final Spell Statistics */}
+        {/* FINAL SPELL STATISTICS */}
         {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
@@ -839,6 +857,4 @@ const AugmentParticle = ({
       </div>
     </>
   );
-};
-
-export default AugmentParticle;
+}

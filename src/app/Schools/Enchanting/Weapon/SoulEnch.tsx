@@ -9,6 +9,39 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 // ==================================================
 
 type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+type CatalystType = "MENTAL" | "BODY" | "SPIRIT" | "MEMORY" | "NECRO";
+type DamageType =
+  | "PRESSURE"
+  | "VORPAL"
+  | "EXPLOSIVE"
+  | "THERMAL"
+  | "KINETIC"
+  | "CONCUSSIVE"
+  | "GRAVITY";
+
+// ==================================================
+// Aura Surge Catalyst Data
+// ==================================================
+
+const catalystDamageTypes: Record<CatalystType, DamageType[]> = {
+  MENTAL: ["PRESSURE", "VORPAL"],
+  BODY: ["EXPLOSIVE", "THERMAL"],
+  SPIRIT: ["KINETIC", "CONCUSSIVE"],
+  MEMORY: ["KINETIC", "GRAVITY"],
+  NECRO: ["KINETIC", "PRESSURE"],
+};
+
+const catalysts = Object.keys(catalystDamageTypes) as CatalystType[];
+const damageTypes: DamageType[] = [
+  "PRESSURE",
+  "VORPAL",
+  "EXPLOSIVE",
+  "THERMAL",
+  "KINETIC",
+  "CONCUSSIVE",
+  "GRAVITY",
+];
+const AURA_SURGE_SCALING = 0.3;
 
 // ==================================================
 // Spell Techniques
@@ -19,8 +52,8 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -30,7 +63,7 @@ const Techniques = {
   "Auto Cast": true,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -65,6 +98,12 @@ const SoulEnch = ({
   const [spellRecovery, setSpellRecovery] = useState(false);
 
   const [spellSurge, setSpellSurge] = useState(false);
+  const [fullCast, setFullCast] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
+  const [catalyst, setCatalyst] = useState<CatalystType>("MENTAL");
+  const [damageType, setDamageType] = useState<DamageType>("PRESSURE");
+  const [weaponDamage, setWeaponDamage] = useState(0);
+  const [unleashDamage, setUnleashDamage] = useState(0);
 
   const [existingEnchantments, setExistingEnchantments] = useState(0);
 
@@ -87,6 +126,22 @@ const SoulEnch = ({
   const aoeIncrease = surgeEligible ? 1 : 0;
 
   // ==================================================
+  // Aura Surge Calculations
+  // ==================================================
+
+  const auraEligible =
+    active &&
+    enabled &&
+    auraSurge &&
+    catalystDamageTypes[catalyst].includes(damageType);
+  const auraMultiplier = auraEligible ? 1 + AURA_SURGE_SCALING : 1;
+  const weaponBonus = weaponDamage * (auraMultiplier - 1);
+  const unleashBonus = unleashDamage * (auraMultiplier - 1);
+  const finalWeaponDamage = weaponDamage * auraMultiplier;
+  const finalUnleashDamage = unleashDamage * auraMultiplier;
+  const displayDamage = (value: number) => Number(value.toFixed(2));
+
+  // ==================================================
   // Parent Spell Update
   // ==================================================
 
@@ -105,6 +160,12 @@ const SoulEnch = ({
       setEnabled(false);
       setSpellRecovery(false);
       setSpellSurge(false);
+      setFullCast(false);
+      setAuraSurge(false);
+      setCatalyst("MENTAL");
+      setDamageType("PRESSURE");
+      setWeaponDamage(0);
+      setUnleashDamage(0);
       setExistingEnchantments(0);
     }
   }, [active]);
@@ -124,6 +185,16 @@ const SoulEnch = ({
   const changeExistingEnchantments = (value: number) => {
     setExistingEnchantments(Math.max(0, Math.trunc(value || 0)));
   };
+
+  const changeDamage = (value: number, setter: (value: number) => void) =>
+    setter(Number.isFinite(value) ? Math.max(0, value) : 0);
+
+  const techniqueButtonClass = (selected: boolean) =>
+    `shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition-colors ${
+      selected
+        ? "bg-purple-600 text-white"
+        : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+    }`;
 
   // ==================================================
   // Render
@@ -193,6 +264,26 @@ const SoulEnch = ({
             >
               Spell Surge
             </button>
+
+            {/* Full Cast */}
+            <button
+              type="button"
+              onClick={() => setFullCast((previous) => !previous)}
+              aria-pressed={fullCast}
+              className={techniqueButtonClass(fullCast)}
+            >
+              Full Cast
+            </button>
+
+            {/* Aura Surge */}
+            <button
+              type="button"
+              onClick={() => setAuraSurge((previous) => !previous)}
+              aria-pressed={auraSurge}
+              className={techniqueButtonClass(auraSurge)}
+            >
+              Aura Surge
+            </button>
           </div>
         </div>
 
@@ -200,7 +291,7 @@ const SoulEnch = ({
         {/* Technique Descriptions */}
         {/* ================================================== */}
 
-        {(spellRecovery || spellSurge) && (
+        {(spellRecovery || spellSurge || fullCast || auraSurge) && (
           <div className="mb-5 space-y-3">
             {/* Spell Recovery */}
 
@@ -228,6 +319,36 @@ const SoulEnch = ({
                   from the caster. Reapply using a Main Action or automatically
                   through{" "}
                   <strong className="text-purple-300">Spell Recovery</strong>.
+                </p>
+              </div>
+            )}
+
+            {/* Full Cast */}
+            {fullCast && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Full Cast:</strong> Once
+                  per turn, targets receive an additional{" "}
+                  <strong className="text-purple-300">INTERACT ACTION</strong>{" "}
+                  when a weapon enchantment is first cast on them. Using this
+                  additional action{" "}
+                  <strong className="text-red-400">REMOVES</strong> the
+                  enchantment.
+                </p>
+              </div>
+            )}
+
+            {/* Aura Surge */}
+            {auraSurge && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Aura Surge:</strong> While
+                  the weapon enchantment is active, adds{" "}
+                  <strong className="text-purple-300">
+                    +30% positive scaling
+                  </strong>{" "}
+                  to weapon and UNLEASH damage when channeling a matching
+                  catalyst and dealing its corresponding damage type.
                 </p>
               </div>
             )}
@@ -333,6 +454,66 @@ const SoulEnch = ({
             </>
           )}
 
+          {/* Full Cast Statistics */}
+          {fullCast && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Additional Interact Action</span>
+                <span className="font-semibold text-purple-400">
+                  +1 (FIRST CAST)
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>Frequency</span>
+                <span className="font-semibold text-cyan-400">
+                  ONCE PER TURN
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>After Using Action</span>
+                <span className="font-semibold text-red-400">
+                  ENCHANTMENT REMOVED
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Aura Surge Statistics */}
+          {auraSurge && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Catalyst</span>
+                <span className="font-semibold text-cyan-400">{catalyst}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>Damage Type</span>
+                <span className="font-semibold text-cyan-400">
+                  {damageType}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>Aura Surge Scaling</span>
+                <span
+                  className={`font-semibold ${auraEligible ? "text-purple-400" : "text-gray-500"}`}
+                >
+                  {auraEligible ? "+30% ACTIVE" : "INACTIVE / NO MATCH"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>Weapon Damage Bonus</span>
+                <span className="font-semibold text-purple-400">
+                  +{displayDamage(weaponBonus)}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>UNLEASH Damage Bonus</span>
+                <span className="font-semibold text-purple-400">
+                  +{displayDamage(unleashBonus)}
+                </span>
+              </div>
+            </>
+          )}
+
           {/* Mana Cost */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
@@ -405,6 +586,144 @@ const SoulEnch = ({
           <span className="font-medium text-cyan-400">20 / 15 / 10</span>
         </p>
       </div>
+
+      {/* ================================================== */}
+      {/* Full Cast Configuration */}
+      {/* ================================================== */}
+
+      {fullCast && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Full Cast Configuration
+          </h3>
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            Once per turn, targets receive an additional Interact Action when a
+            weapon enchantment is first cast on them. Using that action removes
+            the enchantment.
+          </p>
+          <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <div className="flex justify-between gap-3">
+              <span>Additional Interact Actions</span>
+              <span className="font-semibold text-purple-400">+1</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Activation</span>
+              <span className="font-semibold text-cyan-400">FIRST CAST</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Frequency</span>
+              <span className="font-semibold text-cyan-400">ONCE PER TURN</span>
+            </div>
+            <div className="flex justify-between gap-3 border-t border-gray-700 pt-3">
+              <span>After Using Action</span>
+              <span className="font-semibold text-red-400">
+                ENCHANTMENT REMOVED
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================== */}
+      {/* Aura Surge Configuration */}
+      {/* ================================================== */}
+
+      {auraSurge && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Aura Surge Configuration
+          </h3>
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            Channel a catalyst to add 30% positive scaling to weapon and UNLEASH
+            damage of the corresponding type while Soul Enchant is active.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-gray-300">
+              <span className="mb-2 block font-semibold">Catalyst</span>
+              <select
+                value={catalyst}
+                onChange={(e) => setCatalyst(e.target.value as CatalystType)}
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+              >
+                {catalysts.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-gray-300">
+              <span className="mb-2 block font-semibold">Damage Type</span>
+              <select
+                value={damageType}
+                onChange={(e) => setDamageType(e.target.value as DamageType)}
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+              >
+                {damageTypes.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-gray-300">
+              <span className="mb-2 block font-semibold">
+                Base Weapon Damage
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="any"
+                value={weaponDamage}
+                onChange={(e) =>
+                  changeDamage(Number(e.target.value), setWeaponDamage)
+                }
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+              />
+            </label>
+            <label className="block text-gray-300">
+              <span className="mb-2 block font-semibold">
+                Base UNLEASH Damage
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="any"
+                value={unleashDamage}
+                onChange={(e) =>
+                  changeDamage(Number(e.target.value), setUnleashDamage)
+                }
+                className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100"
+              />
+            </label>
+          </div>
+          <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <p className="text-sm text-gray-400">
+              Matching damage types: {catalystDamageTypes[catalyst].join(", ")}
+            </p>
+            <div className="flex justify-between gap-3">
+              <span>Scaling Status</span>
+              <span
+                className={`font-semibold ${auraEligible ? "text-purple-400" : "text-gray-500"}`}
+              >
+                {auraEligible ? "+30% ACTIVE" : "INACTIVE / NO MATCH"}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Final Weapon Damage</span>
+              <span className="font-semibold text-cyan-400">
+                {displayDamage(finalWeaponDamage)}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Final UNLEASH Damage</span>
+              <span className="font-semibold text-cyan-400">
+                {displayDamage(finalUnleashDamage)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ================================================== */}
       {/* Spell Surge Configuration */}

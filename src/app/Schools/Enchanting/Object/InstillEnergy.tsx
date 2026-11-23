@@ -19,8 +19,8 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": false,
   "Double Pulse": false,
-  "Carry Spell": false,
-  "Spell Shift": false,
+  "Soul Cast": true,
+  "Full Cast": true,
   "Counter Spell": false,
   "Spell Surge": true,
   "Junction Cast": false,
@@ -30,7 +30,7 @@ const Techniques = {
   "Auto Cast": false,
   "Rivet Cast": false,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================
@@ -48,6 +48,7 @@ const masteryRates: Record<MasteryType, number> = {
 // ==================================================
 
 const MAX_TTT = 50;
+const SOUL_CAST_COST = 50;
 
 // ==================================================
 // Component
@@ -70,6 +71,8 @@ const InstillEnergy = ({
 
   const [spellRecovery, setSpellRecovery] = useState(false);
   const [spellSurge, setSpellSurge] = useState(false);
+  const [soulCast, setSoulCast] = useState(false);
+  const [fullCast, setFullCast] = useState(false);
 
   const [existingEnchantments, setExistingEnchantments] = useState(0);
 
@@ -99,6 +102,9 @@ const InstillEnergy = ({
 
   const aoeIncrease = surgeEligible ? 1 : 0;
 
+  // Soul Cast consumes Soul independently of the TTT investment.
+  const soulCost = soulCast ? SOUL_CAST_COST : 0;
+
   // ==================================================
   // Parent Spell Update
   // ==================================================
@@ -116,6 +122,8 @@ const InstillEnergy = ({
       setBaseValue(0);
       setSpellRecovery(false);
       setSpellSurge(false);
+      setSoulCast(false);
+      setFullCast(false);
       setExistingEnchantments(0);
     }
   }, [active]);
@@ -199,6 +207,27 @@ const InstillEnergy = ({
             >
               Spell Surge
             </button>
+
+            {/* Soul Cast */}
+
+            <button
+              type="button"
+              onClick={() => setSoulCast((previous) => !previous)}
+              aria-pressed={soulCast}
+              className={techniqueButtonClass(soulCast)}
+            >
+              Soul Cast
+            </button>
+            {/* Full Cast */}
+
+            <button
+              type="button"
+              onClick={() => setFullCast((previous) => !previous)}
+              aria-pressed={fullCast}
+              className={techniqueButtonClass(fullCast)}
+            >
+              Full Cast
+            </button>
           </div>
         </div>
 
@@ -206,7 +235,7 @@ const InstillEnergy = ({
         {/* Technique Descriptions */}
         {/* ================================================== */}
 
-        {(spellRecovery || spellSurge) && (
+        {(spellRecovery || spellSurge || soulCast || fullCast) && (
           <div className="mb-5 space-y-3">
             {/* Spell Recovery */}
 
@@ -216,6 +245,19 @@ const InstillEnergy = ({
                   <strong className="text-purple-400">Spell Recovery:</strong>{" "}
                   Automatically reapplies the Instill Energy enchantment when
                   the target enters the caster's vicinity.
+                </p>
+              </div>
+            )}
+
+            {/* Soul Cast */}
+
+            {soulCast && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Soul Cast:</strong> At the
+                  cost of <strong className="text-purple-300">50 Soul</strong>,
+                  a temporary consciousness of the caster can be left inside the
+                  target.
                 </p>
               </div>
             )}
@@ -234,6 +276,24 @@ const InstillEnergy = ({
                   from the caster. Reapply the same enchantment using a Main
                   Action, or automatically through{" "}
                   <strong className="text-purple-300">Spell Recovery</strong>.
+                </p>
+              </div>
+            )}
+
+            {/* Full Cast */}
+
+            {fullCast && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-400">Full Cast:</strong>{" "}
+                  <strong className="text-purple-300">Once per turn</strong>,
+                  targets receive an additional{" "}
+                  <strong className="text-purple-300">DEFENSIVE ACTION</strong>{" "}
+                  when an enchantment is{" "}
+                  <strong className="text-purple-300">first</strong> cast on
+                  them. Using this additional action{" "}
+                  <strong className="text-red-400">REMOVES</strong> the
+                  enchantment.
                 </p>
               </div>
             )}
@@ -305,6 +365,59 @@ const InstillEnergy = ({
             </>
           )}
 
+          {/* Soul Cast */}
+
+          {soulCast && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Soul Cast</span>
+                <span className="font-semibold text-purple-400">ENABLED</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>Soul Cost</span>
+                <span className="font-semibold text-purple-400">
+                  {soulCost}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span>Temporary Consciousness</span>
+                <span className="font-semibold text-purple-400">CASTER</span>
+              </div>
+            </>
+          )}
+
+          {/* ================================================== */}
+          {/* Full Cast Statistics */}
+          {/* ================================================== */}
+
+          {fullCast && (
+            <>
+              <div className="flex justify-between gap-3">
+                <span>Additional Defensive Action</span>
+
+                <span className="font-semibold text-purple-400">
+                  +1 (FIRST CAST)
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Frequency</span>
+
+                <span className="font-semibold text-cyan-400">
+                  ONCE PER TURN
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>After Using Action</span>
+
+                <span className="font-semibold text-red-400">
+                  ENCHANTMENT REMOVED
+                </span>
+              </div>
+            </>
+          )}
+
           {/* Energy Transferred */}
 
           <div className="flex justify-between gap-3 border-t border-gray-700 pt-3">
@@ -326,6 +439,36 @@ const InstillEnergy = ({
           </div>
         </div>
       </div>
+
+      {/* ================================================== */}
+      {/* Soul Cast Configuration */}
+      {/* ================================================== */}
+
+      {soulCast && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Soul Cast Configuration
+          </h3>
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            At the cost of 50 Soul, a temporary consciousness of the caster can
+            be left inside the target.
+          </p>
+          <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <div className="flex justify-between gap-3">
+              <span>Soul Cost</span>
+              <span className="font-semibold text-purple-400">{soulCost}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Consciousness</span>
+              <span className="font-semibold text-cyan-400">TEMPORARY</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Origin</span>
+              <span className="font-semibold text-cyan-400">CASTER</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ================================================== */}
       {/* Energy Configuration */}
@@ -383,6 +526,52 @@ const InstillEnergy = ({
           </div>
         </div>
       </div>
+
+      {/* ================================================== */}
+      {/* Full Cast Configuration */}
+      {/* ================================================== */}
+
+      {fullCast && (
+        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
+          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
+            Full Cast Configuration
+          </h3>
+
+          <p className="mb-4 text-sm leading-relaxed text-gray-300">
+            Once per turn, targets receive an additional Defensive Action when
+            an enchantment is first cast on them. Using this additional action
+            removes the enchantment.
+          </p>
+
+          <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+            <div className="flex justify-between gap-3">
+              <span>Additional Defensive Actions</span>
+
+              <span className="font-semibold text-purple-400">+1</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Activation</span>
+
+              <span className="font-semibold text-cyan-400">FIRST CAST</span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span>Frequency</span>
+
+              <span className="font-semibold text-cyan-400">ONCE PER TURN</span>
+            </div>
+
+            <div className="flex justify-between gap-3 border-t border-gray-700 pt-3">
+              <span>After Using Action</span>
+
+              <span className="font-semibold text-red-400">
+                ENCHANTMENT REMOVED
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ================================================== */}
       {/* Spell Surge Configuration */}

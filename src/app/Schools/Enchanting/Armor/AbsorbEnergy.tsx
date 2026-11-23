@@ -10,8 +10,11 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 // ==================================================
 
 type PotencyType = "MINOR" | "MAJOR" | "EXTREME";
-
 type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+type CatalystType = "MENTAL" | "BODY" | "SPIRIT" | "MEMORY" | "NECRO";
+
+type DefensiveAction = "DEFEND" | "COVER";
 
 type AbsorbEnergyProps = {
   ParentMastery: Mastery;
@@ -28,18 +31,18 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
   "Focus Spell": true,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -96,10 +99,19 @@ const potencyOptions = [
 ];
 
 // ==================================================
-// Spell Charge Constants
+// Constants
 // ==================================================
 
 const CHARGE_MULTIPLIER = 0.3;
+const AURA_DAMAGE_REDUCTION = 0.2;
+
+const CATALYST_DAMAGE: Record<CatalystType, string[]> = {
+  MENTAL: ["PRESSURE", "VORPAL"],
+  BODY: ["EXPLOSIVE", "THERMAL"],
+  SPIRIT: ["KINETIC", "CONCUSSIVE"],
+  MEMORY: ["KINETIC", "GRAVITY"],
+  NECRO: ["KINETIC", "PRESSURE"],
+};
 
 // ==================================================
 // Component
@@ -117,16 +129,22 @@ export default function AbsorbEnergy({
   const [selectedPotency, setSelectedPotency] = useState<PotencyType>("MINOR");
 
   const [spellCharge, setSpellCharge] = useState(false);
-
   const [spellRecovery, setSpellRecovery] = useState(false);
-
   const [spellSurge, setSpellSurge] = useState(false);
 
-  const [chargeTurns, setChargeTurns] = useState(0);
+  const [fullCast, setFullCast] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
+  const [chargeTurns, setChargeTurns] = useState(0);
   const [doubleCast, setDoubleCast] = useState(false);
 
   const [existingEnchantments, setExistingEnchantments] = useState(0);
+
+  const [selectedCatalyst, setSelectedCatalyst] =
+    useState<CatalystType>("MENTAL");
+
+  const [defensiveAction, setDefensiveAction] =
+    useState<DefensiveAction>("DEFEND");
 
   // ==================================================
   // Mastery
@@ -148,15 +166,12 @@ export default function AbsorbEnergy({
   const currentStats = potencyStats[selectedPotency];
 
   const baseTTT = currentStats.ttt[mastery];
-
   const baseAbsorption = currentStats.absorption;
 
   // ==================================================
-  // Spell Charge Calculations
+  // Spell Charge
   // ==================================================
 
-  // Each completed charge turn adds 30% of the
-  // original absorption strength and TTT.
   const chargeBonus = spellCharge ? chargeTurns * CHARGE_MULTIPLIER : 0;
 
   const chargePercentage = Math.round(chargeBonus * 100);
@@ -166,15 +181,26 @@ export default function AbsorbEnergy({
   const finalTTT = Math.ceil(baseTTT * (1 + chargeBonus));
 
   // ==================================================
-  // Spell Surge Calculations
+  // Spell Surge
   // ==================================================
 
-  // Spell Surge activates when the recipient
-  // already has at least two enchantments
-  // applied by the caster.
   const surgeEligible = spellSurge && existingEnchantments >= 2;
 
   const aoeIncrease = surgeEligible ? 1 : 0;
+
+  // ==================================================
+  // Full Cast
+  // ==================================================
+
+  const additionalDefensiveActions = fullCast ? 1 : 0;
+
+  // ==================================================
+  // Aura Surge
+  // ==================================================
+
+  const protectedDamageTypes = CATALYST_DAMAGE[selectedCatalyst];
+
+  const damageReduction = auraSurge ? AURA_DAMAGE_REDUCTION * 100 : 0;
 
   // ==================================================
   // Parent Spell Update
@@ -192,11 +218,9 @@ export default function AbsorbEnergy({
       case "MINOR":
         potency.minor();
         break;
-
       case "MAJOR":
         potency.major();
         break;
-
       case "EXTREME":
         potency.extreme();
         break;
@@ -216,9 +240,13 @@ export default function AbsorbEnergy({
       setSpellCharge(false);
       setSpellRecovery(false);
       setSpellSurge(false);
+      setFullCast(false);
+      setAuraSurge(false);
       setChargeTurns(0);
       setDoubleCast(false);
       setExistingEnchantments(0);
+      setSelectedCatalyst("MENTAL");
+      setDefensiveAction("DEFEND");
     }
   }, [active]);
 
@@ -234,14 +262,6 @@ export default function AbsorbEnergy({
     } else {
       setSpellCharge(true);
     }
-  };
-
-  const toggleSpellRecovery = () => {
-    setSpellRecovery((previous) => !previous);
-  };
-
-  const toggleSpellSurge = () => {
-    setSpellSurge((previous) => !previous);
   };
 
   const changeChargeTurns = (value: number) => {
@@ -291,50 +311,33 @@ export default function AbsorbEnergy({
           </h3>
 
           <div className="flex flex-wrap gap-2">
-            {/* Spell Charge */}
-
-            <button
-              type="button"
-              onClick={toggleSpellCharge}
-              aria-pressed={spellCharge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellCharge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
-            >
-              Spell Charge
-            </button>
-
-            {/* Spell Recovery */}
-
-            <button
-              type="button"
-              onClick={toggleSpellRecovery}
-              aria-pressed={spellRecovery}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellRecovery
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
-            >
-              Spell Recovery
-            </button>
-
-            {/* Spell Surge */}
-
-            <button
-              type="button"
-              onClick={toggleSpellSurge}
-              aria-pressed={spellSurge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellSurge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
-            >
-              Spell Surge
-            </button>
+            {(
+              [
+                ["Spell Charge", spellCharge, toggleSpellCharge],
+                [
+                  "Spell Recovery",
+                  spellRecovery,
+                  () => setSpellRecovery((v) => !v),
+                ],
+                ["Spell Surge", spellSurge, () => setSpellSurge((v) => !v)],
+                ["Full Cast", fullCast, () => setFullCast((v) => !v)],
+                ["Aura Surge", auraSurge, () => setAuraSurge((v) => !v)],
+              ] as const
+            ).map(([label, enabled, toggle]) => (
+              <button
+                key={label}
+                type="button"
+                onClick={toggle}
+                aria-pressed={enabled}
+                className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                  enabled
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -342,57 +345,212 @@ export default function AbsorbEnergy({
         {/* Technique Captions */}
         {/* ================================================== */}
 
-        {(spellCharge || spellRecovery || spellSurge) && (
-          <div className="mb-5 space-y-3">
-            {/* Spell Charge Caption */}
+        <div className="mb-5 space-y-3">
+          {/* Spell Charge */}
 
-            {spellCharge && (
-              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
-                <p className="text-sm leading-relaxed text-gray-300">
-                  <strong className="text-purple-400">Spell Charge:</strong>{" "}
-                  Increases the enchantment's strength by{" "}
-                  <strong className="text-purple-300">
-                    30% per complete turn
-                  </strong>{" "}
-                  of additional charging. TTT also increases by 30% per charge.
-                  Other spells cannot be cast while charging unless{" "}
-                  <strong className="text-purple-300">Double Cast</strong> is
-                  used.
-                </p>
+          {spellCharge && (
+            <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+              <p className="text-sm leading-relaxed text-gray-300">
+                <strong className="text-purple-400">Spell Charge:</strong>{" "}
+                Increases the enchantment&apos;s strength by 30% per complete
+                turn of additional charging. TTT also increases by 30% per
+                charge. Other spells cannot be cast while charging unless Double
+                Cast is used.
+              </p>
+            </div>
+          )}
+
+          {/* Spell Recovery */}
+
+          {spellRecovery && (
+            <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+              <p className="text-sm leading-relaxed text-gray-300">
+                <strong className="text-purple-400">Spell Recovery:</strong>{" "}
+                Automatically reapplies the enchantment when the target enters
+                the caster&apos;s vicinity.
+              </p>
+            </div>
+          )}
+
+          {/* Spell Surge */}
+
+          {spellSurge && (
+            <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+              <p className="text-sm leading-relaxed text-gray-300">
+                <strong className="text-purple-400">Spell Surge:</strong>{" "}
+                Increases the enchantment&apos;s AOE by one level if the
+                recipient already has two or more enchantments from the caster.
+                Reapplication requires a Main Action or can occur automatically
+                through Spell Recovery.
+              </p>
+            </div>
+          )}
+
+          {/* ================================================== */}
+          {/* Full Cast */}
+          {/* ================================================== */}
+
+          {fullCast && (
+            <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+              <h4 className="mb-2 font-semibold text-purple-400">Full Cast</h4>
+
+              <p className="text-sm leading-relaxed text-gray-300">
+                Once per turn, targets receive an additional{" "}
+                <strong className="text-purple-300">DEFENSIVE ACTION</strong>{" "}
+                when an armor enchantment is first cast on them. Using this
+                additional action{" "}
+                <strong className="text-red-400">REMOVES</strong> the
+                enchantment.
+              </p>
+
+              <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300">
+                <div className="flex justify-between">
+                  <span>Additional Defensive Actions</span>
+
+                  <span className="font-semibold text-purple-400">
+                    +{additionalDefensiveActions}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Activation</span>
+
+                  <span className="font-semibold text-cyan-400">
+                    FIRST CAST
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Frequency</span>
+
+                  <span className="font-semibold text-cyan-400">
+                    ONCE PER TURN
+                  </span>
+                </div>
+
+                <div className="flex justify-between border-t border-gray-700 pt-3">
+                  <span>After Using Action</span>
+
+                  <span className="font-semibold text-red-400">
+                    ENCHANTMENT REMOVED
+                  </span>
+                </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Spell Recovery Caption */}
+          {/* ================================================== */}
+          {/* Aura Surge */}
+          {/* ================================================== */}
 
-            {spellRecovery && (
-              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
-                <p className="text-sm leading-relaxed text-gray-300">
-                  <strong className="text-purple-400">Spell Recovery:</strong>{" "}
-                  Automatically reapplies the enchantment when the target enters
-                  the caster's vicinity.
-                </p>
+          {auraSurge && (
+            <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+              <h4 className="mb-2 font-semibold text-purple-400">Aura Surge</h4>
+
+              <p className="mb-4 text-sm leading-relaxed text-gray-300">
+                While an armor enchantment is active, reduces damage by{" "}
+                <strong className="text-purple-300">20%</strong> against the
+                damage types associated with the selected catalyst when using
+                the DEFEND or COVER action.
+              </p>
+
+              {/* Catalyst Selection */}
+
+              <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+                <h5 className="mb-3 font-semibold text-orange-400">Catalyst</h5>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                  {(Object.keys(CATALYST_DAMAGE) as CatalystType[]).map(
+                    (catalyst) => (
+                      <button
+                        key={catalyst}
+                        type="button"
+                        onClick={() => setSelectedCatalyst(catalyst)}
+                        className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+                          selectedCatalyst === catalyst
+                            ? "border-purple-400 bg-purple-950 text-purple-300"
+                            : "border-gray-600 bg-gray-800 text-gray-300 hover:border-purple-600"
+                        }`}
+                      >
+                        {catalyst}
+                      </button>
+                    ),
+                  )}
+                </div>
               </div>
-            )}
 
-            {/* Spell Surge Caption */}
+              {/* Defensive Action */}
 
-            {spellSurge && (
-              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
-                <p className="text-sm leading-relaxed text-gray-300">
-                  <strong className="text-purple-400">Spell Surge:</strong>{" "}
-                  Increases the enchantment's AOE by one level if the recipient
-                  already has{" "}
-                  <strong className="text-purple-300">
-                    two or more enchantments
-                  </strong>{" "}
-                  from the caster. Reapplication requires a Main Action or can
-                  occur automatically through{" "}
-                  <strong className="text-purple-300">Spell Recovery</strong>.
-                </p>
+              <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+                <h5 className="mb-3 font-semibold text-orange-400">
+                  Defensive Action
+                </h5>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {(["DEFEND", "COVER"] as DefensiveAction[]).map((action) => (
+                    <button
+                      key={action}
+                      type="button"
+                      onClick={() => setDefensiveAction(action)}
+                      className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+                        defensiveAction === action
+                          ? "border-purple-400 bg-purple-950 text-purple-300"
+                          : "border-gray-600 bg-gray-800 text-gray-300 hover:border-purple-600"
+                      }`}
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
-        )}
+
+              {/* Damage Reduction Summary */}
+
+              <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+                <div className="flex justify-between">
+                  <span>Selected Catalyst</span>
+
+                  <span className="font-semibold text-cyan-400">
+                    {selectedCatalyst}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Action</span>
+
+                  <span className="font-semibold text-cyan-400">
+                    {defensiveAction}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Damage Reduction</span>
+
+                  <span className="font-semibold text-purple-400">
+                    {damageReduction}%
+                  </span>
+                </div>
+
+                <div className="border-t border-gray-700 pt-3">
+                  <span className="mb-3 block font-semibold text-gray-300">
+                    Protected Damage Types
+                  </span>
+
+                  <div className="flex flex-wrap gap-2">
+                    {protectedDamageTypes.map((type) => (
+                      <span
+                        key={type}
+                        className="rounded-md border border-purple-700 bg-purple-950 px-3 py-1 text-sm font-semibold text-purple-300"
+                      >
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* ================================================== */}
         {/* Spell Description */}
@@ -408,49 +566,36 @@ export default function AbsorbEnergy({
         {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
-          {/* Mastery */}
-
           <div className="flex justify-between">
             <span>Mastery</span>
-
             <span className="font-semibold text-cyan-400">{mastery}</span>
           </div>
 
-          {/* Potency */}
-
           <div className="flex justify-between">
             <span>Potency</span>
-
             <span className="font-semibold text-cyan-400">
               {selectedPotency}
             </span>
           </div>
 
-          {/* Base Absorption */}
-
           <div className="flex justify-between">
             <span>Base Manna Absorption</span>
-
             <span className="font-semibold text-cyan-400">
               {baseAbsorption}%
             </span>
           </div>
 
-          {/* Base TTT */}
-
           <div className="flex justify-between">
             <span>Base TTT</span>
-
             <span className="font-semibold text-cyan-400">{baseTTT}</span>
           </div>
 
-          {/* Charge Turns */}
+          {/* Spell Charge */}
 
           {spellCharge && (
             <>
               <div className="flex justify-between">
                 <span>Charge Turns</span>
-
                 <span className="font-semibold text-cyan-400">
                   {chargeTurns}
                 </span>
@@ -458,7 +603,6 @@ export default function AbsorbEnergy({
 
               <div className="flex justify-between">
                 <span>Charge Increase</span>
-
                 <span className="font-semibold text-purple-400">
                   +{chargePercentage}%
                 </span>
@@ -471,7 +615,6 @@ export default function AbsorbEnergy({
           {spellRecovery && (
             <div className="flex justify-between">
               <span>Automatic Reapplication</span>
-
               <span className="font-semibold text-purple-400">ENABLED</span>
             </div>
           )}
@@ -482,7 +625,6 @@ export default function AbsorbEnergy({
             <>
               <div className="flex justify-between">
                 <span>Existing Enchantments</span>
-
                 <span className="font-semibold text-cyan-400">
                   {existingEnchantments}
                 </span>
@@ -490,13 +632,50 @@ export default function AbsorbEnergy({
 
               <div className="flex justify-between">
                 <span>AOE Level Increase</span>
-
                 <span
                   className={`font-semibold ${
                     surgeEligible ? "text-purple-400" : "text-gray-500"
                   }`}
                 >
                   +{aoeIncrease}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Full Cast */}
+
+          {fullCast && (
+            <div className="flex justify-between gap-4">
+              <span>Additional Defensive Action</span>
+              <span className="text-right font-semibold text-purple-400">
+                +1 (FIRST CAST)
+              </span>
+            </div>
+          )}
+
+          {/* Aura Surge */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between">
+                <span>Aura Surge Catalyst</span>
+                <span className="font-semibold text-cyan-400">
+                  {selectedCatalyst}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Damage Reduction</span>
+                <span className="font-semibold text-purple-400">
+                  {damageReduction}%
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span>Protected Damage Types</span>
+                <span className="text-right font-semibold text-purple-400">
+                  {protectedDamageTypes.join(", ")}
                 </span>
               </div>
             </>
@@ -548,8 +727,6 @@ export default function AbsorbEnergy({
             Spell Charge Configuration
           </h3>
 
-          {/* Charge Turns */}
-
           <label className="block">
             <span className="mb-2 block font-semibold text-gray-300">
               Complete Turns of Charge
@@ -591,7 +768,6 @@ export default function AbsorbEnergy({
           <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
             <div className="flex justify-between text-gray-300">
               <span>Strength Increase</span>
-
               <span className="font-semibold text-purple-400">
                 +{chargePercentage}%
               </span>
@@ -599,7 +775,6 @@ export default function AbsorbEnergy({
 
             <div className="flex justify-between text-gray-300">
               <span>TTT Increase</span>
-
               <span className="font-semibold text-purple-400">
                 +{chargePercentage}%
               </span>
@@ -607,7 +782,6 @@ export default function AbsorbEnergy({
 
             <div className="flex justify-between text-gray-300">
               <span>Final Absorption</span>
-
               <span className="font-semibold text-cyan-400">
                 {Number(finalAbsorption.toFixed(2))}%
               </span>
@@ -615,12 +789,9 @@ export default function AbsorbEnergy({
 
             <div className="flex justify-between text-gray-300">
               <span>Final TTT</span>
-
               <span className="font-semibold text-cyan-400">{finalTTT}</span>
             </div>
           </div>
-
-          {/* Casting Restriction */}
 
           {!doubleCast && chargeTurns > 0 && (
             <p className="mt-4 rounded-lg border border-amber-800 bg-amber-950/30 p-3 text-sm text-amber-300">
@@ -640,8 +811,6 @@ export default function AbsorbEnergy({
           <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
             Spell Surge Configuration
           </h3>
-
-          {/* Existing Enchantments */}
 
           <label className="block">
             <span className="mb-2 block font-semibold text-gray-300">

@@ -24,6 +24,16 @@ import InstillEnergy from "./Object/InstillEnergy";
 import InstillMotion from "./Object/InstillMotion";
 import ApplyEffectO from "./Object/ApplyEffectObj";
 
+//Primal
+
+import Anima from "./Primal/Anima";
+import Bewitch from "./Primal/Bewitch";
+import Flash from "./Primal/Flash";
+import Gate from "./Primal/Gate";
+import Synchronize from "./Primal/Synchronize";
+import Array from "./Primal/Array";
+import Conduit from "./Primal/Conduit";
+
 // Export Enchanting school with nested branches
 export const Enchanting = {
   Armor: {
@@ -34,11 +44,11 @@ export const Enchanting = {
     Evasion,
     PainThresh,
     TempDur,
-    ApplyEffectW,
+    ApplyEffectA,
   },
   Weapon: {
     Accuracy,
-    ApplyEffectA,
+    ApplyEffectW,
     Disruption,
     Pain,
     SoulEnch,
@@ -50,4 +60,16 @@ export const Enchanting = {
     InstillMotion,
     ApplyEffectO,
   },
+
+  Primal: {
+    Anima,
+    Bewitch,
+    Flash,
+    Gate,
+    Synchronize,
+    Array,
+    Conduit,
+  },
 };
+
+//tracking, combine mental links, attch mental links, buff catalysr?? apply effect - deliverance + conjuration + etc, body seal enchantments that reduce cost in proximity,

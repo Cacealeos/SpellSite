@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
 
@@ -5,7 +7,7 @@ import { Mastery, Spell } from "@/app/models";
 import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 // ==================================================
-// Spell Techniques
+// SPELL TECHNIQUES
 // ==================================================
 
 const Techniques = {
@@ -24,11 +26,11 @@ const Techniques = {
   "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Aura Surge Cast": true,
+  "Aura Surge": false,
 };
 
 // ==================================================
-// Constants
+// CONSTANTS
 // ==================================================
 
 const MASTERY_COSTS = {
@@ -36,10 +38,12 @@ const MASTERY_COSTS = {
     base: 75,
     duration: 8,
   },
+
   INTERMEDIATE: {
     base: 50,
     duration: 6,
   },
+
   MASTERED: {
     base: 25,
     duration: 4,
@@ -51,14 +55,17 @@ const PORTAL_SIZES = {
     label: "Tiny",
     multiplier: 0.5,
   },
+
   SIZEABLE: {
     label: "Sizeable",
     multiplier: 1,
   },
+
   ENORMOUS: {
     label: "Enormous",
     multiplier: 2,
   },
+
   GARGANTUAN: {
     label: "Gargantuan",
     multiplier: 4,
@@ -67,11 +74,15 @@ const PORTAL_SIZES = {
 
 type PortalSize = keyof typeof PORTAL_SIZES;
 
+type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+const SOUL_CAST_COST = 50;
+
 // ==================================================
-// Component
+// COMPONENT
 // ==================================================
 
-const ManifestPortal = ({
+export default function ManifestPortal({
   ParentMastery,
   active,
   updateSpell,
@@ -79,9 +90,9 @@ const ManifestPortal = ({
   ParentMastery: Mastery;
   active: boolean;
   updateSpell: <K extends keyof Spell>(field: K, value: Spell[K]) => void;
-}) => {
+}) {
   // ==================================================
-  // State
+  // STATE
   // ==================================================
 
   const [duration, setDuration] = useState(15);
@@ -89,34 +100,34 @@ const ManifestPortal = ({
   const [portalSize, setPortalSize] = useState<PortalSize>("SIZEABLE");
 
   // ==================================================
-  // Technique State
+  // TECHNIQUE STATE
   // ==================================================
 
   const [soulCast, setSoulCast] = useState(false);
-  const [auraSurge, setAuraSurge] = useState(false);
+
   const [spellRecovery, setSpellRecovery] = useState(false);
+
   const [hyperSpell, setHyperSpell] = useState(false);
 
   // ==================================================
-  // Mastery
+  // MASTERY
   // ==================================================
 
-  const mastery = ParentMastery.getType() as
-    | "NOVICE"
-    | "INTERMEDIATE"
-    | "MASTERED";
+  const mastery = ParentMastery.getType() as MasteryType;
 
   const masteryStats = MASTERY_COSTS[mastery];
 
   // ==================================================
-  // Portal Size
+  // PORTAL SIZE
   // ==================================================
 
   const selectedSize = PORTAL_SIZES[portalSize];
 
   // ==================================================
-  // Hyper Spell Calculations
+  // HYPER SPELL
   // ==================================================
+
+  // Hyper Spell increases duration by 50%.
 
   const durationMultiplier = hyperSpell ? 1.5 : 1;
 
@@ -125,7 +136,7 @@ const ManifestPortal = ({
   const hyperDurationBonus = finalDuration - duration;
 
   // ==================================================
-  // Cost Calculations
+  // COST
   // ==================================================
 
   const baseCost = masteryStats.base;
@@ -139,29 +150,31 @@ const ManifestPortal = ({
   const finalCost = Math.ceil(subtotal * sizeMultiplier);
 
   // ==================================================
-  // Soul Cast
+  // SOUL CAST
   // ==================================================
 
-  const soulCost = soulCast ? 50 : 0;
+  // Soul Cast uses Soul, not Manna.
+  // It does not modify the spell's normal cost.
+
+  const soulCost = soulCast ? SOUL_CAST_COST : 0;
 
   // ==================================================
-  // Aura Surge
+  // DISRUPTION RESISTANCE
   // ==================================================
 
-  const disruptionResistance = auraSurge
-    ? "HIGH"
-    : hyperSpell
-      ? "INCREASED"
-      : "NORMAL";
+  // Hyper Spell provides increased disruption
+  // resistance. Aura Surge is not available.
+
+  const disruptionResistance = hyperSpell ? "INCREASED" : "NORMAL";
 
   // ==================================================
-  // Spell Recovery
+  // SPELL RECOVERY
   // ==================================================
 
   const recoveryCost = Math.ceil(finalCost * 0.5);
 
   // ==================================================
-  // Spell Update
+  // SPELL UPDATE
   // ==================================================
 
   useEffect(() => {
@@ -174,13 +187,25 @@ const ManifestPortal = ({
   }, [active, finalCost, updateSpell]);
 
   // ==================================================
-  // Render
+  // RESET TECHNIQUES
+  // ==================================================
+
+  useEffect(() => {
+    if (!active) {
+      setSoulCast(false);
+      setSpellRecovery(false);
+      setHyperSpell(false);
+    }
+  }, [active]);
+
+  // ==================================================
+  // RENDER
   // ==================================================
 
   return (
     <>
       {/* ================================================== */}
-      {/* Spell Title */}
+      {/* SPELL TITLE */}
       {/* ================================================== */}
 
       <div className="flex items-center gap-3">
@@ -190,7 +215,7 @@ const ManifestPortal = ({
       </div>
 
       {/* ================================================== */}
-      {/* Spell Techniques Table */}
+      {/* SPELL TECHNIQUES TABLE */}
       {/* ================================================== */}
 
       <div className="mt-6">
@@ -198,7 +223,7 @@ const ManifestPortal = ({
       </div>
 
       {/* ================================================== */}
-      {/* Portal Configuration */}
+      {/* PORTAL CONFIGURATION */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
@@ -213,7 +238,7 @@ const ManifestPortal = ({
 
         <div className="space-y-5">
           {/* ================================================== */}
-          {/* Duration */}
+          {/* DURATION */}
           {/* ================================================== */}
 
           <label className="block">
@@ -240,7 +265,7 @@ const ManifestPortal = ({
           </label>
 
           {/* ================================================== */}
-          {/* Portal Size */}
+          {/* PORTAL SIZE */}
           {/* ================================================== */}
 
           <div>
@@ -278,12 +303,12 @@ const ManifestPortal = ({
       </div>
 
       {/* ================================================== */}
-      {/* Spell Properties */}
+      {/* SPELL PROPERTIES */}
       {/* ================================================== */}
 
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
         {/* ================================================== */}
-        {/* Header / Technique Buttons */}
+        {/* HEADER / TECHNIQUE BUTTONS */}
         {/* ================================================== */}
 
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
@@ -292,7 +317,7 @@ const ManifestPortal = ({
           </h3>
 
           <div className="flex flex-wrap gap-2">
-            {/* Soul Cast */}
+            {/* SOUL CAST */}
 
             <button
               type="button"
@@ -307,22 +332,7 @@ const ManifestPortal = ({
               Soul Cast
             </button>
 
-            {/* Aura Surge */}
-
-            <button
-              type="button"
-              aria-pressed={auraSurge}
-              onClick={() => setAuraSurge((prev) => !prev)}
-              className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
-                auraSurge
-                  ? "bg-orange-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-orange-600 hover:text-white"
-              }`}
-            >
-              Aura Surge
-            </button>
-
-            {/* Spell Recovery */}
+            {/* SPELL RECOVERY */}
 
             <button
               type="button"
@@ -337,7 +347,7 @@ const ManifestPortal = ({
               Spell Recovery
             </button>
 
-            {/* Hyper Spell */}
+            {/* HYPER SPELL */}
 
             <button
               type="button"
@@ -355,50 +365,35 @@ const ManifestPortal = ({
         </div>
 
         {/* ================================================== */}
-        {/* Soul Cast */}
+        {/* SOUL CAST */}
         {/* ================================================== */}
 
         {soulCast && (
           <div className="mb-5 rounded-lg border border-purple-700 bg-purple-950/30 p-4 text-sm text-purple-200">
             <h4 className="mb-2 font-semibold text-purple-300">Soul Cast</h4>
 
-            <p>
-              At the cost of 50 Soul, the caster leaves behind a temporary
-              sentient consciousness inside of a construct.
+            <p className="leading-relaxed">
+              At the cost of{" "}
+              <span className="font-semibold text-purple-300">50 Soul</span>,
+              the caster leaves behind a{" "}
+              <span className="font-semibold text-purple-300">
+                temporary sentient consciousness
+              </span>{" "}
+              inside of a construct.
             </p>
 
-            <div className="mt-3 flex justify-between border-t border-purple-800 pt-3">
-              <span>Soul Cost</span>
+            <div className="mt-4 flex justify-between rounded-md border border-purple-800 bg-gray-900 px-4 py-3">
+              <span>Additional Soul Cost</span>
 
-              <span className="font-bold text-purple-300">{soulCost} Soul</span>
+              <span className="font-bold text-purple-300">
+                +{soulCost} Soul
+              </span>
             </div>
           </div>
         )}
 
         {/* ================================================== */}
-        {/* Aura Surge */}
-        {/* ================================================== */}
-
-        {auraSurge && (
-          <div className="mb-5 rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
-            <h4 className="mb-2 font-semibold text-orange-300">Aura Surge</h4>
-
-            <p>
-              While channeling{" "}
-              <span className="font-semibold">Spirit Energy</span>, Manifest
-              Constructs are highly resistant to disruption.
-            </p>
-
-            <div className="mt-3 flex justify-between border-t border-orange-800 pt-3">
-              <span>Disruption Resistance</span>
-
-              <span className="font-bold text-orange-300">HIGH</span>
-            </div>
-          </div>
-        )}
-
-        {/* ================================================== */}
-        {/* Spell Recovery */}
+        {/* SPELL RECOVERY */}
         {/* ================================================== */}
 
         {spellRecovery && (
@@ -434,7 +429,7 @@ const ManifestPortal = ({
         )}
 
         {/* ================================================== */}
-        {/* Hyper Spell */}
+        {/* HYPER SPELL */}
         {/* ================================================== */}
 
         {hyperSpell && (
@@ -449,7 +444,6 @@ const ManifestPortal = ({
             <div className="mt-4 space-y-3 rounded-md border border-indigo-800 bg-gray-900 p-4">
               <div className="flex justify-between">
                 <span>Base Duration</span>
-
                 <span>{duration} Turns</span>
               </div>
 
@@ -479,13 +473,11 @@ const ManifestPortal = ({
         )}
 
         {/* ================================================== */}
-        {/* Final Spell Statistics */}
+        {/* FINAL SPELL STATISTICS */}
         {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
-          {/* ================================================== */}
-          {/* Mastery */}
-          {/* ================================================== */}
+          {/* MASTERY */}
 
           <div className="flex justify-between">
             <span>Mastery</span>
@@ -493,9 +485,7 @@ const ManifestPortal = ({
             <span className="font-semibold text-cyan-400">{mastery}</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Base Cost */}
-          {/* ================================================== */}
+          {/* BASE COST */}
 
           <div className="flex justify-between">
             <span>Base Cost</span>
@@ -503,9 +493,7 @@ const ManifestPortal = ({
             <span className="font-semibold text-cyan-400">{baseCost}</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Duration */}
-          {/* ================================================== */}
+          {/* DURATION */}
 
           <div className="flex justify-between">
             <span>Duration</span>
@@ -515,21 +503,17 @@ const ManifestPortal = ({
             </span>
           </div>
 
-          {/* ================================================== */}
-          {/* Duration Rate */}
-          {/* ================================================== */}
+          {/* MANNA PER TURN */}
 
           <div className="flex justify-between">
-            <span>Mana per Turn</span>
+            <span>Manna per Turn</span>
 
             <span className="font-semibold text-cyan-400">
               {masteryStats.duration}
             </span>
           </div>
 
-          {/* ================================================== */}
-          {/* Duration Cost */}
-          {/* ================================================== */}
+          {/* DURATION COST */}
 
           <div className="flex justify-between">
             <span>Duration Cost</span>
@@ -537,9 +521,7 @@ const ManifestPortal = ({
             <span className="font-semibold text-cyan-400">+{durationCost}</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Portal Size */}
-          {/* ================================================== */}
+          {/* PORTAL SIZE */}
 
           <div className="flex justify-between">
             <span>Portal Size</span>
@@ -549,9 +531,7 @@ const ManifestPortal = ({
             </span>
           </div>
 
-          {/* ================================================== */}
-          {/* Size Multiplier */}
-          {/* ================================================== */}
+          {/* SIZE MULTIPLIER */}
 
           <div className="flex justify-between">
             <span>Size Multiplier</span>
@@ -561,9 +541,7 @@ const ManifestPortal = ({
             </span>
           </div>
 
-          {/* ================================================== */}
-          {/* Soul Cast */}
-          {/* ================================================== */}
+          {/* SOUL CAST */}
 
           {soulCast && (
             <div className="flex justify-between">
@@ -575,23 +553,19 @@ const ManifestPortal = ({
             </div>
           )}
 
-          {/* ================================================== */}
-          {/* Disruption Resistance */}
-          {/* ================================================== */}
+          {/* DISRUPTION RESISTANCE */}
 
-          {(auraSurge || hyperSpell) && (
+          {hyperSpell && (
             <div className="flex justify-between gap-4">
               <span>Disruption Resistance</span>
 
-              <span className="text-right font-semibold text-orange-400">
+              <span className="text-right font-semibold text-indigo-400">
                 {disruptionResistance}
               </span>
             </div>
           )}
 
-          {/* ================================================== */}
-          {/* Subtotal */}
-          {/* ================================================== */}
+          {/* SUBTOTAL */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span>Subtotal</span>
@@ -599,9 +573,7 @@ const ManifestPortal = ({
             <span className="font-semibold text-cyan-400">{subtotal}</span>
           </div>
 
-          {/* ================================================== */}
-          {/* Spell Recovery Cost */}
-          {/* ================================================== */}
+          {/* SPELL RECOVERY COST */}
 
           {spellRecovery && (
             <div className="flex justify-between">
@@ -613,21 +585,17 @@ const ManifestPortal = ({
             </div>
           )}
 
-          {/* ================================================== */}
-          {/* Final Cost */}
-          {/* ================================================== */}
+          {/* FINAL COST */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span className="font-semibold text-gray-100">Final Cost</span>
 
             <span className="text-lg font-bold text-orange-400">
-              {finalCost}
+              {finalCost} Manna
             </span>
           </div>
         </div>
       </div>
     </>
   );
-};
-
-export default ManifestPortal;
+}

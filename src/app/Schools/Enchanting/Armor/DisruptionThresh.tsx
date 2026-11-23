@@ -10,6 +10,10 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
 
+type CatalystType = "MENTAL" | "BODY" | "SPIRIT" | "MEMORY" | "NECRO";
+
+type DefensiveAction = "DEFEND" | "COVER";
+
 // ==================================================
 // Spell Techniques
 // ==================================================
@@ -19,25 +23,25 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
   "Focus Spell": true,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
 // Mastery Data
 // ==================================================
 
-const masteryRates = {
+const masteryRates: Record<MasteryType, number> = {
   NOVICE: 5,
   INTERMEDIATE: 7,
   MASTERED: 10,
@@ -48,6 +52,15 @@ const masteryRates = {
 // ==================================================
 
 const CHARGE_MULTIPLIER = 0.3;
+const AURA_DAMAGE_REDUCTION = 0.2;
+
+const CATALYST_DAMAGE: Record<CatalystType, string[]> = {
+  MENTAL: ["PRESSURE", "VORPAL"],
+  BODY: ["EXPLOSIVE", "THERMAL"],
+  SPIRIT: ["KINETIC", "CONCUSSIVE"],
+  MEMORY: ["KINETIC", "GRAVITY"],
+  NECRO: ["KINETIC", "PRESSURE"],
+};
 
 // ==================================================
 // Component
@@ -72,10 +85,19 @@ const DisruptionThresh = ({
   const [spellCharge, setSpellCharge] = useState(false);
   const [spellRecovery, setSpellRecovery] = useState(false);
   const [spellSurge, setSpellSurge] = useState(false);
+  const [fullCast, setFullCast] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   const [chargeTurns, setChargeTurns] = useState(0);
   const [doubleCast, setDoubleCast] = useState(false);
+
   const [existingEnchantments, setExistingEnchantments] = useState(0);
+
+  const [selectedCatalyst, setSelectedCatalyst] =
+    useState<CatalystType>("MENTAL");
+
+  const [defensiveAction, setDefensiveAction] =
+    useState<DefensiveAction>("DEFEND");
 
   // ==================================================
   // Mastery
@@ -103,16 +125,19 @@ const DisruptionThresh = ({
 
   const maxThreshold = hasBaseThreshold ? baseThreshold * 0.5 : Infinity;
 
-  // Each TTT invested generates disruption according
-  // to mastery and the Spell Charge strength bonus.
+  // Each invested TTT generates disruption according
+  // to Mastery and the Spell Charge strength bonus.
+
   const disruptionPerTTT = rate * strengthMultiplier;
 
-  // Spell Charge also increases the final TTT cost
-  // by 30% per complete charging turn.
+  // Spell Charge increases final TTT by 30%
+  // per complete charging turn.
+
   const calculateTTT = (investment: number) =>
     Math.ceil(investment * strengthMultiplier);
 
   // Maximum investment allowed by the 50% cap.
+
   const maxInvestment =
     hasBaseThreshold && disruptionPerTTT > 0
       ? Math.max(0, Math.floor(maxThreshold / disruptionPerTTT))
@@ -138,6 +163,20 @@ const DisruptionThresh = ({
   const aoeIncrease = surgeEligible ? 1 : 0;
 
   // ==================================================
+  // Full Cast Calculations
+  // ==================================================
+
+  const additionalDefensiveActions = fullCast ? 1 : 0;
+
+  // ==================================================
+  // Aura Surge Calculations
+  // ==================================================
+
+  const protectedDamageTypes = CATALYST_DAMAGE[selectedCatalyst];
+
+  const damageReduction = auraSurge ? AURA_DAMAGE_REDUCTION * 100 : 0;
+
+  // ==================================================
   // Parent Spell Update
   // ==================================================
 
@@ -157,10 +196,15 @@ const DisruptionThresh = ({
       setSpellCharge(false);
       setSpellRecovery(false);
       setSpellSurge(false);
+      setFullCast(false);
+      setAuraSurge(false);
 
       setChargeTurns(0);
       setDoubleCast(false);
       setExistingEnchantments(0);
+
+      setSelectedCatalyst("MENTAL");
+      setDefensiveAction("DEFEND");
     }
   }, [active]);
 
@@ -216,6 +260,24 @@ const DisruptionThresh = ({
   };
 
   // ==================================================
+  // Shared UI Helpers
+  // ==================================================
+
+  const techniqueButtonClass = (enabled: boolean) =>
+    `rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+      enabled
+        ? "bg-purple-600 text-white"
+        : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+    }`;
+
+  const selectionButtonClass = (selected: boolean) =>
+    `rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+      selected
+        ? "border-purple-400 bg-purple-950 text-purple-300"
+        : "border-gray-600 bg-gray-800 text-gray-300 hover:border-purple-600"
+    }`;
+
+  // ==================================================
   // Render
   // ==================================================
 
@@ -262,11 +324,7 @@ const DisruptionThresh = ({
               type="button"
               onClick={toggleSpellCharge}
               aria-pressed={spellCharge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellCharge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellCharge)}
             >
               Spell Charge
             </button>
@@ -277,11 +335,7 @@ const DisruptionThresh = ({
               type="button"
               onClick={() => setSpellRecovery((previous) => !previous)}
               aria-pressed={spellRecovery}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellRecovery
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellRecovery)}
             >
               Spell Recovery
             </button>
@@ -292,13 +346,31 @@ const DisruptionThresh = ({
               type="button"
               onClick={() => setSpellSurge((previous) => !previous)}
               aria-pressed={spellSurge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellSurge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
+              className={techniqueButtonClass(spellSurge)}
             >
               Spell Surge
+            </button>
+
+            {/* Full Cast */}
+
+            <button
+              type="button"
+              onClick={() => setFullCast((previous) => !previous)}
+              aria-pressed={fullCast}
+              className={techniqueButtonClass(fullCast)}
+            >
+              Full Cast
+            </button>
+
+            {/* Aura Surge */}
+
+            <button
+              type="button"
+              onClick={() => setAuraSurge((previous) => !previous)}
+              aria-pressed={auraSurge}
+              className={techniqueButtonClass(auraSurge)}
+            >
+              Aura Surge
             </button>
           </div>
         </div>
@@ -307,9 +379,15 @@ const DisruptionThresh = ({
         {/* Technique Descriptions */}
         {/* ================================================== */}
 
-        {(spellCharge || spellRecovery || spellSurge) && (
+        {(spellCharge ||
+          spellRecovery ||
+          spellSurge ||
+          fullCast ||
+          auraSurge) && (
           <div className="mb-5 space-y-3">
+            {/* ================================================== */}
             {/* Spell Charge */}
+            {/* ================================================== */}
 
             {spellCharge && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
@@ -327,26 +405,30 @@ const DisruptionThresh = ({
               </div>
             )}
 
+            {/* ================================================== */}
             {/* Spell Recovery */}
+            {/* ================================================== */}
 
             {spellRecovery && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
                 <p className="text-sm leading-relaxed text-gray-300">
                   <strong className="text-purple-400">Spell Recovery:</strong>{" "}
                   Automatically reapplies the temporary Disruption Threshold
-                  enchantment when the target enters the caster's vicinity.
+                  enchantment when the target enters the caster&apos;s vicinity.
                 </p>
               </div>
             )}
 
+            {/* ================================================== */}
             {/* Spell Surge */}
+            {/* ================================================== */}
 
             {spellSurge && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
                 <p className="text-sm leading-relaxed text-gray-300">
                   <strong className="text-purple-400">Spell Surge:</strong>{" "}
-                  Increases the enchantment's AOE level by one when the target
-                  already has{" "}
+                  Increases the enchantment&apos;s AOE level by one when the
+                  target already has{" "}
                   <strong className="text-purple-300">
                     two or more enchantments
                   </strong>{" "}
@@ -354,6 +436,184 @@ const DisruptionThresh = ({
                   through{" "}
                   <strong className="text-purple-300">Spell Recovery</strong>.
                 </p>
+              </div>
+            )}
+
+            {/* ================================================== */}
+            {/* Full Cast */}
+            {/* ================================================== */}
+
+            {fullCast && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+                <h4 className="mb-2 font-semibold text-purple-400">
+                  Full Cast
+                </h4>
+
+                <p className="text-sm leading-relaxed text-gray-300">
+                  <strong className="text-purple-300">Once per turn</strong>,
+                  targets receive an additional{" "}
+                  <strong className="text-purple-300">DEFENSIVE ACTION</strong>{" "}
+                  when an armor enchantment is{" "}
+                  <strong className="text-purple-300">first</strong> cast on
+                  them. Using this additional action{" "}
+                  <strong className="text-red-400">REMOVES</strong> the
+                  enchantment.
+                </p>
+
+                <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300">
+                  <div className="flex justify-between">
+                    <span>Additional Defensive Actions</span>
+
+                    <span className="font-semibold text-purple-400">
+                      +{additionalDefensiveActions}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Activation</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      FIRST CAST
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Frequency</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      ONCE PER TURN
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between border-t border-gray-700 pt-3">
+                    <span>After Using Action</span>
+
+                    <span className="font-semibold text-red-400">
+                      ENCHANTMENT REMOVED
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================== */}
+            {/* Aura Surge */}
+            {/* ================================================== */}
+
+            {auraSurge && (
+              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+                <h4 className="mb-2 font-semibold text-purple-400">
+                  Aura Surge
+                </h4>
+
+                <p className="mb-4 text-sm leading-relaxed text-gray-300">
+                  While an armor enchantment is active, reduces damage by{" "}
+                  <strong className="text-purple-300">20%</strong> to the damage
+                  types associated with the selected catalyst when using the{" "}
+                  <strong className="text-purple-300">DEFEND</strong> or{" "}
+                  <strong className="text-purple-300">COVER</strong> action.
+                </p>
+
+                {/* ================================================== */}
+                {/* Catalyst Selection */}
+                {/* ================================================== */}
+
+                <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+                  <h5 className="mb-3 font-semibold text-orange-400">
+                    Catalyst
+                  </h5>
+
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    {(Object.keys(CATALYST_DAMAGE) as CatalystType[]).map(
+                      (catalyst) => (
+                        <button
+                          key={catalyst}
+                          type="button"
+                          onClick={() => setSelectedCatalyst(catalyst)}
+                          className={selectionButtonClass(
+                            selectedCatalyst === catalyst,
+                          )}
+                        >
+                          {catalyst}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* ================================================== */}
+                {/* Defensive Action */}
+                {/* ================================================== */}
+
+                <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+                  <h5 className="mb-3 font-semibold text-orange-400">
+                    Defensive Action
+                  </h5>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {(["DEFEND", "COVER"] as DefensiveAction[]).map(
+                      (action) => (
+                        <button
+                          key={action}
+                          type="button"
+                          onClick={() => setDefensiveAction(action)}
+                          className={selectionButtonClass(
+                            defensiveAction === action,
+                          )}
+                        >
+                          {action}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* ================================================== */}
+                {/* Damage Reduction Summary */}
+                {/* ================================================== */}
+
+                <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-gray-300">
+                  <div className="flex justify-between">
+                    <span>Selected Catalyst</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      {selectedCatalyst}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Action</span>
+
+                    <span className="font-semibold text-cyan-400">
+                      {defensiveAction}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Damage Reduction</span>
+
+                    <span className="font-semibold text-purple-400">
+                      {damageReduction}%
+                    </span>
+                  </div>
+
+                  <div className="border-t border-gray-700 pt-3">
+                    <span className="mb-3 block font-semibold text-gray-300">
+                      Protected Damage Types
+                    </span>
+
+                    <div className="flex flex-wrap gap-2">
+                      {protectedDamageTypes.map((type) => (
+                        <span
+                          key={type}
+                          className="rounded-md border border-purple-700 bg-purple-950 px-3 py-1 text-sm font-semibold text-purple-300"
+                        >
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -364,39 +624,57 @@ const DisruptionThresh = ({
         {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
+          {/* Mastery */}
+
           <div className="flex justify-between">
             <span>Mastery</span>
+
             <span className="font-semibold text-cyan-400">{mastery}</span>
           </div>
 
+          {/* Base Rate */}
+
           <div className="flex justify-between">
             <span>Base Disruption per TTT</span>
+
             <span className="font-semibold text-cyan-400">{rate}</span>
           </div>
 
+          {/* Base Threshold */}
+
           <div className="flex justify-between">
             <span>Base Threshold</span>
+
             <span className="font-semibold text-cyan-400">
               {hasBaseThreshold ? baseThreshold : "Not Set"}
             </span>
           </div>
 
+          {/* Maximum Threshold */}
+
           <div className="flex justify-between">
             <span>Maximum Temporary Threshold</span>
+
             <span className="font-semibold text-cyan-400">
               {hasBaseThreshold ? maxThreshold : "No Cap"}
             </span>
           </div>
 
+          {/* Base TTT */}
+
           <div className="flex justify-between">
             <span>Base TTT Investment</span>
+
             <span className="font-semibold text-cyan-400">{investedTTT}</span>
           </div>
+
+          {/* Spell Charge */}
 
           {spellCharge && (
             <>
               <div className="flex justify-between">
                 <span>Charge Turns</span>
+
                 <span className="font-semibold text-cyan-400">
                   {chargeTurns}
                 </span>
@@ -404,6 +682,7 @@ const DisruptionThresh = ({
 
               <div className="flex justify-between">
                 <span>Charge Increase</span>
+
                 <span className="font-semibold text-purple-400">
                   +{chargePercentage}%
                 </span>
@@ -411,6 +690,7 @@ const DisruptionThresh = ({
 
               <div className="flex justify-between">
                 <span>Strength Multiplier</span>
+
                 <span className="font-semibold text-purple-400">
                   {Number(strengthMultiplier.toFixed(2))}×
                 </span>
@@ -418,17 +698,23 @@ const DisruptionThresh = ({
             </>
           )}
 
+          {/* Spell Recovery */}
+
           {spellRecovery && (
             <div className="flex justify-between">
               <span>Automatic Reapplication</span>
+
               <span className="font-semibold text-purple-400">ENABLED</span>
             </div>
           )}
+
+          {/* Spell Surge */}
 
           {spellSurge && (
             <>
               <div className="flex justify-between">
                 <span>Existing Enchantments</span>
+
                 <span className="font-semibold text-cyan-400">
                   {existingEnchantments}
                 </span>
@@ -436,6 +722,7 @@ const DisruptionThresh = ({
 
               <div className="flex justify-between">
                 <span>AOE Level Increase</span>
+
                 <span
                   className={`font-semibold ${
                     surgeEligible ? "text-purple-400" : "text-gray-500"
@@ -447,12 +734,55 @@ const DisruptionThresh = ({
             </>
           )}
 
+          {/* Full Cast */}
+
+          {fullCast && (
+            <div className="flex justify-between gap-4">
+              <span>Additional Defensive Action</span>
+
+              <span className="text-right font-semibold text-purple-400">
+                +1 (FIRST CAST)
+              </span>
+            </div>
+          )}
+
+          {/* Aura Surge */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between">
+                <span>Aura Surge Catalyst</span>
+
+                <span className="font-semibold text-cyan-400">
+                  {selectedCatalyst}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Damage Reduction</span>
+
+                <span className="font-semibold text-purple-400">
+                  {damageReduction}%
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span>Protected Damage Types</span>
+
+                <span className="text-right font-semibold text-purple-400">
+                  {protectedDamageTypes.join(", ")}
+                </span>
+              </div>
+            </>
+          )}
+
           {/* Final Threshold */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span className="font-semibold text-gray-100">
               Temporary Disruption Threshold
             </span>
+
             <span className="text-lg font-bold text-orange-400">
               {Number(temporaryThreshold.toFixed(2))}
             </span>
@@ -462,6 +792,7 @@ const DisruptionThresh = ({
 
           <div className="flex justify-between">
             <span className="font-semibold text-gray-100">Final TTT</span>
+
             <span className="text-lg font-bold text-orange-400">
               {finalTTT}
             </span>
@@ -484,6 +815,8 @@ const DisruptionThresh = ({
           Disruption Threshold before Spell Charge modifiers.
         </p>
 
+        {/* TTT Investment */}
+
         <label className="block">
           <span className="mb-2 block font-semibold text-gray-300">
             Base TTT Investment
@@ -500,9 +833,12 @@ const DisruptionThresh = ({
           />
         </label>
 
+        {/* Disruption Summary */}
+
         <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
           <div className="flex justify-between text-gray-300">
             <span>Base Disruption</span>
+
             <span className="font-semibold text-cyan-400">
               {baseDisruption}
             </span>
@@ -510,6 +846,7 @@ const DisruptionThresh = ({
 
           <div className="flex justify-between text-gray-300">
             <span>Final Disruption</span>
+
             <span className="font-semibold text-cyan-400">
               {Number(temporaryThreshold.toFixed(2))}
             </span>
@@ -518,6 +855,7 @@ const DisruptionThresh = ({
           {hasBaseThreshold && (
             <div className="flex justify-between text-gray-300">
               <span>Maximum Investment</span>
+
               <span className="font-semibold text-cyan-400">
                 {maxInvestment}
               </span>
@@ -534,6 +872,8 @@ const DisruptionThresh = ({
         <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
           Base Threshold Configuration
         </h3>
+
+        {/* Optional Base Threshold */}
 
         <label className="block">
           <span className="mb-2 block font-semibold text-gray-300">
@@ -556,14 +896,17 @@ const DisruptionThresh = ({
         <p className="mt-3 text-sm leading-relaxed text-gray-400">
           The temporary Disruption Threshold cannot exceed{" "}
           <span className="font-semibold text-cyan-400">50%</span> of the
-          target's base Disruption Threshold. This cap also applies when Spell
-          Charge is enabled.
+          target&apos;s base Disruption Threshold. This cap also applies when
+          Spell Charge is enabled.
         </p>
+
+        {/* Threshold Cap */}
 
         {hasBaseThreshold && (
           <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
             <div className="flex justify-between text-gray-300">
               <span>Base Threshold</span>
+
               <span className="font-semibold text-cyan-400">
                 {baseThreshold}
               </span>
@@ -571,6 +914,7 @@ const DisruptionThresh = ({
 
             <div className="mt-3 flex justify-between text-gray-300">
               <span>50% Threshold Cap</span>
+
               <span className="font-semibold text-cyan-400">
                 {maxThreshold}
               </span>
@@ -588,6 +932,8 @@ const DisruptionThresh = ({
           <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
             Spell Charge Configuration
           </h3>
+
+          {/* Charge Turns */}
 
           <label className="block">
             <span className="mb-2 block font-semibold text-gray-300">
@@ -631,6 +977,7 @@ const DisruptionThresh = ({
           <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
             <div className="flex justify-between text-gray-300">
               <span>Strength Increase</span>
+
               <span className="font-semibold text-purple-400">
                 +{chargePercentage}%
               </span>
@@ -638,6 +985,7 @@ const DisruptionThresh = ({
 
             <div className="flex justify-between text-gray-300">
               <span>TTT Increase</span>
+
               <span className="font-semibold text-purple-400">
                 +{chargePercentage}%
               </span>
@@ -645,9 +993,12 @@ const DisruptionThresh = ({
 
             <div className="flex justify-between text-gray-300">
               <span>Final TTT</span>
+
               <span className="font-semibold text-cyan-400">{finalTTT}</span>
             </div>
           </div>
+
+          {/* Casting Restriction */}
 
           {!doubleCast && chargeTurns > 0 && (
             <p className="mt-4 rounded-lg border border-amber-800 bg-amber-950/30 p-3 text-sm text-amber-300">
@@ -668,6 +1019,8 @@ const DisruptionThresh = ({
             Spell Surge Configuration
           </h3>
 
+          {/* Existing Enchantments */}
+
           <label className="block">
             <span className="mb-2 block font-semibold text-gray-300">
               Existing Enchantments from Caster
@@ -684,6 +1037,8 @@ const DisruptionThresh = ({
               className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 focus:border-cyan-500 focus:outline-none"
             />
           </label>
+
+          {/* Surge Eligibility */}
 
           <div
             className={`mt-4 rounded-lg border p-4 ${
@@ -740,8 +1095,8 @@ const DisruptionThresh = ({
 
         <p className="text-sm leading-relaxed text-gray-300">
           Converts Manna into temporary Disruption Threshold. The maximum
-          temporary threshold is equal to 50% of the target's base Disruption
-          Threshold.
+          temporary threshold is equal to 50% of the target&apos;s base
+          Disruption Threshold.
         </p>
       </div>
     </>

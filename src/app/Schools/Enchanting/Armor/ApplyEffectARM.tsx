@@ -19,7 +19,12 @@ type TechniqueType =
   | "Hyper Spell"
   | "Spell Recovery"
   | "Spell Surge"
-  | "Double Cast";
+  | "Double Cast"
+  | "Full Cast"
+  | "Aura Surge";
+
+type CatalystType = "MENTAL" | "BODY" | "SPIRIT" | "MEMORY" | "NECRO";
+type DefensiveAction = "DEFEND" | "COVER";
 
 // ==================================================
 // Spell Techniques
@@ -30,8 +35,8 @@ const Techniques = {
   "Spell Reflex": true,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
@@ -41,7 +46,7 @@ const Techniques = {
   "Auto Cast": true,
   "Rivet Cast": true,
   "Spell Recovery": true,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -49,19 +54,24 @@ const Techniques = {
 // ==================================================
 
 const masteryRates: Record<MasteryType, { cost: number; ttt: number }> = {
-  NOVICE: {
-    cost: 0.7,
-    ttt: 0.3,
-  },
-  INTERMEDIATE: {
-    cost: 0.5,
-    ttt: 0.2,
-  },
-  MASTERED: {
-    cost: 0.3,
-    ttt: 0.1,
-  },
+  NOVICE: { cost: 0.7, ttt: 0.3 },
+  INTERMEDIATE: { cost: 0.5, ttt: 0.2 },
+  MASTERED: { cost: 0.3, ttt: 0.1 },
 };
+
+// ==================================================
+// Aura Surge Data
+// ==================================================
+
+const CATALYST_DAMAGE: Record<CatalystType, string[]> = {
+  MENTAL: ["PRESSURE", "VORPAL"],
+  BODY: ["EXPLOSIVE", "THERMAL"],
+  SPIRIT: ["KINETIC", "CONCUSSIVE"],
+  MEMORY: ["KINETIC", "GRAVITY"],
+  NECRO: ["KINETIC", "PRESSURE"],
+};
+
+const AURA_DAMAGE_REDUCTION = 20;
 
 // ==================================================
 // Technique Descriptions
@@ -83,6 +93,12 @@ const techniqueDescriptions: Record<TechniqueType, string> = {
 
   "Spell Surge":
     "Increases the enchantment's AOE level by one when the initial recipient already has two or more active enchantments from the caster. Reapplication requires a Main Action or can occur automatically through Spell Recovery.",
+
+  "Full Cast":
+    "Once per turn, targets gain +1 Defensive Action when an armor enchantment is first cast on them. Using this additional action removes the enchantment.",
+
+  "Aura Surge":
+    "While the armor enchantment is active, using DEFEND or COVER reduces damage by 20% for the two damage types associated with the selected catalyst.",
 };
 
 // ==================================================
@@ -103,7 +119,6 @@ const ApplyEffectA = ({
   // ==================================================
 
   const [selectedEffect, setSelectedEffect] = useState(0);
-
   const [baseCost, setBaseCost] = useState(0);
 
   const [enabledTechniques, setEnabledTechniques] = useState<TechniqueType[]>(
@@ -112,12 +127,17 @@ const ApplyEffectA = ({
 
   const [existingEnchantments, setExistingEnchantments] = useState(0);
 
+  const [selectedCatalyst, setSelectedCatalyst] =
+    useState<CatalystType>("MENTAL");
+
+  const [defensiveAction, setDefensiveAction] =
+    useState<DefensiveAction>("DEFEND");
+
   // ==================================================
   // Mastery
   // ==================================================
 
   const mastery = ParentMastery.getType() as MasteryType;
-
   const rates = masteryRates[mastery];
 
   // ==================================================
@@ -128,7 +148,6 @@ const ApplyEffectA = ({
     appliedEffects[selectedEffect] ?? appliedEffects[0];
 
   const cost = Math.ceil(baseCost * rates.cost);
-
   const ttt = Math.ceil(baseCost * rates.ttt);
 
   // ==================================================
@@ -155,21 +174,19 @@ const ApplyEffectA = ({
   // ==================================================
 
   const counterSpell = hasTechnique("Counter Spell");
-
   const spellReflex = hasTechnique("Spell Reflex");
-
   const autoCast = hasTechnique("Auto Cast");
-
   const hyperSpell = hasTechnique("Hyper Spell");
-
   const spellRecovery = hasTechnique("Spell Recovery");
-
   const spellSurge = hasTechnique("Spell Surge");
+  const fullCast = hasTechnique("Full Cast");
+  const auraSurge = hasTechnique("Aura Surge");
+
+  const protectedDamageTypes = CATALYST_DAMAGE[selectedCatalyst];
 
   const surgeEligible = spellSurge && existingEnchantments >= 2;
 
   const baseAOE = hyperSpell ? "Small" : "None";
-
   const aoeIncrease = surgeEligible ? 1 : 0;
 
   // ==================================================
@@ -178,7 +195,6 @@ const ApplyEffectA = ({
 
   useEffect(() => {
     updateSpell("cost", active ? cost : 0);
-
     updateSpell("ttt", active ? ttt : 0);
   }, [active, cost, ttt, updateSpell]);
 
@@ -192,6 +208,8 @@ const ApplyEffectA = ({
       setBaseCost(0);
       setEnabledTechniques([]);
       setExistingEnchantments(0);
+      setSelectedCatalyst("MENTAL");
+      setDefensiveAction("DEFEND");
     }
   }, [active]);
 
@@ -207,9 +225,15 @@ const ApplyEffectA = ({
     setExistingEnchantments(Math.max(0, Math.trunc(value || 0)));
   };
 
-  // ==================================================
-  // Technique Button
-  // ==================================================
+  {
+    /* ================================================== */
+  }
+  {
+    /* Technique Button */
+  }
+  {
+    /* ================================================== */
+  }
 
   const TechniqueButton = ({ technique }: { technique: TechniqueType }) => {
     const enabled = hasTechnique(technique);
@@ -219,7 +243,7 @@ const ApplyEffectA = ({
         type="button"
         onClick={() => toggleTechnique(technique)}
         aria-pressed={enabled}
-        className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+        className={`shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition-colors ${
           enabled
             ? "bg-purple-600 text-white"
             : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
@@ -275,6 +299,8 @@ const ApplyEffectA = ({
             <TechniqueButton technique="Hyper Spell" />
             <TechniqueButton technique="Spell Recovery" />
             <TechniqueButton technique="Spell Surge" />
+            <TechniqueButton technique="Full Cast" />
+            <TechniqueButton technique="Aura Surge" />
           </div>
         </div>
 
@@ -299,6 +325,150 @@ const ApplyEffectA = ({
         )}
 
         {/* ================================================== */}
+        {/* Full Cast Configuration */}
+        {/* ================================================== */}
+
+        {fullCast && (
+          <div className="mb-5 rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+            <h4 className="mb-3 font-semibold text-orange-400">Full Cast</h4>
+
+            <div className="space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300">
+              <div className="flex justify-between gap-3">
+                <span>Additional Defensive Actions</span>
+                <span className="font-semibold text-purple-400">+1</span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Activation</span>
+                <span className="font-semibold text-cyan-400">FIRST CAST</span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Frequency</span>
+                <span className="font-semibold text-cyan-400">
+                  ONCE PER TURN
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3 border-t border-gray-700 pt-3">
+                <span>After Using Action</span>
+                <span className="text-right font-semibold text-red-400">
+                  ENCHANTMENT REMOVED
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* Aura Surge Configuration */}
+        {/* ================================================== */}
+
+        {auraSurge && (
+          <div className="mb-5 rounded-lg border border-purple-800 bg-purple-950/30 p-4">
+            <h4 className="mb-3 font-semibold text-orange-400">Aura Surge</h4>
+
+            {/* ================================================== */}
+            {/* Catalyst Selection */}
+            {/* ================================================== */}
+
+            <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+              <h5 className="mb-3 font-semibold text-orange-400">Catalyst</h5>
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                {(Object.keys(CATALYST_DAMAGE) as CatalystType[]).map(
+                  (catalyst) => (
+                    <button
+                      key={catalyst}
+                      type="button"
+                      onClick={() => setSelectedCatalyst(catalyst)}
+                      aria-pressed={selectedCatalyst === catalyst}
+                      className={`rounded-md border px-2 py-2 text-sm font-semibold ${
+                        selectedCatalyst === catalyst
+                          ? "border-purple-400 bg-purple-950 text-purple-300"
+                          : "border-gray-600 bg-gray-800 text-gray-300 hover:border-purple-600"
+                      }`}
+                    >
+                      {catalyst}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* ================================================== */}
+            {/* Defensive Action */}
+            {/* ================================================== */}
+
+            <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+              <h5 className="mb-3 font-semibold text-orange-400">
+                Defensive Action
+              </h5>
+
+              <div className="grid grid-cols-2 gap-3">
+                {(["DEFEND", "COVER"] as DefensiveAction[]).map((action) => (
+                  <button
+                    key={action}
+                    type="button"
+                    onClick={() => setDefensiveAction(action)}
+                    aria-pressed={defensiveAction === action}
+                    className={`rounded-md border px-3 py-2 text-sm font-semibold ${
+                      defensiveAction === action
+                        ? "border-purple-400 bg-purple-950 text-purple-300"
+                        : "border-gray-600 bg-gray-800 text-gray-300 hover:border-purple-600"
+                    }`}
+                  >
+                    {action}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ================================================== */}
+            {/* Damage Reduction Summary */}
+            {/* ================================================== */}
+
+            <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300">
+              <div className="flex justify-between gap-3">
+                <span>Selected Catalyst</span>
+                <span className="font-semibold text-cyan-400">
+                  {selectedCatalyst}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Action</span>
+                <span className="font-semibold text-cyan-400">
+                  {defensiveAction}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Damage Reduction</span>
+                <span className="font-semibold text-purple-400">
+                  {AURA_DAMAGE_REDUCTION}%
+                </span>
+              </div>
+
+              <div className="border-t border-gray-700 pt-3">
+                <span className="mb-2 block">Protected Damage Types</span>
+
+                <div className="flex flex-wrap gap-2">
+                  {protectedDamageTypes.map((type) => (
+                    <span
+                      key={type}
+                      className="rounded-md border border-purple-700 bg-purple-950 px-3 py-1 font-semibold text-purple-300"
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================== */}
         {/* Spell Statistics */}
         {/* ================================================== */}
 
@@ -307,7 +477,6 @@ const ApplyEffectA = ({
 
           <div className="flex justify-between gap-4">
             <span>Applied Effect</span>
-
             <span className="text-right font-semibold text-cyan-400">
               {selectedEffectData?.label ?? "None"}
             </span>
@@ -317,7 +486,6 @@ const ApplyEffectA = ({
 
           <div className="flex justify-between">
             <span>Base Spell Cost</span>
-
             <span className="font-semibold text-cyan-400">{baseCost}</span>
           </div>
 
@@ -325,7 +493,6 @@ const ApplyEffectA = ({
 
           <div className="flex justify-between">
             <span>Mana Cost Rate</span>
-
             <span className="font-semibold text-cyan-400">
               {Math.round(rates.cost * 100)}%
             </span>
@@ -335,17 +502,15 @@ const ApplyEffectA = ({
 
           <div className="flex justify-between">
             <span>TTT Rate</span>
-
             <span className="font-semibold text-cyan-400">
               {Math.round(rates.ttt * 100)}%
             </span>
           </div>
 
-          {/* Action */}
+          {/* Casting Action */}
 
           <div className="flex justify-between gap-4">
             <span>Casting Action</span>
-
             <span className="text-right font-semibold text-cyan-400">
               {autoCast
                 ? "No Defensive Action"
@@ -360,7 +525,6 @@ const ApplyEffectA = ({
           {spellReflex && (
             <div className="flex justify-between">
               <span>Defensive Uses per Turn</span>
-
               <span className="font-semibold text-purple-400">2</span>
             </div>
           )}
@@ -369,7 +533,6 @@ const ApplyEffectA = ({
 
           <div className="flex justify-between">
             <span>Base AOE</span>
-
             <span className="font-semibold text-cyan-400">{baseAOE}</span>
           </div>
 
@@ -378,7 +541,6 @@ const ApplyEffectA = ({
           {spellRecovery && (
             <div className="flex justify-between">
               <span>Automatic Reapplication</span>
-
               <span className="font-semibold text-purple-400">ENABLED</span>
             </div>
           )}
@@ -389,7 +551,6 @@ const ApplyEffectA = ({
             <>
               <div className="flex justify-between">
                 <span>Existing Enchantments</span>
-
                 <span className="font-semibold text-cyan-400">
                   {existingEnchantments}
                 </span>
@@ -397,7 +558,6 @@ const ApplyEffectA = ({
 
               <div className="flex justify-between">
                 <span>AOE Level Increase</span>
-
                 <span
                   className={`font-semibold ${
                     surgeEligible ? "text-purple-400" : "text-gray-500"
@@ -409,11 +569,48 @@ const ApplyEffectA = ({
             </>
           )}
 
+          {/* Full Cast */}
+
+          {fullCast && (
+            <div className="flex justify-between gap-4">
+              <span>Additional Defensive Action</span>
+              <span className="text-right font-semibold text-purple-400">
+                +1 (FIRST CAST)
+              </span>
+            </div>
+          )}
+
+          {/* Aura Surge */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between gap-4">
+                <span>Aura Surge Catalyst</span>
+                <span className="font-semibold text-cyan-400">
+                  {selectedCatalyst}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span>Damage Reduction</span>
+                <span className="font-semibold text-purple-400">
+                  {AURA_DAMAGE_REDUCTION}%
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span>Protected Damage Types</span>
+                <span className="text-right font-semibold text-purple-400">
+                  {protectedDamageTypes.join(", ")}
+                </span>
+              </div>
+            </>
+          )}
+
           {/* Final Cost */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span className="font-semibold text-gray-100">Final Mana Cost</span>
-
             <span className="text-lg font-bold text-orange-400">{cost}</span>
           </div>
 
@@ -421,7 +618,6 @@ const ApplyEffectA = ({
 
           <div className="flex justify-between">
             <span className="font-semibold text-gray-100">Final TTT</span>
-
             <span className="text-lg font-bold text-orange-400">{ttt}</span>
           </div>
         </div>
@@ -510,13 +706,11 @@ const ApplyEffectA = ({
         <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
           <div className="flex justify-between text-gray-300">
             <span>Calculated Mana Cost</span>
-
             <span className="font-semibold text-cyan-400">{cost}</span>
           </div>
 
           <div className="flex justify-between text-gray-300">
             <span>Calculated TTT</span>
-
             <span className="font-semibold text-cyan-400">{ttt}</span>
           </div>
         </div>
@@ -610,7 +804,7 @@ const ApplyEffectA = ({
           <p className="text-sm leading-relaxed text-gray-300">
             Applies a selected spell effect as an armor enchantment. Mana cost
             and TTT are determined by the base cost of the applied spell and the
-            caster's mastery.
+            caster&apos;s mastery.
           </p>
         </div>
       </div>

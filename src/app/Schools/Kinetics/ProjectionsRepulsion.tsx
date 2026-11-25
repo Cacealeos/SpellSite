@@ -1,5 +1,27 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+const Techniques = {
+  "Quick Spell": false,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Soul Cast": false,
+  "Full Cast ": false,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": true,
+  "Aura Surge": true,
+};
 
 type ProjectionsRepulsionProps = {
   ParentMastery: Mastery;
@@ -25,6 +47,7 @@ const ProjectionsRepulsion = ({
   const [spellSurge, setSpellSurge] = useState(false);
   const [doublePulse, setDoublePulse] = useState(false);
   const [hyperSpell, setHyperSpell] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   // ==================================================
   // Mastery / Rates
@@ -76,8 +99,13 @@ const ProjectionsRepulsion = ({
   const powerCost = power * powerRate;
   const baseCost = aoeCost + powerCost + damage;
 
-  // Hyper Spell reduces the final Manna cost by 33%.
-  const finalCost = hyperSpell ? Math.ceil(baseCost * 0.67) : baseCost;
+  // Aura Surge increases damage by 30% and total Manna cost by 50%.
+  const auraDamageBonus = auraSurge ? Math.ceil(damage * 0.3) : 0;
+  const finalDamage = damage + auraDamageBonus;
+  const auraAdjustedCost = baseCost * (auraSurge ? 1.5 : 1);
+
+  // Hyper Spell reduces the Aura-adjusted Manna cost by 33%.
+  const finalCost = Math.ceil(auraAdjustedCost * (hyperSpell ? 0.67 : 1));
 
   const maxDamage = power * 15 + 5;
 
@@ -99,6 +127,7 @@ const ProjectionsRepulsion = ({
     setSpellSurge(false);
     setDoublePulse(false);
     setHyperSpell(false);
+    setAuraSurge(false);
 
     updateSpell("cost", 0);
   }, [active, updateSpell]);
@@ -149,6 +178,10 @@ const ProjectionsRepulsion = ({
       </div>
 
       {/* ================================================== */}
+      <div className="mb-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
       {/* Power & Endurance */}
       {/* ================================================== */}
 
@@ -370,6 +403,20 @@ const ProjectionsRepulsion = ({
             >
               Hyper Spell
             </button>
+
+            {/* Aura Surge */}
+            <button
+              type="button"
+              onClick={() => setAuraSurge((prev) => !prev)}
+              aria-pressed={auraSurge}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                auraSurge
+                  ? "border-orange-400 bg-orange-500/10 text-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.5)]"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-orange-500 hover:text-orange-300"
+              }`}
+            >
+              Aura Surge
+            </button>
           </div>
         </div>
 
@@ -417,6 +464,49 @@ const ProjectionsRepulsion = ({
           )}
         </div>
 
+        {auraSurge && (
+          <div className="mt-4 rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
+            <h3 className="mb-3 font-semibold text-orange-300">
+              Aura Surge — Body Energy
+            </h3>
+            <p>
+              While channeling <strong>Body Energy</strong>, Repulsion receives{" "}
+              <strong>+30% Damage</strong> at the cost of{" "}
+              <strong>50% extra Manna</strong>.
+            </p>
+            <div className="mt-4 space-y-2 rounded-md border border-orange-800 bg-gray-900 p-3">
+              <div className="flex justify-between">
+                <span>Base Damage</span>
+                <strong>{damage}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Aura Surge Bonus</span>
+                <strong>+{auraDamageBonus}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Final Damage</span>
+                <strong>{finalDamage}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Base Manna Cost</span>
+                <strong>{baseCost}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Aura Surge Surcharge</span>
+                <strong>+50%</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Final Manna Cost</span>
+                <strong>{finalCost}</strong>
+              </div>
+            </div>
+            <p className="mt-3 text-xs italic">
+              Requires channeling Body Energy during casting. The damage bonus
+              applies beyond the base damage cap.
+            </p>
+          </div>
+        )}
+
         {/* Statistics */}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -432,7 +522,7 @@ const ProjectionsRepulsion = ({
 
           <div className="rounded border border-gray-700 bg-gray-900 p-3">
             <p className="text-sm text-gray-400">Damage</p>
-            <p className="text-xl font-bold text-white">{damage}</p>
+            <p className="text-xl font-bold text-white">{finalDamage}</p>
           </div>
 
           <div className="rounded border border-gray-700 bg-gray-900 p-3">

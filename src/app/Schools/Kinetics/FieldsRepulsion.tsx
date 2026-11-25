@@ -1,5 +1,27 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import { Mastery, Spell } from "@/app/models";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+const Techniques = {
+  "Quick Spell": false,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": false,
+  "Soul Cast": false,
+  "Full Cast ": false,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Aura Surge": true,
+};
 
 const FieldsRepulse = ({
   ParentMastery,
@@ -14,13 +36,13 @@ const FieldsRepulse = ({
   // State
   // ==================================================
 
-  const [cost, setCost] = useState(0);
   const [damage, setDamage] = useState(0);
   const [power, setPower] = useState(0);
   const [size, setSize] = useState(1);
 
   const [counterSpell, setCounterSpell] = useState(false);
   const [hyperSpell, setHyperSpell] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   // ==================================================
   // Mastery / Rates
@@ -59,7 +81,13 @@ const FieldsRepulse = ({
   // Base Spell Statistics
   // ==================================================
 
-  const totalCost = aoeCost + power * powerRate + damage * damageRate;
+  const baseCost = aoeCost + power * powerRate + damage * damageRate;
+  const totalCost = auraSurge ? Math.ceil(baseCost * 1.5) : baseCost;
+
+  // Preserve the original displayed damage calculation.
+  const baseDamage = damage * damageRate;
+  const auraDamageBonus = auraSurge ? Math.ceil(baseDamage * 0.3) : 0;
+  const finalDamage = baseDamage + auraDamageBonus;
 
   // ==================================================
   // Effective Range
@@ -81,19 +109,18 @@ const FieldsRepulse = ({
 
   useEffect(() => {
     if (!active) {
-      setCost(0);
       setPower(0);
       setDamage(0);
       setSize(1);
       setCounterSpell(false);
       setHyperSpell(false);
+      setAuraSurge(false);
 
       updateSpell("cost", 0);
 
       return;
     }
 
-    setCost(totalCost);
     updateSpell("cost", totalCost);
   }, [active, totalCost, updateSpell]);
 
@@ -127,11 +154,15 @@ const FieldsRepulse = ({
       {/* Title */}
       {/* ================================================== */}
 
-      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800/60 p-4">
-        <h1 className="mb-4 text-2xl font-bold text-orange-400">
-          Fields Repulsion
-        </h1>
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800 p-4 text-center">
+        <h1 className="text-2xl font-bold text-cyan-400">Fields Repulsion</h1>
+      </div>
 
+      <div className="mb-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800/60 p-4">
         {/* ================================================== */}
         {/* Power */}
         {/* ================================================== */}
@@ -281,14 +312,14 @@ const FieldsRepulse = ({
       {/* ================================================== */}
 
       <div className="rounded-lg border border-gray-700 bg-gray-800/60 p-4">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold text-orange-400">Final Stats</h2>
 
           {/* ================================================== */}
           {/* Spell Techniques */}
           {/* ================================================== */}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {/* Counter Spell */}
 
             <button
@@ -316,6 +347,20 @@ const FieldsRepulse = ({
             >
               Hyper Spell
             </button>
+
+            {/* Aura Surge */}
+            <button
+              type="button"
+              aria-pressed={auraSurge}
+              onClick={() => setAuraSurge((prev) => !prev)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                auraSurge
+                  ? "border-orange-400 bg-orange-500/10 text-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.5)]"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-orange-500 hover:text-orange-300"
+              }`}
+            >
+              Aura Surge
+            </button>
           </div>
         </div>
 
@@ -329,6 +374,48 @@ const FieldsRepulse = ({
               Allows the spell to be used as a{" "}
               <span className="font-semibold">DEFENSIVE MEASURE</span>.
             </p>
+          )}
+
+          {auraSurge && (
+            <div className="rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
+              <h3 className="mb-2 font-semibold text-orange-300">
+                Aura Surge — Body Energy
+              </h3>
+              <p>
+                While channeling <strong>Body Energy</strong>, Repulsion
+                receives <strong>+30% Damage</strong> at the cost of{" "}
+                <strong>50% extra Manna</strong>.
+              </p>
+              <div className="mt-3 space-y-2 rounded-md border border-orange-800 bg-gray-900 p-3">
+                <div className="flex justify-between">
+                  <span>Base Damage</span>
+                  <strong>{baseDamage}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Damage Bonus</span>
+                  <strong>+{auraDamageBonus}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Final Damage</span>
+                  <strong>{finalDamage}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Base Manna Cost</span>
+                  <strong>{baseCost}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Additional Manna</span>
+                  <strong>+{totalCost - baseCost}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Final Manna Cost</span>
+                  <strong>{totalCost}</strong>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-orange-300">
+                Requires channeling Body Energy during casting.
+              </p>
+            </div>
           )}
 
           {hyperSpell && (
@@ -351,7 +438,7 @@ const FieldsRepulse = ({
               Cost
             </p>
 
-            <p className="text-xl font-bold text-orange-400">{cost}</p>
+            <p className="text-xl font-bold text-orange-400">{totalCost}</p>
           </div>
 
           {/* Power */}
@@ -372,9 +459,7 @@ const FieldsRepulse = ({
             Damage
           </p>
 
-          <p className="text-xl font-bold text-red-400">
-            {damage * damageRate}
-          </p>
+          <p className="text-xl font-bold text-red-400">{finalDamage}</p>
         </div>
 
         {/* Effective Range */}

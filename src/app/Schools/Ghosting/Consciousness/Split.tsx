@@ -9,22 +9,22 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 // ==================================================
 
 const Techniques = {
-  "Quick Spell": true,
+  "Quick Spell": false,
   "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
-  "Counter Spell": true,
-  "Spell Surge": true,
+  "Double Pulse": false,
+  "Soul Cast": false,
+  "Full Cast ": false,
+  "Counter Spell": false,
+  "Spell Surge": false,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
-  "Hyper Spell": true,
-  "Auto Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": false,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================

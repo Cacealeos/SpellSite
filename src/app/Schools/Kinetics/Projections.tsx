@@ -1,6 +1,28 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { Mastery, Potency, Spell } from "@/app/models";
 import PotencySelector from "@/app/PotencyDisplay";
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+const Techniques = {
+  "Quick Spell": false,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": true,
+  "Soul Cast": false,
+  "Full Cast ": false,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": true,
+  "Aura Surge": false,
+};
 
 type ProjectionsProps = {
   ParentMastery: Mastery;
@@ -268,6 +290,8 @@ const Projections = ({
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 text-center shadow-md">
         <h1 className="text-2xl font-bold text-gray-100">Projections</h1>
       </div>
+
+      <SpellTechniquesTable techniques={Techniques} />
 
       {/* ================================================== */}
       {/* Spell Information */}

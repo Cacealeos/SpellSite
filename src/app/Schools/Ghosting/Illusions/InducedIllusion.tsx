@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { EyeIcon } from "@heroicons/react/24/solid";
 
@@ -12,19 +14,19 @@ const Techniques = {
   "Quick Spell": true,
   "Spell Reflex": true,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Double Pulse": false,
+  "Soul Cast": false,
+  "Full Cast ": false,
   "Counter Spell": true,
-  "Spell Surge": true,
+  "Spell Surge": false,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -36,8 +38,6 @@ const MASTERY_TTT = {
   INTERMEDIATE: 6,
   MASTERED: 3,
 };
-
-const HYPER_PAIN = 1000;
 
 type Sense = "Sight" | "Smell" | "Touch" | "Taste" | "Sound" | "Manna";
 
@@ -65,6 +65,8 @@ const InducedIllusion = ({
   const [desc, setDesc] = useState("");
 
   const [spellReflex, setSpellReflex] = useState(false);
+
+  const [auraSurge, setAuraSurge] = useState(false);
 
   const [hyperSpell, setHyperSpell] = useState(false);
 
@@ -95,8 +97,6 @@ const InducedIllusion = ({
 
   const hyperPainActive = hyperSpell && touchSelected;
 
-  const painPerTurn = hyperPainActive ? HYPER_PAIN : 0;
-
   // ==================================================
   // Spell Update
   // ==================================================
@@ -114,6 +114,7 @@ const InducedIllusion = ({
       setSelectedSenses([]);
       setDesc("");
       setSpellReflex(false);
+      setAuraSurge(false);
       setHyperSpell(false);
     }
   }, [active]);
@@ -171,7 +172,7 @@ const InducedIllusion = ({
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setSpellReflex(!spellReflex)}
+              onClick={() => setSpellReflex((previous) => !previous)}
               aria-pressed={spellReflex}
               className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
                 spellReflex
@@ -180,6 +181,19 @@ const InducedIllusion = ({
               }`}
             >
               Spell Reflex
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAuraSurge((previous) => !previous)}
+              aria-pressed={auraSurge}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                auraSurge
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-orange-600 hover:text-white"
+              }`}
+            >
+              Aura Surge
             </button>
 
             <button
@@ -201,7 +215,7 @@ const InducedIllusion = ({
         {/* Technique Captions */}
         {/* ================================================== */}
 
-        {(spellReflex || hyperSpell) && (
+        {(spellReflex || auraSurge || hyperSpell) && (
           <div className="mb-5 space-y-3">
             {spellReflex && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
@@ -216,12 +230,54 @@ const InducedIllusion = ({
               </div>
             )}
 
+            {auraSurge && (
+              <div className="rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
+                <h4 className="mb-3 font-semibold text-orange-300">
+                  Aura Surge — Mental Energy
+                </h4>
+                <p className="leading-relaxed">
+                  While channeling <strong>Mental Energy</strong>, targets of
+                  induced illusions make a{" "}
+                  <strong>Power + Dis vs Power + Dis</strong> check. If they
+                  fail, they become <strong>Constricted</strong>.
+                </p>
+                <div className="mt-4 space-y-3 rounded-md border border-orange-800 bg-gray-900 p-4">
+                  <div className="flex justify-between gap-4">
+                    <span>Required Energy</span>
+                    <span className="font-semibold text-orange-300">
+                      MENTAL ENERGY
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                    <div className="rounded-md border border-orange-800 p-3 text-center">
+                      <div className="text-xs text-gray-400">Caster</div>
+                      <strong>Power + Dis</strong>
+                    </div>
+                    <span className="font-bold text-gray-500">VS</span>
+                    <div className="rounded-md border border-orange-800 p-3 text-center">
+                      <div className="text-xs text-gray-400">Target</div>
+                      <strong>Power + Dis</strong>
+                    </div>
+                  </div>
+                  <div className="flex justify-between gap-4 border-t border-orange-800 pt-3">
+                    <span>On Target Failure</span>
+                    <span className="font-semibold text-orange-300">
+                      CONSTRICTED
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs italic text-orange-200/80">
+                  The contested check is resolved during casting.
+                </p>
+              </div>
+            )}
+
             {hyperSpell && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
                 <p className="text-sm leading-relaxed text-gray-300">
                   <strong className="text-purple-400">Hyper Spell:</strong>{" "}
                   Induced illusions that target the sense of touch can inflict{" "}
-                  <strong className="text-red-400">1000 Pain per turn</strong>.
+                  <strong className="text-red-400">100 x Int Pain</strong>.
                 </p>
 
                 {!touchSelected && (
@@ -283,6 +339,13 @@ const InducedIllusion = ({
             <span className="font-semibold text-cyan-400">{tttRate}</span>
           </div>
 
+          {spellReflex && (
+            <div className="flex justify-between gap-4">
+              <span>Extra Roll upon Illusion Failure</span>
+              <span className="font-semibold text-purple-400">+1</span>
+            </div>
+          )}
+
           {/* Pain per Turn */}
 
           {hyperSpell && (
@@ -294,9 +357,34 @@ const InducedIllusion = ({
                   hyperPainActive ? "text-red-400" : "text-gray-500"
                 }`}
               >
-                {painPerTurn}
+                Int x 100
               </span>
             </div>
+          )}
+
+          {/* Aura Surge Properties */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between gap-4">
+                <span>Aura Surge</span>
+                <span className="font-semibold text-orange-400">
+                  MENTAL ENERGY
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>Contested Check</span>
+                <span className="text-right font-semibold text-orange-400">
+                  Power + Dis vs Power + Dis
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>On Target Failure</span>
+                <span className="font-semibold text-orange-400">
+                  CONSTRICTED
+                </span>
+              </div>
+            </>
           )}
 
           {/* Final TTT */}

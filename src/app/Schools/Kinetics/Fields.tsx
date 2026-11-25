@@ -1,5 +1,28 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import { Mastery, Spell } from "@/app/models";
+
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+const Techniques = {
+  "Quick Spell": false,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": false,
+  "Soul Cast": true,
+  "Full Cast ": false,
+  "Counter Spell": true,
+  "Spell Surge": true,
+  "Junction Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Aura Surge": true,
+};
 
 const Fields = ({
   ParentMastery,
@@ -17,6 +40,9 @@ const Fields = ({
   const [hyperSpell, setHyperSpell] = useState(false);
   const [counterSpell, setCounterSpell] = useState(false);
   const [spellSurge, setSpellSurge] = useState(false);
+
+  const [soulCast, setSoulCast] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   const testMastery = new Mastery();
 
@@ -75,7 +101,9 @@ const Fields = ({
   // Final Spell Statistics
   // ==================================================
 
-  const surgeCost = Math.ceil(baseCost * 0.8);
+  const soulCost = soulCast ? 50 : 0;
+  const finalEndurance = power + (auraSurge ? 1 : 0);
+  const finalVitality = vitality + (auraSurge ? Math.ceil(vitality * 0.4) : 0);
 
   const finalTTT = hyperSpell ? Math.ceil(baseTTT * 0.5) : baseTTT;
 
@@ -93,6 +121,8 @@ const Fields = ({
       setHyperSpell(false);
       setCounterSpell(false);
       setSpellSurge(false);
+      setSoulCast(false);
+      setAuraSurge(false);
 
       updateSpell("cost", 0);
       updateSpell("ttt", 0);
@@ -133,8 +163,14 @@ const Fields = ({
       {/* ================================================== */}
 
       <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800/60 p-4">
-        <h1 className="mb-3 text-2xl font-bold text-orange-400">Fields</h1>
+        <h1 className="text-center text-2xl font-bold text-cyan-400">Fields</h1>
+      </div>
 
+      <div className="mb-6">
+        <SpellTechniquesTable techniques={Techniques} />
+      </div>
+
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800/60 p-4">
         {/* ================================================== */}
         {/* Power & Endurance */}
         {/* ================================================== */}
@@ -296,14 +332,14 @@ const Fields = ({
       {/* ================================================== */}
 
       <div className="rounded-lg border border-gray-700 bg-gray-800/60 p-4">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold text-orange-400">Final Stats</h2>
 
           {/* ================================================== */}
           {/* Spell Techniques */}
           {/* ================================================== */}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {/* Counter Spell */}
 
             <button
@@ -332,6 +368,32 @@ const Fields = ({
               Spell Surge
             </button>
 
+            <button
+              type="button"
+              aria-pressed={soulCast}
+              onClick={() => setSoulCast((prev) => !prev)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                soulCast
+                  ? "border-indigo-400 bg-indigo-500/10 text-indigo-300"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-indigo-500 hover:text-indigo-300"
+              }`}
+            >
+              Soul Cast
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={auraSurge}
+              onClick={() => setAuraSurge((prev) => !prev)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                auraSurge
+                  ? "border-orange-400 bg-orange-500/10 text-orange-300"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-orange-500 hover:text-orange-300"
+              }`}
+            >
+              Aura Surge
+            </button>
+
             {/* Hyper Spell */}
 
             <button
@@ -353,6 +415,35 @@ const Fields = ({
         {/* ================================================== */}
 
         <div className="mb-4 space-y-2">
+          {soulCast && (
+            <div className="rounded-md border border-indigo-700 bg-indigo-950/30 p-3 text-sm text-indigo-300">
+              <p className="font-semibold">Soul Cast — {soulCost} Soul</p>
+              <p>
+                Leaves a temporary sentient consciousness inside the Field,
+                allowing independent actions without interacts from others.
+              </p>
+            </div>
+          )}
+          {auraSurge && (
+            <div className="rounded-md border border-orange-700 bg-orange-950/30 p-3 text-sm text-orange-300">
+              <p className="font-semibold">Aura Surge — Memory Energy</p>
+              <p>
+                While channeling Memory Energy, Fields receive +1 Endurance and
+                +40% Vitality if caster Endurance exceeds the Field's base
+                Endurance.
+              </p>
+              <p className="mt-2">
+                Endurance: {power} → {finalEndurance}
+              </p>
+              <p>
+                Vitality: {vitality} → {finalVitality}
+              </p>
+              <p className="mt-2 text-xs">
+                Conditional bonuses are previewed here. Requirements are
+                resolved during casting.
+              </p>
+            </div>
+          )}
           {counterSpell && (
             <p className="border-t border-gray-700 pt-3 text-sm text-red-300">
               Allows the spell to be used as a{" "}
@@ -397,6 +488,29 @@ const Fields = ({
           </div>
         </div>
 
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="rounded-md border border-gray-700 bg-gray-900/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Power
+            </p>
+            <p className="text-xl font-bold text-cyan-400">{power}</p>
+          </div>
+          <div className="rounded-md border border-gray-700 bg-gray-900/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Endurance
+            </p>
+            <p className="text-xl font-bold text-cyan-400">{finalEndurance}</p>
+          </div>
+        </div>
+        {soulCast && (
+          <div className="mt-3 rounded-md border border-indigo-700 bg-gray-900/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Soul Cost
+            </p>
+            <p className="text-xl font-bold text-indigo-300">{soulCost} Soul</p>
+          </div>
+        )}
+
         {/* Vitality */}
 
         <div className="mt-3 rounded-md border border-gray-700 bg-gray-900/70 p-3">
@@ -404,7 +518,7 @@ const Fields = ({
             Vitality
           </p>
 
-          <p className="text-xl font-bold text-green-400">{vitality}</p>
+          <p className="text-xl font-bold text-green-400">{finalVitality}</p>
         </div>
       </div>
     </div>

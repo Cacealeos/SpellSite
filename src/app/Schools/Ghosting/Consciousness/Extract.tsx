@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 
@@ -9,22 +11,22 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 // ==================================================
 
 const Techniques = {
-  "Quick Spell": true,
+  "Quick Spell": false,
   "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
-  "Counter Spell": true,
-  "Spell Surge": true,
+  "Double Pulse": false,
+  "Soul Cast": false,
+  "Full Cast ": false,
+  "Counter Spell": false,
+  "Spell Surge": false,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================
@@ -39,7 +41,6 @@ const MAX_COST = 1000;
 // ==================================================
 
 const ExtractFabricate = ({
-  ParentMastery,
   active,
   updateSpell,
 }: {
@@ -53,7 +54,9 @@ const ExtractFabricate = ({
 
   const [cost, setCost] = useState(MIN_COST);
 
-  const [counterSpell, setCounterSpell] = useState(false);
+  // ==================================================
+  // Technique State
+  // ==================================================
 
   const [hyperSpell, setHyperSpell] = useState(false);
 
@@ -64,7 +67,6 @@ const ExtractFabricate = ({
   useEffect(() => {
     if (!active) {
       setCost(MIN_COST);
-      setCounterSpell(false);
       setHyperSpell(false);
       updateSpell("cost", 0);
       return;
@@ -127,22 +129,11 @@ const ExtractFabricate = ({
           </h3>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setCounterSpell(!counterSpell)}
-              aria-pressed={counterSpell}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                counterSpell
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
-            >
-              Counter Spell
-            </button>
+            {/* Hyper Spell */}
 
             <button
               type="button"
-              onClick={() => setHyperSpell(!hyperSpell)}
+              onClick={() => setHyperSpell((prev) => !prev)}
               aria-pressed={hyperSpell}
               className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
                 hyperSpell
@@ -156,39 +147,19 @@ const ExtractFabricate = ({
         </div>
 
         {/* ================================================== */}
-        {/* Technique Captions */}
+        {/* Hyper Spell */}
         {/* ================================================== */}
 
-        {(counterSpell || hyperSpell) && (
-          <div className="mb-5 space-y-3">
-            {counterSpell && (
-              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
-                <p className="text-sm leading-relaxed text-gray-300">
-                  <strong className="text-purple-400">Counter Spell:</strong>{" "}
-                  Grants an{" "}
-                  <strong className="text-purple-300">
-                    extra roll upon failure
-                  </strong>{" "}
-                  when using Transmogrify on a target, and allows Mutate
-                  Consciousness to be used as a{" "}
-                  <strong className="text-purple-300">DEFENSIVE</strong>{" "}
-                  measure.
-                </p>
-              </div>
-            )}
-
-            {hyperSpell && (
-              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
-                <p className="text-sm leading-relaxed text-gray-300">
-                  <strong className="text-purple-400">Hyper Spell:</strong>{" "}
-                  Allows the caster to inject a copy of their own monitoring
-                  consciousness within the target.{" "}
-                  <strong className="text-red-400">
-                    Highly susceptible to Disruption.
-                  </strong>
-                </p>
-              </div>
-            )}
+        {hyperSpell && (
+          <div className="mb-5 rounded-lg border border-purple-800 bg-purple-950/30 p-3">
+            <p className="text-sm leading-relaxed text-gray-300">
+              <strong className="text-purple-400">Hyper Spell:</strong> Allows
+              the caster to inject a copy of their own monitoring consciousness
+              within the target.{" "}
+              <strong className="text-red-400">
+                Highly susceptible to Disruption.
+              </strong>
+            </p>
           </div>
         )}
 
@@ -197,18 +168,27 @@ const ExtractFabricate = ({
         {/* ================================================== */}
 
         <div className="space-y-3 text-gray-300">
+          {/* Minimum Cost */}
+
           <div className="flex justify-between">
             <span>Minimum Cost</span>
+
             <span className="font-semibold text-cyan-400">{MIN_COST}</span>
           </div>
 
+          {/* Maximum Cost */}
+
           <div className="flex justify-between">
             <span>Maximum Cost</span>
+
             <span className="font-semibold text-cyan-400">{MAX_COST}</span>
           </div>
 
+          {/* Final Cost */}
+
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span className="font-semibold text-gray-100">Final Cost</span>
+
             <span className="text-lg font-bold text-orange-400">{cost}</span>
           </div>
         </div>
@@ -224,7 +204,7 @@ const ExtractFabricate = ({
         </h3>
 
         <label className="block">
-          <span className="text-gray-300">Additional Mana Cost</span>
+          <span className="text-gray-300">Additional Manna Cost</span>
 
           <span className="ml-2 text-sm text-gray-500">
             Optional — defaults to {MIN_COST}

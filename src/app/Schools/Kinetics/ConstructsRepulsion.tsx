@@ -1,5 +1,28 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import { Mastery, Spell } from "@/app/models";
+
+import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
+
+const Techniques = {
+  "Quick Spell": false,
+  "Spell Reflex": false,
+  "Double Cast": true,
+  "Double Pulse": false,
+  "Soul Cast": false,
+  "Full Cast ": false,
+  "Counter Spell": false,
+  "Spell Surge": false,
+  "Junction Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": true,
+  "Auto Cast": false,
+  "Rivet Cast": true,
+  "Spell Recovery": false,
+  "Aura Surge": true,
+};
 
 type ConstructsRepulsionProps = {
   ParentMastery: Mastery;
@@ -15,6 +38,7 @@ const ConstructsRepulsion = ({
   const [power, setPower] = useState(0);
   const [damage, setDamage] = useState(0);
   const [aoe, setAoe] = useState(1);
+  const [auraSurge, setAuraSurge] = useState(false);
   const [hyperSpell, setHyperSpell] = useState(false);
 
   // ==================================================
@@ -70,26 +94,25 @@ const ConstructsRepulsion = ({
   // Spell Cost
   // ==================================================
 
+  const masteryType = ParentMastery.getType();
+  const aoeCost = getAOECost(masteryType, aoe);
+  const baseCost = aoeCost + damage;
+  const auraAdjustedCost = baseCost * (auraSurge ? 1.5 : 1);
+  const finalCost = Math.ceil(auraAdjustedCost * (hyperSpell ? 0.33 : 1));
+
   useEffect(() => {
     if (!active) {
       setPower(0);
       setDamage(0);
       setAoe(1);
       setHyperSpell(false);
-      updateSpell("cost", 0);
-      return;
+      setAuraSurge(false);
     }
+  }, [active]);
 
-    const masteryType = ParentMastery.getType();
-    const aoeCost = getAOECost(masteryType, aoe);
-
-    const baseCost = aoeCost + damage;
-
-    // Hyper Spell reduces the final cost by 67%.
-    const finalCost = hyperSpell ? Math.ceil(baseCost * 0.33) : baseCost;
-
-    updateSpell("cost", finalCost);
-  }, [active, damage, aoe, hyperSpell, ParentMastery, updateSpell]);
+  useEffect(() => {
+    updateSpell("cost", active ? finalCost : 0);
+  }, [active, finalCost, updateSpell]);
 
   // ==================================================
   // Damage Limit
@@ -107,7 +130,10 @@ const ConstructsRepulsion = ({
   // Hyper Spell Damage
   // ==================================================
 
-  const finalDamage = hyperSpell ? Math.ceil(damage * 1.5) : damage;
+  const damageBonus = Math.ceil(
+    (damage * ((auraSurge ? 30 : 0) + (hyperSpell ? 50 : 0))) / 100,
+  );
+  const finalDamage = damage + damageBonus;
 
   // ==================================================
   // Render
@@ -120,8 +146,10 @@ const ConstructsRepulsion = ({
       {/* ================================================== */}
 
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 text-center shadow-md">
-        <h1 className="text-2xl font-bold text-gray-100">Repulsion</h1>
+        <h1 className="text-2xl font-bold text-cyan-400">Repulsion</h1>
       </div>
+
+      <SpellTechniquesTable techniques={Techniques} />
 
       {/* ================================================== */}
       {/* Spell Information */}
@@ -276,21 +304,53 @@ const ConstructsRepulsion = ({
       {/* ================================================== */}
 
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-        <div className="mb-4 flex items-center justify-between border-b border-gray-700 pb-3">
-          <h2 className="text-xl font-bold text-gray-100">Final Statistics</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-700 pb-3">
+          <h2 className="text-xl font-bold text-orange-400">
+            Final Statistics
+          </h2>
 
-          <button
-            type="button"
-            onClick={() => setHyperSpell((prev) => !prev)}
-            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
-              hyperSpell
-                ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
-                : "border-gray-600 bg-gray-900 text-gray-400 hover:border-purple-500 hover:text-purple-300"
-            }`}
-          >
-            Hyper Spell
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              aria-pressed={auraSurge}
+              onClick={() => setAuraSurge((prev) => !prev)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                auraSurge
+                  ? "border-orange-400 bg-orange-500/10 text-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.5)]"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-orange-500 hover:text-orange-300"
+              }`}
+            >
+              Aura Surge
+            </button>
+            <button
+              type="button"
+              onClick={() => setHyperSpell((prev) => !prev)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                hyperSpell
+                  ? "border-purple-400 bg-purple-500/10 text-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.5)]"
+                  : "border-gray-600 bg-gray-900 text-gray-400 hover:border-purple-500 hover:text-purple-300"
+              }`}
+            >
+              Hyper Spell
+            </button>
+          </div>
         </div>
+
+        {auraSurge && (
+          <div className="mb-4 rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
+            <h3 className="mb-2 font-semibold text-orange-300">
+              Aura Surge — Body Energy
+            </h3>
+            <p>
+              While channeling <strong>Body Energy</strong>, Repulsion receives{" "}
+              <strong>+30% Damage</strong> at the cost of{" "}
+              <strong>50% extra Manna</strong>.
+            </p>
+            <p className="mt-2 text-xs text-orange-300">
+              Requires channeling Body Energy during casting.
+            </p>
+          </div>
+        )}
 
         {hyperSpell && (
           <p className="mb-4 border-b border-gray-700 pb-3 text-sm text-purple-300">
@@ -321,7 +381,7 @@ const ConstructsRepulsion = ({
             <span className="text-lg font-semibold text-gray-300">Cost</span>
 
             <span className="text-2xl font-bold text-orange-400">
-              {/* Parent spell cost is updated through updateSpell */}
+              {finalCost}
             </span>
           </div>
         </div>

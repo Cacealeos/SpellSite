@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { EyeIcon } from "@heroicons/react/24/solid";
 
@@ -10,21 +12,21 @@ import SpellTechniquesTable from "@/app/SpellCreation/SpellTechTable";
 
 const Techniques = {
   "Quick Spell": true,
-  "Spell Reflex": true,
+  "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Double Pulse": false,
+  "Soul Cast": false,
+  "Full Cast ": false,
   "Counter Spell": true,
-  "Spell Surge": true,
+  "Spell Surge": false,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
-  "Hyper Spell": true,
-  "Auto Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": false,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -106,7 +108,7 @@ const ProjectedIllusion = ({
 
   const [desc, setDesc] = useState("");
 
-  const [spellReflex, setSpellReflex] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   // ==================================================
   // Mastery
@@ -148,7 +150,7 @@ const ProjectedIllusion = ({
       setSelectedSenses([]);
       setSize("SMALL");
       setDesc("");
-      setSpellReflex(false);
+      setAuraSurge(false);
     }
   }, [active]);
 
@@ -204,15 +206,15 @@ const ProjectedIllusion = ({
 
           <button
             type="button"
-            onClick={() => setSpellReflex(!spellReflex)}
-            aria-pressed={spellReflex}
+            onClick={() => setAuraSurge((previous) => !previous)}
+            aria-pressed={auraSurge}
             className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-              spellReflex
-                ? "bg-purple-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
+              auraSurge
+                ? "bg-orange-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-orange-600 hover:text-white"
             }`}
           >
-            Spell Reflex
+            Aura Surge
           </button>
         </div>
 
@@ -220,15 +222,29 @@ const ProjectedIllusion = ({
         {/* Technique Caption */}
         {/* ================================================== */}
 
-        {spellReflex && (
-          <div className="mb-5 rounded-lg border border-purple-800 bg-purple-950/30 p-3">
-            <p className="text-sm leading-relaxed text-gray-300">
-              <strong className="text-purple-400">Spell Reflex:</strong> Grants
-              an{" "}
-              <strong className="text-purple-300">
-                extra roll upon failure
-              </strong>{" "}
-              to induce illusions.
+        {auraSurge && (
+          <div className="mb-5 rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
+            <h4 className="mb-3 font-semibold text-orange-300">
+              Aura Surge — Spirit Energy
+            </h4>
+            <p className="leading-relaxed">
+              While channeling <strong>Spirit Energy</strong>, Projected
+              Illusions become resistant to <strong>Disruption</strong>.
+            </p>
+            <div className="mt-4 space-y-3 rounded-md border border-orange-800 bg-gray-900 p-4">
+              <div className="flex justify-between gap-4">
+                <span>Required Energy</span>
+                <span className="font-semibold text-orange-300">
+                  SPIRIT ENERGY
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>Disruption Resistance</span>
+                <span className="font-semibold text-orange-300">RESISTANT</span>
+              </div>
+            </div>
+            <p className="mt-3 text-xs italic text-orange-200/80">
+              Requires channeling Spirit Energy during casting.
             </p>
           </div>
         )}
@@ -295,6 +311,23 @@ const ProjectedIllusion = ({
 
             <span className="font-semibold text-cyan-400">{aoeCost}</span>
           </div>
+
+          {/* Aura Surge Properties */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between gap-4">
+                <span>Aura Surge</span>
+                <span className="font-semibold text-orange-400">
+                  SPIRIT ENERGY
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>Disruption Resistance</span>
+                <span className="font-semibold text-orange-400">RESISTANT</span>
+              </div>
+            </>
+          )}
 
           {/* Final TTT */}
 

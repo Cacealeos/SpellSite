@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { CubeTransparentIcon } from "@heroicons/react/24/solid";
 
@@ -12,19 +14,19 @@ const Techniques = {
   "Quick Spell": true,
   "Spell Reflex": false,
   "Double Cast": true,
-  "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Double Pulse": false,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
-  "Spell Surge": true,
+  "Spell Surge": false,
   "Junction Cast": true,
-  "Spell Charge": true,
-  "Focus Spell": true,
-  "Hyper Spell": true,
-  "Auto Cast": true,
+  "Spell Charge": false,
+  "Focus Spell": false,
+  "Hyper Spell": false,
+  "Auto Cast": false,
   "Rivet Cast": true,
   "Spell Recovery": false,
-  "Father Spell": false,
+  "Aura Surge": false,
 };
 
 // ==================================================
@@ -70,14 +72,6 @@ const sizeOptions = [
 ];
 
 // ==================================================
-// Spell Surge Constants
-// ==================================================
-
-const SURGE_REDUCTION = 0.15;
-const MAX_SURGE_REDUCTION = 0.75;
-const MAX_SUCCESSIVE_CASTS = 5;
-
-// ==================================================
 // Component
 // ==================================================
 
@@ -98,11 +92,9 @@ const ImbuePolymorphic = ({
 
   const [desc, setDesc] = useState("");
 
+  const [fullCast, setFullCast] = useState(false);
+
   const [counterSpell, setCounterSpell] = useState(false);
-
-  const [spellSurge, setSpellSurge] = useState(false);
-
-  const [successiveCasts, setSuccessiveCasts] = useState(0);
 
   // ==================================================
   // Mastery
@@ -123,15 +115,7 @@ const ImbuePolymorphic = ({
 
   const totalTTT = currentStats.ttt * size;
 
-  // Spell Surge reduces mana cost by 15% per
-  // successive cast, up to a maximum of 75%.
-  const surgeReduction = spellSurge
-    ? Math.min(successiveCasts * SURGE_REDUCTION, MAX_SURGE_REDUCTION)
-    : 0;
-
-  const surgePercentage = Math.round(surgeReduction * 100);
-
-  const finalCost = Math.ceil(baseCost * (1 - surgeReduction));
+  const finalCost = baseCost;
 
   // ==================================================
   // Spell Update
@@ -150,26 +134,10 @@ const ImbuePolymorphic = ({
     if (!active) {
       setSize(1);
       setDesc("");
+      setFullCast(false);
       setCounterSpell(false);
-      setSpellSurge(false);
-      setSuccessiveCasts(0);
     }
   }, [active]);
-
-  // ==================================================
-  // Handlers
-  // ==================================================
-
-  const toggleSpellSurge = () => {
-    setSpellSurge((previous) => !previous);
-    setSuccessiveCasts(0);
-  };
-
-  const changeSuccessiveCasts = (value: number) => {
-    setSuccessiveCasts(
-      Math.max(0, Math.min(MAX_SUCCESSIVE_CASTS, Math.trunc(value || 0))),
-    );
-  };
 
   // ==================================================
   // Render
@@ -210,6 +178,20 @@ const ImbuePolymorphic = ({
           </h3>
 
           <div className="flex flex-wrap gap-2">
+            {/* Full Cast */}
+            <button
+              type="button"
+              onClick={() => setFullCast((previous) => !previous)}
+              aria-pressed={fullCast}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                fullCast
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-indigo-600 hover:text-white"
+              }`}
+            >
+              Full Cast
+            </button>
+
             {/* Counter Spell */}
 
             <button
@@ -224,21 +206,6 @@ const ImbuePolymorphic = ({
             >
               Counter Spell
             </button>
-
-            {/* Spell Surge */}
-
-            <button
-              type="button"
-              onClick={toggleSpellSurge}
-              aria-pressed={spellSurge}
-              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                spellSurge
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-purple-600 hover:text-white"
-              }`}
-            >
-              Spell Surge
-            </button>
           </div>
         </div>
 
@@ -246,8 +213,39 @@ const ImbuePolymorphic = ({
         {/* Technique Captions */}
         {/* ================================================== */}
 
-        {(counterSpell || spellSurge) && (
+        {(fullCast || counterSpell) && (
           <div className="mb-5 space-y-3">
+            {/* Full Cast Caption */}
+            {fullCast && (
+              <div className="rounded-lg border border-indigo-700 bg-indigo-950/30 p-4 text-sm text-indigo-200">
+                <h4 className="mb-3 font-semibold text-indigo-300">
+                  Full Cast
+                </h4>
+                <p>
+                  Grants targets an additional <strong>INTERACT ACTION</strong>{" "}
+                  or <strong>DEFENSIVE ACTION</strong>.
+                </p>
+                <div className="mt-4 space-y-3 rounded-md border border-indigo-800 bg-gray-900 p-4">
+                  <div className="flex justify-between gap-4">
+                    <span>Additional Actions</span>
+                    <span className="font-bold text-indigo-300">+1</span>
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-indigo-800 pt-3">
+                    <div className="rounded-md border border-indigo-800 p-3 text-center font-semibold">
+                      INTERACT ACTION
+                    </div>
+                    <span className="text-xs font-bold text-gray-500">OR</span>
+                    <div className="rounded-md border border-indigo-800 p-3 text-center font-semibold">
+                      DEFENSIVE ACTION
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs italic">
+                  The action type is determined during casting.
+                </p>
+              </div>
+            )}
+
             {/* Counter Spell Caption */}
 
             {counterSpell && (
@@ -257,20 +255,6 @@ const ImbuePolymorphic = ({
                   Allows Transmogrification to be used as a{" "}
                   <strong className="text-purple-300">DEFENSIVE</strong>{" "}
                   measure.
-                </p>
-              </div>
-            )}
-
-            {/* Spell Surge Caption */}
-
-            {spellSurge && (
-              <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
-                <p className="text-sm leading-relaxed text-gray-300">
-                  <strong className="text-purple-400">Spell Surge:</strong>{" "}
-                  Incrementally reduces mana cost by{" "}
-                  <strong className="text-purple-300">15%</strong> for each
-                  successive spell cast, up to a maximum reduction of{" "}
-                  <strong className="text-purple-300">75%</strong>.
                 </p>
               </div>
             )}
@@ -306,26 +290,27 @@ const ImbuePolymorphic = ({
             <span className="font-semibold text-cyan-400">{baseCost}</span>
           </div>
 
-          {/* Spell Surge Reduction */}
-
-          {spellSurge && (
+          {/* Full Cast Properties */}
+          {fullCast && (
             <>
-              <div className="flex justify-between">
-                <span>Successive Casts</span>
-
-                <span className="font-semibold text-cyan-400">
-                  {successiveCasts}
-                </span>
+              <div className="flex justify-between gap-4">
+                <span>Additional Target Actions</span>
+                <span className="font-semibold text-indigo-400">+1</span>
               </div>
-
-              <div className="flex justify-between">
-                <span>Mana Reduction</span>
-
-                <span className="font-semibold text-purple-400">
-                  -{surgePercentage}%
+              <div className="flex justify-between gap-4">
+                <span>Available Action Types</span>
+                <span className="text-right font-semibold text-indigo-400">
+                  INTERACT / DEFENSIVE
                 </span>
               </div>
             </>
+          )}
+
+          {counterSpell && (
+            <div className="flex justify-between gap-4">
+              <span>Additional Casting Action</span>
+              <span className="font-semibold text-purple-400">DEFENSIVE</span>
+            </div>
           )}
 
           {/* Total TTT */}
@@ -342,7 +327,7 @@ const ImbuePolymorphic = ({
             <span className="font-semibold text-gray-100">Final Cost</span>
 
             <span className="text-lg font-bold text-orange-400">
-              {finalCost}
+              {finalCost} Manna
             </span>
           </div>
         </div>
@@ -395,67 +380,6 @@ const ImbuePolymorphic = ({
           })}
         </div>
       </div>
-
-      {/* ================================================== */}
-      {/* Spell Surge Configuration */}
-      {/* ================================================== */}
-
-      {spellSurge && (
-        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-800 p-5 shadow-md">
-          <h3 className="mb-4 border-b border-gray-700 pb-2 text-lg font-semibold text-orange-400">
-            Spell Surge Configuration
-          </h3>
-
-          {/* Successive Casts */}
-
-          <label className="block">
-            <span className="mb-2 block font-semibold text-gray-300">
-              Successive Casts
-              <span className="ml-2 text-sm font-normal text-gray-500">
-                (0–5)
-              </span>
-            </span>
-
-            <input
-              type="number"
-              min={0}
-              max={MAX_SUCCESSIVE_CASTS}
-              step={1}
-              value={successiveCasts}
-              onChange={(e) => changeSuccessiveCasts(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-gray-100 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-
-          {/* Reduction Meter */}
-
-          <div className="mt-5">
-            <div className="mb-2 flex justify-between">
-              <span className="font-semibold text-gray-300">
-                Mana Cost Reduction
-              </span>
-
-              <span className="font-semibold text-purple-400">
-                {surgePercentage}%
-              </span>
-            </div>
-
-            <div className="h-3 w-full overflow-hidden rounded-full bg-gray-900">
-              <div
-                className="h-full rounded-full bg-purple-500 transition-all duration-300"
-                style={{
-                  width: `${(surgeReduction / MAX_SURGE_REDUCTION) * 100}%`,
-                }}
-              />
-            </div>
-
-            <p className="mt-3 text-sm italic text-gray-400">
-              Each successive cast reduces the original mana cost by another
-              15%. The reduction is capped at 75%.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ================================================== */}
       {/* Description */}

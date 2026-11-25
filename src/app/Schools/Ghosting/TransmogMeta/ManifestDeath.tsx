@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { NoSymbolIcon } from "@heroicons/react/24/solid";
 
@@ -14,18 +16,18 @@ const Techniques = {
   "Spell Reflex": false,
   "Double Cast": true,
   "Double Pulse": true,
-  "Carry Spell": true,
-  "Spell Shift": true,
+  "Soul Cast": true,
+  "Full Cast ": true,
   "Counter Spell": true,
   "Spell Surge": true,
   "Junction Cast": true,
   "Spell Charge": true,
   "Focus Spell": true,
   "Hyper Spell": true,
-  "Auto Cast": true,
+  "Auto Cast": false,
   "Rivet Cast": true,
-  "Spell Recovery": false,
-  "Father Spell": false,
+  "Spell Recovery": true,
+  "Aura Surge": true,
 };
 
 // ==================================================
@@ -35,6 +37,12 @@ const Techniques = {
 type PotencyType = "MINOR" | "MAJOR" | "EXTREME";
 
 type MasteryType = "NOVICE" | "INTERMEDIATE" | "MASTERED";
+
+// ==================================================
+// Constants
+// ==================================================
+
+const SPELL_RECOVERY_MULTIPLIER = 0.5;
 
 // ==================================================
 // Potency Data
@@ -99,27 +107,23 @@ const ManifestDeath = ({
 
   const [selectedPotency, setSelectedPotency] = useState<PotencyType>("MINOR");
 
-  const [spellCharge, setSpellCharge] = useState(false);
-
-  const [hyperSpell, setHyperSpell] = useState(false);
-
-  const [counterSpell, setCounterSpell] = useState(false);
-
   const [chargeTurns, setChargeTurns] = useState(0);
+
+  // ==================================================
+  // Technique State
+  // ==================================================
+
+  const [spellCharge, setSpellCharge] = useState(false);
+  const [hyperSpell, setHyperSpell] = useState(false);
+  const [counterSpell, setCounterSpell] = useState(false);
+  const [spellRecovery, setSpellRecovery] = useState(false);
+  const [auraSurge, setAuraSurge] = useState(false);
 
   // ==================================================
   // Mastery
   // ==================================================
 
-  const testMastery = new Mastery();
-
-  let mastery: MasteryType = "NOVICE";
-
-  if (ParentMastery.getType() === testMastery.intermediate(true)) {
-    mastery = "INTERMEDIATE";
-  } else if (ParentMastery.getType() === testMastery.mastered(true)) {
-    mastery = "MASTERED";
-  }
+  const mastery = ParentMastery.getType() as MasteryType;
 
   // ==================================================
   // Derived Values
@@ -131,12 +135,25 @@ const ManifestDeath = ({
 
   const finalCost = currentStats.cost;
 
-  // Each turn of Spell Charge adds +1 resistance.
+  // ==================================================
+  // Spell Charge
+  // ==================================================
+
+  // Each turn of Spell Charge adds +1 Resistance.
+
   const resistanceBonus = spellCharge ? chargeTurns : 0;
 
   const finalResistance = baseResistance + resistanceBonus;
 
-  // Hyper Spell grants AOE based on charge turns.
+  // ==================================================
+  // Hyper Spell
+  // ==================================================
+
+  // Requires Spell Charge.
+  //
+  // 2 Turns: Small AOE
+  // 4 Turns: Moderate AOE
+
   const areaOfEffect =
     hyperSpell && spellCharge
       ? chargeTurns >= 4
@@ -145,6 +162,37 @@ const ManifestDeath = ({
           ? "SMALL"
           : "NONE"
       : "NONE";
+
+  // ==================================================
+  // Counter Spell
+  // ==================================================
+
+  // Allows Manifest Death to be used as a
+  // DEFENSIVE measure.
+
+  // ==================================================
+  // Spell Recovery
+  // ==================================================
+
+  // Allows compensation of lost spells at
+  // 50% of their original Manna cost.
+
+  const recoveryCost = Math.ceil(finalCost * SPELL_RECOVERY_MULTIPLIER);
+
+  // ==================================================
+  // Aura Surge
+  // ==================================================
+
+  // While channeling MENTAL ENERGY:
+  //
+  // Drain Avatar, Manifest Death, and Alter Integrity
+  // can Constrict targets through a contested check:
+  //
+  // Power + Dis vs Power + Dis
+  //
+  // The check is resolved dynamically during casting.
+  // No caster or target statistics are required
+  // during spell creation.
 
   // ==================================================
   // Spell Update
@@ -161,9 +209,13 @@ const ManifestDeath = ({
   useEffect(() => {
     if (!active) {
       setSelectedPotency("MINOR");
+
       setSpellCharge(false);
       setHyperSpell(false);
       setCounterSpell(false);
+      setSpellRecovery(false);
+      setAuraSurge(false);
+
       setChargeTurns(0);
     }
   }, [active]);
@@ -267,8 +319,8 @@ const ManifestDeath = ({
 
             <button
               type="button"
-              onClick={() => setCounterSpell(!counterSpell)}
               aria-pressed={counterSpell}
+              onClick={() => setCounterSpell((prev) => !prev)}
               className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
                 counterSpell
                   ? "bg-purple-600 text-white"
@@ -277,6 +329,36 @@ const ManifestDeath = ({
             >
               Counter Spell
             </button>
+
+            {/* Spell Recovery */}
+
+            <button
+              type="button"
+              aria-pressed={spellRecovery}
+              onClick={() => setSpellRecovery((prev) => !prev)}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                spellRecovery
+                  ? "bg-fuchsia-700 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-fuchsia-700 hover:text-white"
+              }`}
+            >
+              Spell Recovery
+            </button>
+
+            {/* Aura Surge */}
+
+            <button
+              type="button"
+              aria-pressed={auraSurge}
+              onClick={() => setAuraSurge((prev) => !prev)}
+              className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                auraSurge
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-orange-600 hover:text-white"
+              }`}
+            >
+              Aura Surge
+            </button>
           </div>
         </div>
 
@@ -284,15 +366,21 @@ const ManifestDeath = ({
         {/* Technique Captions */}
         {/* ================================================== */}
 
-        {(spellCharge || hyperSpell || counterSpell) && (
+        {(spellCharge ||
+          hyperSpell ||
+          counterSpell ||
+          spellRecovery ||
+          auraSurge) && (
           <div className="mb-5 space-y-3">
-            {/* Spell Charge Caption */}
+            {/* ================================================== */}
+            {/* Spell Charge */}
+            {/* ================================================== */}
 
             {spellCharge && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
                 <p className="text-sm leading-relaxed text-gray-300">
                   <strong className="text-purple-400">Spell Charge:</strong>{" "}
-                  Increases Manifest Death's Resistance Check by{" "}
+                  Increases Manifest Death&apos;s Resistance Check by{" "}
                   <strong className="text-purple-300">
                     +1 per turn of charge
                   </strong>
@@ -301,7 +389,9 @@ const ManifestDeath = ({
               </div>
             )}
 
-            {/* Hyper Spell Caption */}
+            {/* ================================================== */}
+            {/* Hyper Spell */}
+            {/* ================================================== */}
 
             {hyperSpell && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
@@ -315,7 +405,9 @@ const ManifestDeath = ({
               </div>
             )}
 
-            {/* Counter Spell Caption */}
+            {/* ================================================== */}
+            {/* Counter Spell */}
+            {/* ================================================== */}
 
             {counterSpell && (
               <div className="rounded-lg border border-purple-800 bg-purple-950/30 p-3">
@@ -324,6 +416,131 @@ const ManifestDeath = ({
                   Allows Manifest Death to be used as a{" "}
                   <strong className="text-purple-300">DEFENSIVE</strong>{" "}
                   measure.
+                </p>
+              </div>
+            )}
+
+            {/* ================================================== */}
+            {/* Spell Recovery */}
+            {/* ================================================== */}
+
+            {spellRecovery && (
+              <div className="rounded-lg border border-fuchsia-700 bg-fuchsia-950/30 p-4 text-sm text-fuchsia-200">
+                <h4 className="mb-3 font-semibold text-fuchsia-300">
+                  Spell Recovery
+                </h4>
+
+                <p className="leading-relaxed">
+                  Allows for the compensation of lost spells at{" "}
+                  <strong>50% Manna cost</strong>.
+                </p>
+
+                <div className="mt-4 space-y-3 rounded-md border border-fuchsia-800 bg-gray-900 p-4">
+                  {/* Normal Manna Cost */}
+
+                  <div className="flex justify-between">
+                    <span>Normal Manna Cost</span>
+
+                    <span className="font-semibold text-gray-200">
+                      {finalCost}
+                    </span>
+                  </div>
+
+                  {/* Recovery Discount */}
+
+                  <div className="flex justify-between">
+                    <span>Recovery Discount</span>
+
+                    <span className="font-semibold text-fuchsia-300">50%</span>
+                  </div>
+
+                  {/* Recovery Cost */}
+
+                  <div className="flex justify-between border-t border-fuchsia-800 pt-3">
+                    <span className="font-semibold">Recovery Cost</span>
+
+                    <span className="font-bold text-fuchsia-300">
+                      {recoveryCost} Manna
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================== */}
+            {/* Aura Surge */}
+            {/* ================================================== */}
+
+            {auraSurge && (
+              <div className="rounded-lg border border-orange-700 bg-orange-950/30 p-4 text-sm text-orange-200">
+                <h4 className="mb-3 font-semibold text-orange-300">
+                  Aura Surge — Mental Energy
+                </h4>
+
+                <p className="leading-relaxed">
+                  While channeling <strong>Mental Energy</strong>, Drain Avatar,
+                  Manifest Death, and Alter Integrity spells can{" "}
+                  <strong>Constrict</strong> targets through a{" "}
+                  <strong>Power + Dis vs Power + Dis</strong> check.
+                </p>
+
+                <div className="mt-4 space-y-3 rounded-md border border-orange-800 bg-gray-900 p-4">
+                  {/* Required Energy */}
+
+                  <div className="flex justify-between gap-4">
+                    <span>Required Energy</span>
+
+                    <span className="text-right font-semibold text-orange-300">
+                      MENTAL ENERGY
+                    </span>
+                  </div>
+
+                  {/* Additional Effect */}
+
+                  <div className="flex justify-between gap-4">
+                    <span>Additional Effect</span>
+
+                    <span className="text-right font-semibold text-orange-300">
+                      CONSTRICT
+                    </span>
+                  </div>
+
+                  {/* Contested Check */}
+
+                  <div className="border-t border-orange-800 pt-3">
+                    <div className="mb-3 text-center font-semibold text-orange-300">
+                      Contested Check
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      {/* Caster Side */}
+
+                      <div className="rounded-md border border-orange-800 bg-orange-950/30 p-3 text-center">
+                        <div className="text-xs text-gray-400">Caster Side</div>
+
+                        <div className="mt-1 font-bold text-orange-300">
+                          Power + Dis
+                        </div>
+                      </div>
+
+                      <span className="font-bold text-gray-500">VS</span>
+
+                      {/* Target Side */}
+
+                      <div className="rounded-md border border-orange-800 bg-orange-950/30 p-3 text-center">
+                        <div className="text-xs text-gray-400">Target</div>
+
+                        <div className="mt-1 font-bold text-orange-300">
+                          Power + Dis
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="mt-3 text-xs italic text-orange-200/80">
+                  Requires channeling Mental Energy. The contested check and
+                  Constrict effect are resolved during casting.
                 </p>
               </div>
             )}
@@ -371,7 +588,9 @@ const ManifestDeath = ({
             </span>
           </div>
 
-          {/* Charge Turns */}
+          {/* ================================================== */}
+          {/* Spell Charge Properties */}
+          {/* ================================================== */}
 
           {spellCharge && (
             <>
@@ -393,7 +612,9 @@ const ManifestDeath = ({
             </>
           )}
 
-          {/* Area of Effect */}
+          {/* ================================================== */}
+          {/* Hyper Spell Properties */}
+          {/* ================================================== */}
 
           {hyperSpell && (
             <div className="flex justify-between">
@@ -405,7 +626,69 @@ const ManifestDeath = ({
             </div>
           )}
 
+          {/* ================================================== */}
+          {/* Counter Spell Properties */}
+          {/* ================================================== */}
+
+          {counterSpell && (
+            <div className="flex justify-between gap-4">
+              <span>Additional Action</span>
+
+              <span className="text-right font-semibold text-purple-400">
+                DEFENSIVE
+              </span>
+            </div>
+          )}
+
+          {/* ================================================== */}
+          {/* Aura Surge Properties */}
+          {/* ================================================== */}
+
+          {auraSurge && (
+            <>
+              <div className="flex justify-between gap-4">
+                <span>Aura Surge</span>
+
+                <span className="text-right font-semibold text-orange-400">
+                  MENTAL ENERGY
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span>Additional Effect</span>
+
+                <span className="text-right font-semibold text-orange-400">
+                  CONSTRICT
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span>Constrict Check</span>
+
+                <span className="text-right font-semibold text-orange-400">
+                  Power + Dis vs Power + Dis
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* ================================================== */}
+          {/* Spell Recovery Cost */}
+          {/* ================================================== */}
+
+          {spellRecovery && (
+            <div className="flex justify-between">
+              <span>Spell Recovery Cost</span>
+
+              <span className="font-semibold text-fuchsia-400">
+                {recoveryCost} Manna
+              </span>
+            </div>
+          )}
+
+          {/* ================================================== */}
           {/* Final Resistance */}
+          {/* ================================================== */}
 
           <div className="flex justify-between border-t border-gray-700 pt-3">
             <span className="font-semibold text-gray-100">
@@ -417,13 +700,15 @@ const ManifestDeath = ({
             </span>
           </div>
 
+          {/* ================================================== */}
           {/* Final Cost */}
+          {/* ================================================== */}
 
           <div className="flex justify-between">
             <span className="font-semibold text-gray-100">Final Cost</span>
 
             <span className="text-lg font-bold text-orange-400">
-              {finalCost}
+              {finalCost} Manna
             </span>
           </div>
         </div>
@@ -468,7 +753,9 @@ const ManifestDeath = ({
             />
           </label>
 
+          {/* ================================================== */}
           {/* Charge Statistics */}
+          {/* ================================================== */}
 
           <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
             <div className="flex justify-between text-gray-300">
@@ -498,10 +785,14 @@ const ManifestDeath = ({
             )}
           </div>
 
+          {/* ================================================== */}
           {/* Hyper Spell Thresholds */}
+          {/* ================================================== */}
 
           {hyperSpell && (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {/* Small AOE */}
+
               <div
                 className={`rounded-lg border p-3 ${
                   chargeTurns >= 2
@@ -513,6 +804,8 @@ const ManifestDeath = ({
 
                 <p className="mt-1 text-sm text-gray-400">2 Turns of Charge</p>
               </div>
+
+              {/* Moderate AOE */}
 
               <div
                 className={`rounded-lg border p-3 ${
